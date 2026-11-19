@@ -1,0 +1,550 @@
+{
+ "Tropia": {
+  "target_growth": 0.3333333333333333,
+  "start_levels": {
+   "banana": 1,
+   "wheat": 1
+  },
+  "expand": "ore",
+  "cheapest": {
+   "levels": {
+    "banana": 1,
+    "wheat": 2,
+    "ore": 0
+   },
+   "cost": 75,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.3333333333333333
+  },
+  "fewest_upgrades": {
+   "levels": {
+    "banana": 1,
+    "wheat": 2,
+    "ore": 0
+   },
+   "cost": 75,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.3333333333333333
+  },
+  "max_growth_7_upgrades": 2.3333333333333335,
+  "normal_play": {
+   "reach": 0.57,
+   "no_growth_share": 0.43,
+   "mean_growth": 0.19,
+   "mean_investment": 42.75,
+   "mean_income_tax_plus_sales": 362.01
+  },
+  "cheapest_cost_over_income": 0.20717659733156543,
+  "by_upgrades": {
+   "1": {
+    "cost": 75,
+    "cost_over_income": 0.20717659733156543,
+    "growth": 0.3333333333333333,
+    "levels": {
+     "banana": 1,
+     "wheat": 2,
+     "ore": 0
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "2": {
+    "cost": 150,
+    "cost_over_income": 0.41435319466313086,
+    "growth": 0.6666666666666666,
+    "levels": {
+     "banana": 2,
+     "wheat": 2,
+     "ore": 0
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "3": {
+    "cost": 245,
+    "cost_over_income": 0.676776884616447,
+    "growth": 1.0,
+    "levels": {
+     "banana": 2,
+     "wheat": 2,
+     "ore": 1
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "4": {
+    "cost": 340,
+    "cost_over_income": 0.9392005745697632,
+    "growth": 1.3333333333333333,
+    "levels": {
+     "banana": 2,
+     "wheat": 2,
+     "ore": 2
+    },
+    "ore": 0,
+    "machine_grade": 0
+   }
+  }
+ },
+ "Grainia": {
+  "target_growth": 0.4,
+  "start_levels": {
+   "wheat": 1,
+   "banana": 1
+  },
+  "expand": "machine",
+  "cheapest": {
+   "levels": {
+    "wheat": 1,
+    "banana": 2,
+    "machine": 0
+   },
+   "cost": 75,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.4
+  },
+  "fewest_upgrades": {
+   "levels": {
+    "wheat": 1,
+    "banana": 2,
+    "machine": 0
+   },
+   "cost": 75,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.4
+  },
+  "max_growth_7_upgrades": 5.2,
+  "normal_play": {
+   "reach": 0.32,
+   "no_growth_share": 0.68,
+   "mean_growth": 0.128,
+   "mean_investment": 24.0,
+   "mean_income_tax_plus_sales": 322.95
+  },
+  "cheapest_cost_over_income": 0.23223409196470043,
+  "by_upgrades": {
+   "1": {
+    "cost": 75,
+    "cost_over_income": 0.23223409196470043,
+    "growth": 0.4,
+    "levels": {
+     "wheat": 1,
+     "banana": 2,
+     "machine": 0
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "2": {
+    "cost": 150,
+    "cost_over_income": 0.46446818392940087,
+    "growth": 0.8,
+    "levels": {
+     "wheat": 2,
+     "banana": 2,
+     "machine": 0
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "3": {
+    "cost": 265,
+    "cost_over_income": 0.8205604582752748,
+    "growth": 1.2,
+    "levels": {
+     "wheat": 2,
+     "banana": 3,
+     "machine": 0
+    },
+    "ore": 1,
+    "machine_grade": 0
+   },
+   "4": {
+    "cost": 380,
+    "cost_over_income": 1.176652732621149,
+    "growth": 1.6,
+    "levels": {
+     "wheat": 3,
+     "banana": 3,
+     "machine": 0
+    },
+    "ore": 2,
+    "machine_grade": 0
+   }
+  }
+ },
+ "Oilia": {
+  "target_growth": 0.8333333333333334,
+  "start_levels": {
+   "fuel": 1,
+   "ore": 1,
+   "banana": 1
+  },
+  "expand": "banana",
+  "cheapest": {
+   "levels": {
+    "fuel": 2,
+    "ore": 1,
+    "banana": 2
+   },
+   "cost": 170,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 2,
+   "growth": 0.8333333333333334
+  },
+  "fewest_upgrades": {
+   "levels": {
+    "fuel": 2,
+    "ore": 1,
+    "banana": 2
+   },
+   "cost": 170,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 2,
+   "growth": 0.8333333333333334
+  },
+  "max_growth_7_upgrades": 2.8333333333333335,
+  "normal_play": {
+   "reach": 0.37,
+   "no_growth_share": 0.0,
+   "mean_growth": 0.6233333333333334,
+   "mean_investment": 123.55,
+   "mean_income_tax_plus_sales": 456.03
+  },
+  "cheapest_cost_over_income": 0.3727824923798873,
+  "by_upgrades": {
+   "1": {
+    "cost": 75,
+    "cost_over_income": 0.1644628642852444,
+    "growth": 0.3333333333333333,
+    "levels": {
+     "fuel": 1,
+     "ore": 1,
+     "banana": 2
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "2": {
+    "cost": 170,
+    "cost_over_income": 0.3727824923798873,
+    "growth": 0.8333333333333334,
+    "levels": {
+     "fuel": 2,
+     "ore": 1,
+     "banana": 2
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "3": {
+    "cost": 265,
+    "cost_over_income": 0.5811021204745302,
+    "growth": 1.1666666666666667,
+    "levels": {
+     "fuel": 2,
+     "ore": 2,
+     "banana": 2
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "4": {
+    "cost": 380,
+    "cost_over_income": 0.8332785123785716,
+    "growth": 1.5,
+    "levels": {
+     "fuel": 2,
+     "ore": 2,
+     "banana": 3
+    },
+    "ore": 1,
+    "machine_grade": 0
+   }
+  }
+ },
+ "Mechania": {
+  "target_growth": 0.4166666666666667,
+  "start_levels": {
+   "machine": 1,
+   "wheat": 1
+  },
+  "expand": "electronics",
+  "cheapest": {
+   "levels": {
+    "machine": 2,
+    "wheat": 1,
+    "electronics": 0
+   },
+   "cost": 125,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.4166666666666667
+  },
+  "fewest_upgrades": {
+   "levels": {
+    "machine": 2,
+    "wheat": 1,
+    "electronics": 0
+   },
+   "cost": 125,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.4166666666666667
+  },
+  "max_growth_7_upgrades": 3.9166666666666665,
+  "normal_play": {
+   "reach": 1.0,
+   "no_growth_share": 0.0,
+   "mean_growth": 0.41666666666666674,
+   "mean_investment": 125.0,
+   "mean_income_tax_plus_sales": 429.37
+  },
+  "cheapest_cost_over_income": 0.2911242052309197,
+  "by_upgrades": {
+   "1": {
+    "cost": 75,
+    "cost_over_income": 0.17467452313855183,
+    "growth": 0.16666666666666666,
+    "levels": {
+     "machine": 1,
+     "wheat": 2,
+     "electronics": 0
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "2": {
+    "cost": 190,
+    "cost_over_income": 0.44250879195099796,
+    "growth": 0.3333333333333333,
+    "levels": {
+     "machine": 1,
+     "wheat": 3,
+     "electronics": 0
+    },
+    "ore": 1,
+    "machine_grade": 0
+   },
+   "3": {
+    "cost": 315,
+    "cost_over_income": 0.7336329971819177,
+    "growth": 0.75,
+    "levels": {
+     "machine": 2,
+     "wheat": 3,
+     "electronics": 0
+    },
+    "ore": 1,
+    "machine_grade": 0
+   },
+   "4": {
+    "cost": 465,
+    "cost_over_income": 1.0829820434590214,
+    "growth": 0.9166666666666666,
+    "levels": {
+     "machine": 2,
+     "wheat": 4,
+     "electronics": 0
+    },
+    "ore": 3,
+    "machine_grade": 2
+   }
+  }
+ },
+ "Mineria": {
+  "target_growth": 0.6,
+  "start_levels": {
+   "ore": 1,
+   "fuel": 1
+  },
+  "expand": "machine",
+  "cheapest": {
+   "levels": {
+    "ore": 1,
+    "fuel": 2,
+    "machine": 0
+   },
+   "cost": 95,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.6
+  },
+  "fewest_upgrades": {
+   "levels": {
+    "ore": 1,
+    "fuel": 2,
+    "machine": 0
+   },
+   "cost": 95,
+   "ore": 0,
+   "machine_grade": 0,
+   "upgrades": 1,
+   "growth": 0.6
+  },
+  "max_growth_7_upgrades": 5.8,
+  "normal_play": {
+   "reach": 0.68,
+   "no_growth_share": 0.32,
+   "mean_growth": 0.496,
+   "mean_investment": 80.0,
+   "mean_income_tax_plus_sales": 443.33
+  },
+  "cheapest_cost_over_income": 0.21428732546861257,
+  "by_upgrades": {
+   "1": {
+    "cost": 95,
+    "cost_over_income": 0.21428732546861257,
+    "growth": 0.6,
+    "levels": {
+     "ore": 1,
+     "fuel": 2,
+     "machine": 0
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "2": {
+    "cost": 190,
+    "cost_over_income": 0.42857465093722513,
+    "growth": 1.0,
+    "levels": {
+     "ore": 2,
+     "fuel": 2,
+     "machine": 0
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "3": {
+    "cost": 335,
+    "cost_over_income": 0.7556447792840548,
+    "growth": 1.6,
+    "levels": {
+     "ore": 2,
+     "fuel": 3,
+     "machine": 0
+    },
+    "ore": 1,
+    "machine_grade": 0
+   },
+   "4": {
+    "cost": 480,
+    "cost_over_income": 1.0827149076308844,
+    "growth": 2.0,
+    "levels": {
+     "ore": 3,
+     "fuel": 3,
+     "machine": 0
+    },
+    "ore": 2,
+    "machine_grade": 0
+   }
+  }
+ },
+ "Technia": {
+  "target_growth": 1.5,
+  "start_levels": {
+   "electronics": 1,
+   "machine": 1,
+   "wheat": 1
+  },
+  "expand": "wheat",
+  "cheapest": {
+   "levels": {
+    "electronics": 3,
+    "machine": 2,
+    "wheat": 1
+   },
+   "cost": 755,
+   "ore": 2,
+   "machine_grade": 2,
+   "upgrades": 3,
+   "growth": 1.5
+  },
+  "fewest_upgrades": {
+   "levels": {
+    "electronics": 3,
+    "machine": 2,
+    "wheat": 1
+   },
+   "cost": 755,
+   "ore": 2,
+   "machine_grade": 2,
+   "upgrades": 3,
+   "growth": 1.5
+  },
+  "max_growth_7_upgrades": 2.9285714285714284,
+  "normal_play": {
+   "reach": 0.39,
+   "no_growth_share": 0.0,
+   "mean_growth": 1.2092857142857143,
+   "mean_investment": 587.85,
+   "mean_income_tax_plus_sales": 994.72
+  },
+  "cheapest_cost_over_income": 0.7590075599163584,
+  "by_upgrades": {
+   "1": {
+    "cost": 75,
+    "cost_over_income": 0.0753981019784462,
+    "growth": 0.14285714285714285,
+    "levels": {
+     "electronics": 1,
+     "machine": 1,
+     "wheat": 2
+    },
+    "ore": 0,
+    "machine_grade": 0
+   },
+   "2": {
+    "cost": 190,
+    "cost_over_income": 0.1910085250120637,
+    "growth": 0.2857142857142857,
+    "levels": {
+     "electronics": 1,
+     "machine": 1,
+     "wheat": 3
+    },
+    "ore": 1,
+    "machine_grade": 0
+   },
+   "3": {
+    "cost": 340,
+    "cost_over_income": 0.3418047289689561,
+    "growth": 0.42857142857142855,
+    "levels": {
+     "electronics": 1,
+     "machine": 1,
+     "wheat": 4
+    },
+    "ore": 3,
+    "machine_grade": 2
+   },
+   "4": {
+    "cost": 545,
+    "cost_over_income": 0.547892874376709,
+    "growth": 0.7857142857142857,
+    "levels": {
+     "electronics": 1,
+     "machine": 2,
+     "wheat": 4
+    },
+    "ore": 3,
+    "machine_grade": 2
+   }
+  }
+ }
+}
