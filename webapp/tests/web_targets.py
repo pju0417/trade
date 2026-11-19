@@ -14,7 +14,11 @@ Pre-registered before running (do not change after seeing results)
     W2  every country: share of student-games at full export points between 10% and 50%
     W3  max - min of the six countries' H2 mean totals <= 10 points
   Also reported (no criterion): the same validation games scored with the simulator targets.
-Usage: python3 web_targets.py calibrate | validate | report
+v2 (pre-registered 2026-11-20, after the phase-order fix E1 in order_fix_eval.py): the same design
+  and criteria W1-W3 with the new phase order. Calibration seeds as above (new runs); validation on
+  NEW seeds 195000 + 100*trio + j (j = 0..5) because 190000 was used to evaluate E1.
+  Files: web_calibrate_v2, web_validate_v2, web_targets_report_v2.json.
+Usage: python3 web_targets.py calibrate | validate | report  [v2]
 """
 import gzip
 import itertools
@@ -47,20 +51,23 @@ def play_game(spec):
     return {'trio': trio, 'seed': seed, 'm': {n: m[n] for n in C.ORIGINAL}}
 
 
+V = '_v2' if 'v2' in sys.argv else ''
+
+
 def run(kind):
-    base, k = (180000, 9) if kind == 'calibrate' else (190000, 6)
+    base, k = (180000, 9) if kind == 'calibrate' else ((195000 if V else 190000), 6)
     specs = [(i, base + 100 * i + j) for i in range(len(TRIOS)) for j in range(k)]
     with Pool(2) as p:
         rows = p.map(play_game, specs, chunksize=3)
     os.makedirs(OUT, exist_ok=True)
-    with gzip.open(os.path.join(OUT, f'web_{kind}.jsonl.gz'), 'wt', encoding='utf-8') as f:
+    with gzip.open(os.path.join(OUT, f'web_{kind}{V}.jsonl.gz'), 'wt', encoding='utf-8') as f:
         for r in rows:
             f.write(json.dumps(r) + '\n')
     print(kind, 'games', len(rows))
 
 
 def load(kind):
-    with gzip.open(os.path.join(OUT, f'web_{kind}.jsonl.gz'), 'rt', encoding='utf-8') as f:
+    with gzip.open(os.path.join(OUT, f'web_{kind}{V}.jsonl.gz'), 'rt', encoding='utf-8') as f:
         return [json.loads(l) for l in f]
 
 
@@ -110,7 +117,7 @@ def report():
         'W3': max(means.values()) - min(means.values()) <= 10,
         'W3_spread': max(means.values()) - min(means.values()),
     }
-    json.dump(out, open(os.path.join(OUT, 'web_targets_report.json'), 'w'), ensure_ascii=False, indent=1)
+    json.dump(out, open(os.path.join(OUT, f'web_targets_report{V}.json'), 'w'), ensure_ascii=False, indent=1)
     print(json.dumps(out, ensure_ascii=False, indent=1))
 
 

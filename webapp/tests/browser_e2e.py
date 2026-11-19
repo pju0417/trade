@@ -75,8 +75,9 @@ with sync_playwright() as p:
         pg.wait_for_selector('h1:has-text("거래")', timeout=20000)
     # Mineria buys the first market listing it can afford
     m = stu['미네리아']
+    before = msg(m)
     m.click('[data-act="buy"] >> nth=0')
-    m.wait_for_function("document.querySelector('#msg').innerText.length > 0", timeout=20000)
+    m.wait_for_function(f"document.querySelector('#msg').innerText !== {before!r}", timeout=20000)
     buy_msg = msg(m)
     # Oilia offers wheat to Tropia (student to student), Tropia accepts
     o = stu['오일리아']

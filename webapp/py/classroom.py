@@ -5,9 +5,9 @@ Students replace the AI's decisions for their countries only; production, settle
 national operation, emergency purchase, prices and the AI countries are the original engine.
 
 Round flow (core_engine.Game.run split into teacher-advanced phases):
-  start      production, verify, AI investment plans
-  listing    students list / cancel / reprice goods
-             -> advance: AI listings (order_actors 'listing'), demand snapshot, AI buy sweep 0
+  start      production, verify, AI investment plans, AI listings (order_actors 'listing')
+  listing    students see the AI listings and list / cancel / reprice goods
+             -> advance: demand snapshot, AI buy sweep 0
   trading    students buy from the market, make direct offers, list more
              -> advance: AI buy sweep 1, students' unsold listings return to stock,
                 pending offers expire, settlement (food, electronics, operation, income)
@@ -258,13 +258,21 @@ class Session:
         if g.flag('budget_plans'):
             for c in g.cs.values():
                 g.plan(c)
+        # AI countries list first, so students see the AI prices when they set theirs.
+        # (Same call order as core_engine.Game.run; student countries are skipped.)
+        self.ai_listed = set()
+        for c in g.order_actors('listing'):
+            g.prepare_orders(c)
+            if c.name not in g.students:
+                self.ai_listed.add(c.name)
         self.tx_round_start = len(g.transactions)
         self.phase = 'listing'
 
     def _end_listing(self):
         g = self.g
-        for c in g.order_actors('listing'):
-            g.prepare_orders(c)
+        for c in g.order_actors('listing'):  # a country handed to the AI during this phase
+            if c.name not in g.students and c.name not in self.ai_listed:
+                g.prepare_orders(c)
         g.demand_snapshot()
         for c in g.order_actors('buy0'):
             g.buy_phase(c, 0)

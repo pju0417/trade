@@ -34,6 +34,7 @@ const r = await me.connect();            // {ok, msg}
 | `invest(good)` | 투자 | 산업 레벨 업(라운드당 1번, 1~7라운드) |
 | `focus(good)` | 투자 | 다음 라운드 주력 산업 |
 
+- 판매 등록 단계가 시작될 때 AI 나라들의 판매 물건이 이미 `market`에 올라와 있다. 학생은 그 가격을 보고 정한다.
 - 물건 키: `wheat` 밀, `banana` 바나나, `fuel` 연료, `ore` 광물, `machine` 기계, `electronics` 전자제품. `gen`(세대)은 기계·전자제품만 1~3이다.
 - AI 나라에 보낸 제안은 바로 답이 온다: `{ok:true, accepted:true|false, msg}`. 거절이면 `msg`에 조건이 들어 있다(예: "개당 18G 이상이면 팔게요").
 - 학생 나라에 보낸 제안은 상대가 `respond`할 때까지 `pending`이다. 거래 단계가 끝나면 `expired`가 된다.
