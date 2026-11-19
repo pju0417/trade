@@ -28,7 +28,7 @@
 
 ## 다음 할 일
 
-1. 산업 목표 A안(레벨 업 횟수) 실험: 2번(테크니아 3번)으로 사전 기준을 고정하고 검증. 진단과 C안 비교는 `docs/industrial_targets_diagnosis.md`
+1. 산업 목표 다음 후보 정하기(사용자 결정). A안(레벨 업 2번, 테크니아 3번)은 기준 미통과(`docs/industrial_targets_diagnosis.md`, `docs/industrial_levelup_experiment.md`). 후보: 주력 산업 레벨 업만 인정 / C안(증가율) / 농업국 현금 문제 따로 다루기
 2. 목표 달성도의 등급 기준 정하기
 
 ## 실행 방법

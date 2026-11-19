@@ -95,6 +95,51 @@ class WashTrade(Emergency):
         return super().settle_round(c)
 
 
+class LevelUpStudent(Emergency):
+    """Student-like investment policy for listed countries: until `levelup_k[name]` level-ups
+    are made, plan the CHEAPEST currently legal upgrade (existing industry below level 4, or the
+    designated expansion industry from R3), instead of the AI's single preferred industry.
+    All engine checks (cash reserve, ore, machine grade, once per round, R1-R7) still apply."""
+    levelup_k = {}
+
+    def plan(self, c):
+        k = self.levelup_k.get(c.name)
+        if (k is None or self._operating_initializing or c.upgrades >= k or self.r >= 8
+                or c.style in ('idle', 'trade')):
+            return super().plan(c)
+        key = (self.r, c.name)
+        if key in self.plan_cache:
+            return self.plan_cache[key]
+        choices = [g for g, lv in c.levels.items() if lv < 4]
+        if c.expand not in c.levels and self.r >= 3:
+            choices.append(c.expand)
+        if not choices:
+            return super().plan(c)
+        pick = min(choices, key=lambda g: (self.upgrade_cost(c, g), sum(self.upgrade_requirements(c, g)),
+                                           g not in c.levels, g))
+        self.plan_cache[key] = pick
+        return pick
+
+
+class LevelUpNoReserve(LevelUpStudent):
+    """Same as LevelUpStudent, but the AI-only cash reserve is not required when the focal
+    country invests (students have no reserve rule; cost, ore and machine checks remain)."""
+    _investing = None
+
+    def reserve(self, c):
+        if self._investing == c.name:
+            return 0
+        return super().reserve(c)
+
+    def invest(self, c, *a, **kw):
+        if c.name in self.levelup_k and c.upgrades < self.levelup_k[c.name]:
+            self._investing = c.name
+        try:
+            return super().invest(c, *a, **kw)
+        finally:
+            self._investing = None
+
+
 def export_measures(game):
     """Per country: cash sales revenue, and 'useful export value' = for each unit it sold
     (cash or barter), min(unit price, base reference value) counted only if some other
@@ -128,18 +173,18 @@ def export_measures(game):
 
 
 def make_game(seed, profile='light', mode='baseline', fee=None, focal=None, style='normal',
-              behaviors=None, skip=(), wash=()):
+              behaviors=None, skip=(), wash=(), levelup=None, no_reserve=False):
     """fee=None -> original v17 engine; fee=<float> -> Emergency with that multiplier."""
     kw = dict(mode=mode, operating_profile=profile)
     if focal is not None:
         kw.update(focal=focal, style=style)
     if behaviors:
         kw['behaviors'] = dict(behaviors)
-    if fee is None and not skip and not wash:
+    if fee is None and not skip and not wash and not levelup:
         return engine.Game(seed, **kw)
-    base = WashTrade if wash else (Emergency if fee is not None else Skip)
+    base = (LevelUpNoReserve if no_reserve else LevelUpStudent) if levelup else WashTrade if wash else (Emergency if fee is not None else Skip)
     cls = type('Variant', (base,), {'skip': tuple(skip), 'mult': fee if fee is not None else 0,
-                                    'pairs': tuple(wash)})
+                                    'pairs': tuple(wash), 'levelup_k': dict(levelup or {})})
     return cls(seed, **kw)
 
 
@@ -159,5 +204,8 @@ def run_metrics(game):
                   'op_short': c['national_operation']['any_shortage_rounds'],
                   'emergency': getattr(game, 'emergency', {}).get(n, 0),
                   'econ_old': c['fixed_evaluation']['economic_growth'],
+                  'cap_old': c['fixed_evaluation']['capacity'],
+                  'upgrades': game.cs[n].upgrades,
+                  'upgrade_path': [list(x) for x in game.cs[n].upgrade_rounds],
                   'happy': c['happy'], **ex[n]}
     return out

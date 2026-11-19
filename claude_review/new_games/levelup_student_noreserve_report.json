@@ -1,0 +1,112 @@
+{
+ "K": {
+  "Tropia": 2,
+  "Grainia": 2,
+  "Oilia": 2,
+  "Mechania": 2,
+  "Mineria": 2,
+  "Technia": 3
+ },
+ "countries": {
+  "Tropia": {
+   "reach": 0.8666666666666667,
+   "mean_upgrades": 1.8666666666666667,
+   "first_K_upgrades_by_industry": {
+    "banana": 30,
+    "wheat": 26
+   },
+   "d_happy": -1.0759259259259262,
+   "op_short": 0.16666666666666666,
+   "emergency_G": 4.533333333333333,
+   "econ_attain": 0.9415,
+   "econ_attain_normal": 0.9023333333333333,
+   "score": 91.64146997384039,
+   "d_score_vs_normal": 8.58856586798573,
+   "better_than_normal": 30
+  },
+  "Grainia": {
+   "reach": 0.6666666666666666,
+   "mean_upgrades": 1.6666666666666667,
+   "first_K_upgrades_by_industry": {
+    "banana": 30,
+    "wheat": 20
+   },
+   "d_happy": -1.2222222222222219,
+   "op_short": 0.13333333333333333,
+   "emergency_G": 3.6666666666666665,
+   "econ_attain": 0.9314583333333334,
+   "econ_attain_normal": 0.9020833333333333,
+   "score": 89.58064274619478,
+   "d_score_vs_normal": 8.66943944567093,
+   "better_than_normal": 30
+  },
+  "Oilia": {
+   "reach": 1.0,
+   "mean_upgrades": 2.033333333333333,
+   "first_K_upgrades_by_industry": {
+    "banana": 30,
+    "fuel": 30
+   },
+   "d_happy": -1.0833333333333324,
+   "op_short": 0.0,
+   "emergency_G": 0.0,
+   "econ_attain": 0.9483333333333334,
+   "econ_attain_normal": 0.8833333333333333,
+   "score": 93.88235618952528,
+   "d_score_vs_normal": 5.296328878852969,
+   "better_than_normal": 21
+  },
+  "Mechania": {
+   "reach": 0.9,
+   "mean_upgrades": 1.9,
+   "first_K_upgrades_by_industry": {
+    "wheat": 57
+   },
+   "d_happy": -1.3333333333333328,
+   "op_short": 0.03333333333333333,
+   "emergency_G": 0.6666666666666666,
+   "econ_attain": 0.7613043478260869,
+   "econ_attain_normal": 0.931304347826087,
+   "score": 84.39861996049284,
+   "d_score_vs_normal": -0.9159345490465687,
+   "better_than_normal": 14
+  },
+  "Mineria": {
+   "reach": 1.0,
+   "mean_upgrades": 2.0,
+   "first_K_upgrades_by_industry": {
+    "fuel": 30,
+    "ore": 30
+   },
+   "d_happy": -2.287037037037037,
+   "op_short": 0.0,
+   "emergency_G": 0.0,
+   "econ_attain": 0.933103448275862,
+   "econ_attain_normal": 0.886551724137931,
+   "score": 90.7146666590439,
+   "d_score_vs_normal": 9.485892689984178,
+   "better_than_normal": 28
+  },
+  "Technia": {
+   "reach": 0.7666666666666667,
+   "mean_upgrades": 2.7666666666666666,
+   "first_K_upgrades_by_industry": {
+    "wheat": 83
+   },
+   "d_happy": -1.8240740740740762,
+   "op_short": 0.0,
+   "emergency_G": 0.0,
+   "econ_attain": 0.6718968692449355,
+   "econ_attain_normal": 0.8332228360957643,
+   "score": 87.04026946514188,
+   "d_score_vs_normal": -3.0101453994314213,
+   "better_than_normal": 11
+  }
+ },
+ "criteria": {
+  "H1_reach_ge_0.8": false,
+  "H2_burden": true,
+  "H3_range_le_0.3": false
+ },
+ "games": 180
+}

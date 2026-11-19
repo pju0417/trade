@@ -1,0 +1,214 @@
+{
+ "K": {
+  "Tropia": 2,
+  "Grainia": 2,
+  "Oilia": 2,
+  "Mechania": 2,
+  "Mineria": 2,
+  "Technia": 3
+ },
+ "export_targets": {
+  "Tropia": 200,
+  "Grainia": 160,
+  "Oilia": 300,
+  "Mechania": 230,
+  "Mineria": 290,
+  "Technia": 905
+ },
+ "countries": {
+  "Tropia": {
+   "normal_ai": {
+    "reach": 0.0,
+    "mean_upgrades": 0.57,
+    "cap_old": 8.55,
+    "cap_new": 4.275,
+    "score_before": 86.61238120248512,
+    "score_after": 82.33738120248512
+   },
+   "invest": {
+    "reach": 0.4666666666666667,
+    "mean_upgrades": 1.4666666666666666,
+    "d_happy": -5.316666666666668,
+    "op_short": 0.3,
+    "emergency_G": 8.2,
+    "upgraded_industries": {
+     "banana": 30,
+     "wheat": 14
+    },
+    "score_after": 86.54120762227747,
+    "d_score_after_vs_normal": 3.488303516422818
+   },
+   "trade": {
+    "cap_new": 0.0,
+    "score_after": 78.59993182743183,
+    "d_score_after_vs_normal": -4.452972278422825
+   },
+   "idle": {
+    "score_after": 27.63888888888889
+   }
+  },
+  "Grainia": {
+   "normal_ai": {
+    "reach": 0.0,
+    "mean_upgrades": 0.32,
+    "cap_old": 4.8,
+    "cap_new": 2.4,
+    "score_before": 82.56973517562905,
+    "score_after": 80.16973517562906
+   },
+   "invest": {
+    "reach": 0.4,
+    "mean_upgrades": 1.4,
+    "d_happy": -5.622222222222222,
+    "op_short": 0.3333333333333333,
+    "emergency_G": 9.6,
+    "upgraded_industries": {
+     "wheat": 30,
+     "banana": 12
+    },
+    "score_after": 79.53562751234618,
+    "d_score_after_vs_normal": -1.3755757881776627
+   },
+   "trade": {
+    "cap_new": 0.0,
+    "score_after": 78.36531921947523,
+    "d_score_after_vs_normal": -2.545884081048625
+   },
+   "idle": {
+    "score_after": 28.194444444444446
+   }
+  },
+  "Oilia": {
+   "normal_ai": {
+    "reach": 0.37,
+    "mean_upgrades": 1.37,
+    "cap_old": 11.22,
+    "cap_new": 10.275,
+    "score_before": 89.89474562395095,
+    "score_after": 88.94974562395095
+   },
+   "invest": {
+    "reach": 0.9,
+    "mean_upgrades": 2.0,
+    "d_happy": -1.3055555555555558,
+    "op_short": 0.0,
+    "emergency_G": 0.0,
+    "upgraded_industries": {
+     "fuel": 32,
+     "banana": 21,
+     "ore": 7
+    },
+    "score_after": 91.00043210351276,
+    "d_score_after_vs_normal": 2.41440479284045
+   },
+   "trade": {
+    "cap_new": 0.0,
+    "score_after": 79.50402368771934,
+    "d_score_after_vs_normal": -9.082003622952977
+   },
+   "idle": {
+    "score_after": 22.731481500000005
+   }
+  },
+  "Mechania": {
+   "normal_ai": {
+    "reach": 0.0,
+    "mean_upgrades": 1.0,
+    "cap_old": 15.0,
+    "cap_new": 7.5,
+    "score_before": 92.5867839856623,
+    "score_after": 85.0867839856623
+   },
+   "invest": {
+    "reach": 0.0,
+    "mean_upgrades": 1.0,
+    "d_happy": -1.2018518518518524,
+    "op_short": 0.13333333333333333,
+    "emergency_G": 3.2666666666666666,
+    "upgraded_industries": {
+     "machine": 30
+    },
+    "score_after": 70.39930601225998,
+    "d_score_after_vs_normal": -14.915248497279428
+   },
+   "trade": {
+    "cap_new": 0.0,
+    "score_after": 75.70579860913531,
+    "d_score_after_vs_normal": -9.608755900404093
+   },
+   "idle": {
+    "score_after": 27.22953216374269
+   }
+  },
+  "Mineria": {
+   "normal_ai": {
+    "reach": 0.0,
+    "mean_upgrades": 0.68,
+    "cap_old": 10.2,
+    "cap_new": 5.1,
+    "score_before": 86.92101130814515,
+    "score_after": 81.82101130814516
+   },
+   "invest": {
+    "reach": 0.2,
+    "mean_upgrades": 1.2,
+    "d_happy": -1.12962962962963,
+    "op_short": 0.0,
+    "emergency_G": 0.0,
+    "upgraded_industries": {
+     "fuel": 30,
+     "ore": 4,
+     "machine": 2
+    },
+    "score_after": 84.48652196569593,
+    "d_score_after_vs_normal": 3.2577479966362137
+   },
+   "trade": {
+    "cap_new": 0.0,
+    "score_after": 77.89209915244398,
+    "d_score_after_vs_normal": -3.3366748166157407
+   },
+   "idle": {
+    "score_after": 17.824074074074076
+   }
+  },
+  "Technia": {
+   "normal_ai": {
+    "reach": 0.39,
+    "mean_upgrades": 2.27,
+    "cap_old": 12.092857142857142,
+    "cap_new": 11.35,
+    "score_before": 89.18835578284838,
+    "score_after": 88.44549863999124
+   },
+   "invest": {
+    "reach": 0.6666666666666666,
+    "mean_upgrades": 2.533333333333333,
+    "d_happy": -0.2679012370370373,
+    "op_short": 0.13333333333333333,
+    "emergency_G": 2.7333333333333334,
+    "upgraded_industries": {
+     "electronics": 56,
+     "machine": 20
+    },
+    "score_after": 89.12991777476539,
+    "d_score_after_vs_normal": -0.9204970898078988
+   },
+   "trade": {
+    "cap_new": 0.0,
+    "score_after": 75.27179682412095,
+    "d_score_after_vs_normal": -14.778618040452338
+   },
+   "idle": {
+    "score_after": 28.492724886243384
+   }
+  }
+ },
+ "criteria": {
+  "G1_invest_reach_ge_0.8": false,
+  "G2_burden": false,
+  "G3_reach_range_le_0.3": false,
+  "G4_no_invest_zero": true
+ },
+ "games": 670
+}
