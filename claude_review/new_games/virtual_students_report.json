@@ -1,0 +1,1254 @@
+{
+ "games": 1200,
+ "failed": 0,
+ "targets": {
+  "Tropia": 205,
+  "Mechania": 235,
+  "Mineria": 315
+ },
+ "configs": {
+  "P": {
+   "민준": {
+    "n": 200,
+    "mean": 91.63369301381046,
+    "median": 91.88448695613329,
+    "min": 82.28945362286689,
+    "max": 96.37356467409658,
+    "grades": {
+     "A": 153,
+     "B": 47,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 17.806829268292685,
+    "industry_pts": 15,
+    "living_pts": 22.886388888888888,
+    "trade_pts": 23.554850848385332,
+    "util_pts": 7.385624008243557,
+    "cash_pts": 5.0,
+    "op_short_days": 0.19,
+    "emergency_G": 4.5,
+    "food_short_rounds": 0
+   },
+   "서연": {
+    "n": 200,
+    "mean": 90.83218831076546,
+    "median": 91.41516689804965,
+    "min": 77.67745271867612,
+    "max": 95.81696801527627,
+    "grades": {
+     "A": 126,
+     "B": 72,
+     "C": 2,
+     "D": 0
+    },
+    "export_pts": 17.132340425531915,
+    "industry_pts": 15,
+    "living_pts": 23.353680555555556,
+    "trade_pts": 23.960023996234522,
+    "util_pts": 6.585205833443461,
+    "cash_pts": 4.8009375,
+    "op_short_days": 0.005,
+    "emergency_G": 0.1,
+    "food_short_rounds": 0
+   },
+   "지호": {
+    "n": 200,
+    "mean": 73.28572148811952,
+    "median": 73.76238803125595,
+    "min": 62.398576097105504,
+    "max": 76.87040213455307,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 200,
+     "D": 0
+    },
+    "export_pts": 19.277142857142856,
+    "industry_pts": 0,
+    "living_pts": 18.882291666666667,
+    "trade_pts": 24.196703630976664,
+    "util_pts": 5.998958333333333,
+    "cash_pts": 4.930625,
+    "op_short_days": 5,
+    "emergency_G": 130,
+    "food_short_rounds": 0
+   },
+   "_ai_food_short_all9": 0
+  },
+  "G": {
+   "민준": {
+    "n": 200,
+    "mean": 92.695613471597,
+    "median": 93.41358243816109,
+    "min": 81.97597020305177,
+    "max": 96.87310213940651,
+    "grades": {
+     "A": 172,
+     "B": 28,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 18.889756097560976,
+    "industry_pts": 15,
+    "living_pts": 22.815555555555555,
+    "trade_pts": 23.38373015873016,
+    "util_pts": 7.606571659750312,
+    "cash_pts": 5.0,
+    "op_short_days": 0.28,
+    "emergency_G": 7.32,
+    "food_short_rounds": 0
+   },
+   "서연": {
+    "n": 200,
+    "mean": 92.49619472740424,
+    "median": 93.35593971631207,
+    "min": 76.46282799582984,
+    "max": 97.65277777777777,
+    "grades": {
+     "A": 167,
+     "B": 31,
+     "C": 2,
+     "D": 0
+    },
+    "export_pts": 18.951489361702127,
+    "industry_pts": 15,
+    "living_pts": 23.466319444444444,
+    "trade_pts": 23.800309342923594,
+    "util_pts": 6.308701578334078,
+    "cash_pts": 4.969375,
+    "op_short_days": 0,
+    "emergency_G": 0,
+    "food_short_rounds": 0
+   },
+   "지호": {
+    "n": 200,
+    "mean": 92.83012527331472,
+    "median": 93.57890271493213,
+    "min": 82.81094776972436,
+    "max": 96.56764227642277,
+    "grades": {
+     "A": 170,
+     "B": 30,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 18.77809523809524,
+    "industry_pts": 15,
+    "living_pts": 23.662152777777777,
+    "trade_pts": 24.17647654891744,
+    "util_pts": 6.232150708524265,
+    "cash_pts": 4.98125,
+    "op_short_days": 0,
+    "emergency_G": 0,
+    "food_short_rounds": 0
+   },
+   "_ai_food_short_all9": 0
+  },
+  "FIX_SY": {
+   "민준": {
+    "n": 200,
+    "mean": 92.35941877522563,
+    "median": 92.83362369337979,
+    "min": 84.53860211756212,
+    "max": 96.60503920443679,
+    "grades": {
+     "A": 171,
+     "B": 29,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 18.72,
+    "industry_pts": 15,
+    "living_pts": 22.72625,
+    "trade_pts": 23.37631636562671,
+    "util_pts": 7.536852409598931,
+    "cash_pts": 5.0,
+    "op_short_days": 0.31,
+    "emergency_G": 7.99,
+    "food_short_rounds": 0
+   },
+   "서연": {
+    "n": 200,
+    "mean": 92.719274570212,
+    "median": 93.63815011820331,
+    "min": 79.21483451536642,
+    "max": 96.21944138015566,
+    "grades": {
+     "A": 175,
+     "B": 24,
+     "C": 1,
+     "D": 0
+    },
+    "export_pts": 19.165106382978724,
+    "industry_pts": 15,
+    "living_pts": 23.381875,
+    "trade_pts": 23.89822946062484,
+    "util_pts": 6.332501226608436,
+    "cash_pts": 4.9415625,
+    "op_short_days": 0.015,
+    "emergency_G": 0.3,
+    "food_short_rounds": 0
+   },
+   "지호": {
+    "n": 200,
+    "mean": 73.34809076145265,
+    "median": 73.82087933031329,
+    "min": 65.56209068709069,
+    "max": 76.66206880121975,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 200,
+     "D": 0
+    },
+    "export_pts": 19.4031746031746,
+    "industry_pts": 0,
+    "living_pts": 18.786805555555556,
+    "trade_pts": 24.176264011813405,
+    "util_pts": 6.106534090909091,
+    "cash_pts": 4.8753125,
+    "op_short_days": 5,
+    "emergency_G": 130,
+    "food_short_rounds": 0
+   },
+   "_ai_food_short_all9": 0
+  },
+  "FIX_JH_OPS": {
+   "민준": {
+    "n": 200,
+    "mean": 91.94028574745428,
+    "median": 92.28302572828949,
+    "min": 80.69146639268592,
+    "max": 96.49743983614952,
+    "grades": {
+     "A": 152,
+     "B": 48,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 18.04780487804878,
+    "industry_pts": 15,
+    "living_pts": 22.854583333333334,
+    "trade_pts": 23.569284345922277,
+    "util_pts": 7.468613190149889,
+    "cash_pts": 5.0,
+    "op_short_days": 0.235,
+    "emergency_G": 5.45,
+    "food_short_rounds": 0
+   },
+   "서연": {
+    "n": 200,
+    "mean": 90.77215046599943,
+    "median": 91.21437493228659,
+    "min": 81.38030048525569,
+    "max": 96.62684986275212,
+    "grades": {
+     "A": 131,
+     "B": 69,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 17.078297872340425,
+    "industry_pts": 15,
+    "living_pts": 23.312361111111112,
+    "trade_pts": 24.03754162954163,
+    "util_pts": 6.557074853006266,
+    "cash_pts": 4.786875,
+    "op_short_days": 0.03,
+    "emergency_G": 0.6,
+    "food_short_rounds": 0
+   },
+   "지호": {
+    "n": 200,
+    "mean": 78.23157509973687,
+    "median": 78.43771751124693,
+    "min": 67.29720524573466,
+    "max": 82.84187462863933,
+    "grades": {
+     "A": 0,
+     "B": 61,
+     "C": 139,
+     "D": 0
+    },
+    "export_pts": 18.17015873015873,
+    "industry_pts": 0,
+    "living_pts": 23.99965277777778,
+    "trade_pts": 24.28117647058824,
+    "util_pts": 6.780587121212121,
+    "cash_pts": 5.0,
+    "op_short_days": 0,
+    "emergency_G": 0,
+    "food_short_rounds": 0
+   },
+   "_ai_food_short_all9": 0
+  },
+  "FIX_JH_INV": {
+   "민준": {
+    "n": 200,
+    "mean": 91.71977340384782,
+    "median": 91.98684926152828,
+    "min": 84.40565151852127,
+    "max": 96.5863306315434,
+    "grades": {
+     "A": 152,
+     "B": 48,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 17.821951219512197,
+    "industry_pts": 15,
+    "living_pts": 22.977430555555557,
+    "trade_pts": 23.53295429666119,
+    "util_pts": 7.387437332118878,
+    "cash_pts": 5.0,
+    "op_short_days": 0.175,
+    "emergency_G": 4.1,
+    "food_short_rounds": 0
+   },
+   "서연": {
+    "n": 200,
+    "mean": 90.5258362291669,
+    "median": 91.01134993004294,
+    "min": 80.39450354609929,
+    "max": 96.59722222222223,
+    "grades": {
+     "A": 113,
+     "B": 87,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 16.67914893617021,
+    "industry_pts": 15,
+    "living_pts": 23.380902777777777,
+    "trade_pts": 24.060968020362758,
+    "util_pts": 6.595128994856149,
+    "cash_pts": 4.8096875,
+    "op_short_days": 0,
+    "emergency_G": 0,
+    "food_short_rounds": 0
+   },
+   "지호": {
+    "n": 200,
+    "mean": 87.31104269313872,
+    "median": 87.96266790460741,
+    "min": 76.82882191338072,
+    "max": 91.0135302088315,
+    "grades": {
+     "A": 14,
+     "B": 180,
+     "C": 6,
+     "D": 0
+    },
+    "export_pts": 19.351111111111113,
+    "industry_pts": 15,
+    "living_pts": 18.644791666666666,
+    "trade_pts": 24.132366582553104,
+    "util_pts": 5.398398332807832,
+    "cash_pts": 4.784375,
+    "op_short_days": 5,
+    "emergency_G": 130,
+    "food_short_rounds": 0
+   },
+   "_ai_food_short_all9": 0
+  },
+  "FIX_JH": {
+   "민준": {
+    "n": 200,
+    "mean": 91.75357641368628,
+    "median": 91.95767760752193,
+    "min": 84.166197751879,
+    "max": 96.55382472137792,
+    "grades": {
+     "A": 145,
+     "B": 55,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 17.815121951219513,
+    "industry_pts": 15,
+    "living_pts": 22.973333333333333,
+    "trade_pts": 23.56300355774494,
+    "util_pts": 7.402117571388486,
+    "cash_pts": 5.0,
+    "op_short_days": 0.16,
+    "emergency_G": 3.85,
+    "food_short_rounds": 0
+   },
+   "서연": {
+    "n": 200,
+    "mean": 90.37229865687284,
+    "median": 91.00935739771126,
+    "min": 77.5010262922497,
+    "max": 96.31179138321997,
+    "grades": {
+     "A": 124,
+     "B": 74,
+     "C": 2,
+     "D": 0
+    },
+    "export_pts": 16.642978723404255,
+    "industry_pts": 15,
+    "living_pts": 23.377083333333335,
+    "trade_pts": 24.02451221088063,
+    "util_pts": 6.526786889254622,
+    "cash_pts": 4.8009375,
+    "op_short_days": 0,
+    "emergency_G": 0,
+    "food_short_rounds": 0
+   },
+   "지호": {
+    "n": 200,
+    "mean": 92.88728837225682,
+    "median": 93.65227501256913,
+    "min": 84.45035193564604,
+    "max": 96.88412641479356,
+    "grades": {
+     "A": 167,
+     "B": 33,
+     "C": 0,
+     "D": 0
+    },
+    "export_pts": 18.731428571428573,
+    "industry_pts": 15,
+    "living_pts": 23.698958333333334,
+    "trade_pts": 24.201388543724615,
+    "util_pts": 6.255512923770305,
+    "cash_pts": 5.0,
+    "op_short_days": 0,
+    "emergency_G": 0,
+    "food_short_rounds": 0
+   },
+   "_ai_food_short_all9": 0
+  }
+ },
+ "paired_vs_P": {
+  "G": {
+   "민준": 1.0619204577865409,
+   "서연": 1.6640064166387891,
+   "지호": 19.5444037851952
+  },
+  "FIX_SY": {
+   "민준": 0.7257257614151797,
+   "서연": 1.8870862594465432,
+   "지호": 0.062369273333132184
+  },
+  "FIX_JH_OPS": {
+   "민준": 0.30659273364382034,
+   "서연": -0.060037844766021704,
+   "지호": 4.945853611617347
+  },
+  "FIX_JH_INV": {
+   "민준": 0.08608039003736181,
+   "서연": -0.30635208159855765,
+   "지호": 14.025321205019194
+  },
+  "FIX_JH": {
+   "민준": 0.1198833998758095,
+   "서연": -0.45988965389261055,
+   "지호": 19.601566884137302
+  }
+ },
+ "narrated": {
+  "seed": 150065,
+  "students": {
+   "Tropia": {
+    "who": "민준",
+    "role": "good",
+    "rounds": [
+     {
+      "round": 1,
+      "sold": {},
+      "sold_cash": 0,
+      "to": {},
+      "bought": {},
+      "bought_cash": 0,
+      "from": {},
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 75.0,
+      "cash_end": 188
+     },
+     {
+      "round": 2,
+      "sold": {},
+      "sold_cash": 0,
+      "to": {},
+      "bought": {
+       "전자제품": 1
+      },
+      "bought_cash": 119,
+      "from": {
+       "테크니아": 1
+      },
+      "invest": [
+       "바나나 레벨 2"
+      ],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 100.0,
+      "cash_end": 14
+     },
+     {
+      "round": 3,
+      "sold": {
+       "밀": 1,
+       "바나나": 3
+      },
+      "sold_cash": 19,
+      "to": {
+       "아그레아": 1,
+       "미네리아": 1,
+       "노비아": 1,
+       "테크니아": 1
+      },
+      "bought": {
+       "연료": 1
+      },
+      "bought_cash": 20,
+      "from": {
+       "미네리아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 95.0,
+      "cash_end": 33
+     },
+     {
+      "round": 4,
+      "sold": {
+       "바나나": 3,
+       "밀": 1
+      },
+      "sold_cash": 19,
+      "to": {
+       "노비아": 1,
+       "미네리아": 1,
+       "메카니아": 1,
+       "테크니아": 1
+      },
+      "bought": {
+       "광물": 1
+      },
+      "bought_cash": 14,
+      "from": {
+       "미네리아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "광물": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 95.0,
+      "cash_end": 58
+     },
+     {
+      "round": 5,
+      "sold": {
+       "바나나": 2
+      },
+      "sold_cash": 10,
+      "to": {
+       "미네리아": 1,
+       "페리아": 1
+      },
+      "bought": {
+       "기계": 1
+      },
+      "bought_cash": 24,
+      "from": {
+       "노비아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 85.0,
+      "cash_end": 63
+     },
+     {
+      "round": 6,
+      "sold": {
+       "바나나": 5,
+       "밀": 2
+      },
+      "sold_cash": 33,
+      "to": {
+       "노비아": 1,
+       "아그레아": 1,
+       "메카니아": 1,
+       "미네리아": 1
+      },
+      "bought": {
+       "연료": 1,
+       "전자제품": 1
+      },
+      "bought_cash": 69,
+      "from": {
+       "미네리아": 1,
+       "테크니아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 95.0,
+      "cash_end": 47
+     },
+     {
+      "round": 7,
+      "sold": {
+       "바나나": 7,
+       "밀": 2
+      },
+      "sold_cash": 43,
+      "to": {
+       "페리아": 1,
+       "노비아": 1,
+       "메카니아": 1,
+       "테크니아": 1,
+       "아그레아": 1
+      },
+      "bought": {},
+      "bought_cash": 0,
+      "from": {},
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 95.0,
+      "cash_end": 110
+     },
+     {
+      "round": 8,
+      "sold": {
+       "바나나": 3,
+       "밀": 2
+      },
+      "sold_cash": 23,
+      "to": {
+       "메카니아": 1,
+       "노비아": 1,
+       "아그레아": 1
+      },
+      "bought": {
+       "광물": 1
+      },
+      "bought_cash": 13,
+      "from": {
+       "미네리아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "광물": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 95.0,
+      "cash_end": 140
+     },
+     {
+      "round": 9,
+      "sold": {
+       "밀": 4,
+       "바나나": 5
+      },
+      "sold_cash": 41,
+      "to": {
+       "아그레아": 1,
+       "미네리아": 2,
+       "노비아": 1,
+       "테크니아": 1
+      },
+      "bought": {
+       "연료": 1
+      },
+      "bought_cash": 14,
+      "from": {
+       "아그레아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 95.0,
+      "cash_end": 187
+     }
+    ],
+    "score": {
+     "수출": 18.34146341463415,
+     "산업": 15,
+     "국민 생활": 23.055555555555557,
+     "무역": 22.555555555555557,
+     "활용": 7.7272727272727275,
+     "현금": 5.0,
+     "total": 91.67984725301798,
+     "grade": "A"
+    },
+    "export_value": 188.0,
+    "target": 205,
+    "revenue": 188,
+    "op_short": 0,
+    "emergency_total": 0,
+    "final_cash": 187,
+    "food_short": 0
+   },
+   "Mechania": {
+    "who": "서연",
+    "role": "cheap",
+    "rounds": [
+     {
+      "round": 1,
+      "sold": {
+       "기계": 2
+      },
+      "sold_cash": 50,
+      "to": {
+       "미네리아": 1,
+       "페리아": 1
+      },
+      "bought": {
+       "전자제품": 1,
+       "광물": 1
+      },
+      "bought_cash": 100,
+      "from": {
+       "노비아": 1,
+       "페리아": 1
+      },
+      "invest": [
+       "기계 레벨 2"
+      ],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 100.0,
+      "cash_end": 60
+     },
+     {
+      "round": 2,
+      "sold": {
+       "기계": 1
+      },
+      "sold_cash": 33,
+      "to": {
+       "노비아": 1
+      },
+      "bought": {
+       "광물": 1
+      },
+      "bought_cash": 18,
+      "from": {
+       "미네리아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 95.0,
+      "cash_end": 95
+     },
+     {
+      "round": 3,
+      "sold": {
+       "밀": 2,
+       "기계": 1
+      },
+      "sold_cash": 38,
+      "to": {
+       "미네리아": 1,
+       "오일리아": 1,
+       "그레니아": 1
+      },
+      "bought": {
+       "바나나": 1,
+       "연료": 1,
+       "광물": 1
+      },
+      "bought_cash": 39,
+      "from": {
+       "그레니아": 1,
+       "미네리아": 1,
+       "오일리아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 90.0,
+      "cash_end": 113
+     },
+     {
+      "round": 4,
+      "sold": {
+       "밀": 2
+      },
+      "sold_cash": 8,
+      "to": {
+       "오일리아": 1,
+       "아그레아": 1
+      },
+      "bought": {
+       "바나나": 1,
+       "광물": 1
+      },
+      "bought_cash": 21,
+      "from": {
+       "트로피아": 1,
+       "노비아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "광물": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 90.0,
+      "cash_end": 119
+     },
+     {
+      "round": 5,
+      "sold": {
+       "밀": 2
+      },
+      "sold_cash": 8,
+      "to": {
+       "오일리아": 1
+      },
+      "bought": {
+       "바나나": 2,
+       "전자제품": 1
+      },
+      "bought_cash": 66,
+      "from": {
+       "오일리아": 1,
+       "테크니아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 92.5,
+      "cash_end": 80
+     },
+     {
+      "round": 6,
+      "sold": {
+       "밀": 4
+      },
+      "sold_cash": 16,
+      "to": {
+       "미네리아": 1,
+       "오일리아": 1
+      },
+      "bought": {
+       "바나나": 2,
+       "연료": 1
+      },
+      "bought_cash": 24,
+      "from": {
+       "오일리아": 1,
+       "트로피아": 1,
+       "아그레아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 92.5,
+      "cash_end": 91
+     },
+     {
+      "round": 7,
+      "sold": {
+       "밀": 3
+      },
+      "sold_cash": 12,
+      "to": {
+       "미네리아": 1,
+       "오일리아": 1
+      },
+      "bought": {
+       "바나나": 2
+      },
+      "bought_cash": 10,
+      "from": {
+       "트로피아": 1,
+       "그레니아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 92.5,
+      "cash_end": 112
+     },
+     {
+      "round": 8,
+      "sold": {
+       "밀": 3
+      },
+      "sold_cash": 12,
+      "to": {
+       "아그레아": 1,
+       "미네리아": 1
+      },
+      "bought": {
+       "바나나": 3,
+       "광물": 1
+      },
+      "bought_cash": 28,
+      "from": {
+       "오일리아": 1,
+       "트로피아": 1,
+       "미네리아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "광물": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 92.5,
+      "cash_end": 115
+     },
+     {
+      "round": 9,
+      "sold": {
+       "밀": 3
+      },
+      "sold_cash": 12,
+      "to": {
+       "오일리아": 1,
+       "아그레아": 1
+      },
+      "bought": {
+       "바나나": 3,
+       "연료": 1
+      },
+      "bought_cash": 29,
+      "from": {
+       "그레니아": 1,
+       "미네리아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 92.5,
+      "cash_end": 117
+     }
+    ],
+    "score": {
+     "수출": 16.085106382978726,
+     "산업": 15,
+     "국민 생활": 23.26388888888889,
+     "무역": 24.783783783783782,
+     "활용": 7.872340425531915,
+     "현금": 5.0,
+     "total": 92.0051194811833,
+     "grade": "A"
+    },
+    "export_value": 189.0,
+    "target": 235,
+    "revenue": 189,
+    "op_short": 0,
+    "emergency_total": 0,
+    "final_cash": 117,
+    "food_short": 0
+   },
+   "Mineria": {
+    "who": "지호",
+    "role": "jiho",
+    "rounds": [
+     {
+      "round": 1,
+      "sold": {},
+      "sold_cash": 0,
+      "to": {},
+      "bought": {
+       "기계": 1
+      },
+      "bought_cash": 25,
+      "from": {
+       "메카니아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 75.0,
+      "cash_end": 168
+     },
+     {
+      "round": 2,
+      "sold": {
+       "광물": 2
+      },
+      "sold_cash": 37,
+      "to": {
+       "노비아": 1,
+       "메카니아": 1
+      },
+      "bought": {
+       "전자제품": 1
+      },
+      "bought_cash": 119,
+      "from": {
+       "노비아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 100.0,
+      "cash_end": 106
+     },
+     {
+      "round": 3,
+      "sold": {
+       "연료": 4,
+       "광물": 2
+      },
+      "sold_cash": 108,
+      "to": {
+       "메카니아": 1,
+       "노비아": 2,
+       "트로피아": 1,
+       "테크니아": 2
+      },
+      "bought": {
+       "밀": 1,
+       "바나나": 1,
+       "전자제품": 1
+      },
+      "bought_cash": 150,
+      "from": {
+       "메카니아": 1,
+       "트로피아": 1,
+       "노비아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {
+       "연료": 1
+      },
+      "emergency_fee": 30,
+      "happy": 100.0,
+      "cash_end": 54
+     },
+     {
+      "round": 4,
+      "sold": {
+       "광물": 2
+      },
+      "sold_cash": 28,
+      "to": {
+       "트로피아": 1,
+       "아그레아": 1
+      },
+      "bought": {
+       "밀": 1,
+       "바나나": 1
+      },
+      "bought_cash": 9,
+      "from": {
+       "트로피아": 1,
+       "아그레아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "광물": 1
+      },
+      "ops_missing": {
+       "광물": 1
+      },
+      "emergency_fee": 20,
+      "happy": 100.0,
+      "cash_end": 73
+     },
+     {
+      "round": 5,
+      "sold": {},
+      "sold_cash": 0,
+      "to": {},
+      "bought": {
+       "밀": 2,
+       "바나나": 2
+      },
+      "bought_cash": 18,
+      "from": {
+       "페리아": 1,
+       "그레니아": 1,
+       "아그레아": 1,
+       "트로피아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 97.5,
+      "cash_end": 75
+     },
+     {
+      "round": 6,
+      "sold": {
+       "연료": 2,
+       "광물": 1
+      },
+      "sold_cash": 45,
+      "to": {
+       "트로피아": 1,
+       "테크니아": 1,
+       "노비아": 1
+      },
+      "bought": {
+       "밀": 2,
+       "바나나": 2
+      },
+      "bought_cash": 18,
+      "from": {
+       "메카니아": 1,
+       "트로피아": 1
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {
+       "연료": 1
+      },
+      "emergency_fee": 30,
+      "happy": 97.5,
+      "cash_end": 92
+     },
+     {
+      "round": 7,
+      "sold": {
+       "연료": 4
+      },
+      "sold_cash": 56,
+      "to": {
+       "노비아": 1,
+       "테크니아": 1
+      },
+      "bought": {
+       "밀": 2,
+       "바나나": 2
+      },
+      "bought_cash": 18,
+      "from": {
+       "메카니아": 1,
+       "그레니아": 1,
+       "오일리아": 1
+      },
+      "invest": [],
+      "ops_needed": {},
+      "ops_missing": {},
+      "emergency_fee": 0,
+      "happy": 97.5,
+      "cash_end": 150
+     },
+     {
+      "round": 8,
+      "sold": {
+       "광물": 2
+      },
+      "sold_cash": 26,
+      "to": {
+       "메카니아": 1,
+       "트로피아": 1
+      },
+      "bought": {
+       "밀": 3,
+       "바나나": 3
+      },
+      "bought_cash": 27,
+      "from": {
+       "메카니아": 1,
+       "테크니아": 1,
+       "그레니아": 2
+      },
+      "invest": [],
+      "ops_needed": {
+       "광물": 1
+      },
+      "ops_missing": {
+       "광물": 1
+      },
+      "emergency_fee": 20,
+      "happy": 97.5,
+      "cash_end": 149
+     },
+     {
+      "round": 9,
+      "sold": {
+       "연료": 2
+      },
+      "sold_cash": 28,
+      "to": {
+       "메카니아": 1,
+       "페리아": 1
+      },
+      "bought": {
+       "밀": 3,
+       "바나나": 3
+      },
+      "bought_cash": 27,
+      "from": {
+       "트로피아": 2,
+       "그레니아": 2
+      },
+      "invest": [],
+      "ops_needed": {
+       "연료": 1
+      },
+      "ops_missing": {
+       "연료": 1
+      },
+      "emergency_fee": 30,
+      "happy": 97.5,
+      "cash_end": 140
+     }
+    ],
+    "score": {
+     "수출": 19.746031746031747,
+     "산업": 0,
+     "국민 생활": 18.958333333333332,
+     "무역": 24.094017094017097,
+     "활용": 6.0606060606060606,
+     "현금": 5.0,
+     "total": 73.85898823398824,
+     "grade": "C"
+    },
+    "export_value": 311.0,
+    "target": 315,
+    "revenue": 328,
+    "op_short": 5,
+    "emergency_total": 130,
+    "final_cash": 140,
+    "food_short": 0
+   }
+  }
+ }
+}

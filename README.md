@@ -13,6 +13,7 @@
 | `docs/student_rules_summary.md` | 학생용 규칙 요약(1쪽) |
 | `docs/teacher_guide.md` | 교사용 운영 안내 |
 | `docs/final_simulation.md` | 확정 규칙 최종 시뮬레이션: 혼합 행동, 학생 3명 vs 6명 |
+| `docs/virtual_students.md` | 가상 학생 3명(민준·서연·지호) 시뮬레이션과 한 판 따라가기 |
 | `docs/claude_review_report_v17.md` | Claude 교차 검증 보고서. 원본은 [Claude 문서](https://claude.ai/artifact/ExUwWNfED9nKjbTCEEYbSN) |
 | `handoff_v17/` | ChatGPT가 만든 v17 인수인계 묶음 그대로. 인수인계서, 검증 요청문, v13~v16 이력, 목표 보정 자료(`calibration_v15/`) |
 | `trade_v17/` | v17 전체 패키지(코드·설정·보고서·작은 결과). 대형 원본 6개는 제외 |
@@ -54,7 +55,7 @@ python3 -X utf8 claude_review/compare_new.py claude_review/games_compact.json.gz
 python3 -X utf8 claude_review/analyze_mult.py claude_review
 ```
 
-`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`), `export_noswap.py`는 같은 물건 맞바꾸기 제외 실험이다. 산업 목표 실험은 `industrial_levelup.py`(A안), `main_industry.py`(1번), `l3_flat_cost.py`(3번), `main_k1.py`(추천안)다. 등급 비교는 `grades.py`, 운영 부족 감점 재채점은 `grades_ops_penalty.py`, 종합 검증은 `final_validation.py`·`final_food_check.py`, 최종 시뮬레이션은 `final_simulation.py`다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
+`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`), `export_noswap.py`는 같은 물건 맞바꾸기 제외 실험이다. 산업 목표 실험은 `industrial_levelup.py`(A안), `main_industry.py`(1번), `l3_flat_cost.py`(3번), `main_k1.py`(추천안)다. 등급 비교는 `grades.py`, 운영 부족 감점 재채점은 `grades_ops_penalty.py`, 종합 검증은 `final_validation.py`·`final_food_check.py`, 최종 시뮬레이션은 `final_simulation.py`, 가상 학생 3명은 `virtual_students.py`다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
 
 `new_sims.py`의 실험 이름: `repro`, `skip`, `class3`, `class3_cheap`, `fix`, `mult<배수>_normal|skip|idle`. 한 판에 약 0.35초 걸린다.
 
