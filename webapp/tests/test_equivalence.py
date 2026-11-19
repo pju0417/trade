@@ -30,11 +30,12 @@ def compare(seed):
 
 def check_targets_and_total():
     import final_validation as FV
-    assert FV.targets() == C.TARGETS, (FV.targets(), C.TARGETS)
+    assert FV.targets() == C.SIM_TARGETS, (FV.targets(), C.SIM_TARGETS)
     m = L.run_metrics(L.make_game(7, fee=1.0, l3_flat=True))
     for n in C.ORIGINAL:
-        assert C.total_score(m, n) == FV.total(m, n, C.TARGETS)
-        assert C.grade(C.total_score(m, n)) == 'DCBA'[FV.grade(C.total_score(m, n)) - 1]
+        for T in (C.SIM_TARGETS, C.TARGETS):
+            assert C.total_score(m, n, T) == FV.total(m, n, T)
+            assert C.grade(C.total_score(m, n, T)) == 'DCBA'[FV.grade(C.total_score(m, n, T)) - 1]
     print('targets and total() match final_validation')
 
 

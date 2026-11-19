@@ -39,7 +39,10 @@ from reference_engine import GOODS, FOOD, DURABLES, PRICE
 
 ORIGINAL = ('Tropia', 'Grainia', 'Oilia', 'Mechania', 'Mineria', 'Technia')
 ADDED = ('Novia', 'Agrea', 'Ferria')
-TARGETS = {'Tropia': 205, 'Grainia': 155, 'Oilia': 340, 'Mechania': 235, 'Mineria': 315, 'Technia': 765}
+# Web-app export targets v2 (docs/webapp_human_play.md, applied 2026-11-20): P75 of human-style (H2)
+# students in this web app, rounded up to 5G. SIM_TARGETS = simulator targets (final_validation.targets()).
+TARGETS = {'Tropia': 255, 'Grainia': 205, 'Oilia': 425, 'Mechania': 155, 'Mineria': 330, 'Technia': 475}
+SIM_TARGETS = {'Tropia': 205, 'Grainia': 155, 'Oilia': 340, 'Mechania': 235, 'Mineria': 315, 'Technia': 765}
 NAME_KO = {'Tropia': '트로피아', 'Grainia': '그레니아', 'Oilia': '오일리아', 'Mechania': '메카니아',
            'Mineria': '미네리아', 'Technia': '테크니아', 'Novia': '노비아', 'Agrea': '아그레아', 'Ferria': '페리아'}
 GOOD_KO = {'wheat': '밀', 'banana': '바나나', 'fuel': '연료', 'ore': '광물', 'machine': '기계', 'electronics': '전자제품'}
@@ -48,12 +51,13 @@ MAX_PRICE = 9999
 MAX_QTY = 99
 
 
-def total_score(m, n):
-    """Confirmed-rules total (= final_validation.total with the RULES_v1 targets)."""
+def total_score(m, n, targets=None):
+    """Confirmed-rules total (= final_validation.total) with the web-app targets by default."""
+    T = TARGETS if targets is None else targets
     x = m[n]
     main_up = x['main_ups'] >= 1
     well_cut = min(x['happy'] / 4, x['op_short'])
-    return (x['score'] - x['econ_old'] + 20 * min(1, x['useful_export_noswap'] / TARGETS[n])
+    return (x['score'] - x['econ_old'] + 20 * min(1, x['useful_export_noswap'] / T[n])
             - x['cap_old'] + (15 if main_up else 0) - well_cut)
 
 
