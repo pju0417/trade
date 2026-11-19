@@ -1,0 +1,455 @@
+{
+ "targets": {
+  "Tropia": 205,
+  "Grainia": 155,
+  "Oilia": 340,
+  "Mechania": 235,
+  "Mineria": 315,
+  "Technia": 765
+ },
+ "settings": {
+  "S3": {
+   "games": 600,
+   "types": {
+    "skip_ops": {
+     "n": 276,
+     "mean_total": 86.28741745703115,
+     "dist": {
+      "A": 59,
+      "B": 192,
+      "C": 25,
+      "D": 0
+     },
+     "A": 0.213768115942029,
+     "AB": 0.9094202898550725,
+     "D": 0.0
+    },
+    "idle": {
+     "n": 179,
+     "mean_total": 22.02920593630025,
+     "dist": {
+      "A": 0,
+      "B": 0,
+      "C": 0,
+      "D": 179
+     },
+     "A": 0.0,
+     "AB": 0.0,
+     "D": 1.0
+    },
+    "cheap": {
+     "n": 187,
+     "mean_total": 88.94401902110489,
+     "dist": {
+      "A": 75,
+      "B": 104,
+      "C": 8,
+      "D": 0
+     },
+     "A": 0.40106951871657753,
+     "AB": 0.9572192513368984,
+     "D": 0.0
+    },
+    "minimum": {
+     "n": 188,
+     "mean_total": 74.09938671634448,
+     "dist": {
+      "A": 0,
+      "B": 58,
+      "C": 127,
+      "D": 3
+     },
+     "A": 0.0,
+     "AB": 0.30851063829787234,
+     "D": 0.015957446808510637
+    },
+    "good": {
+     "n": 714,
+     "mean_total": 91.63262952024786,
+     "dist": {
+      "A": 528,
+      "B": 176,
+      "C": 10,
+      "D": 0
+     },
+     "A": 0.7394957983193278,
+     "AB": 0.9859943977591037,
+     "D": 0.0
+    },
+    "no_invest": {
+     "n": 256,
+     "mean_total": 76.50238890429605,
+     "dist": {
+      "A": 0,
+      "B": 59,
+      "C": 193,
+      "D": 4
+     },
+     "A": 0.0,
+     "AB": 0.23046875,
+     "D": 0.015625
+    }
+   },
+   "good_by_country_AB": {
+    "Technia": 1.0,
+    "Mineria": 1.0,
+    "Oilia": 1.0,
+    "Tropia": 0.9765625,
+    "Grainia": 0.981651376146789,
+    "Mechania": 0.9612403100775194
+   },
+   "good_by_country_n": {
+    "Technia": 114,
+    "Mineria": 121,
+    "Oilia": 113,
+    "Tropia": 128,
+    "Grainia": 109,
+    "Mechania": 129
+   },
+   "good_AB_when_half_peers_not_good": 0.9825479930191972,
+   "n_mixed_good": 573,
+   "good_by_number_of_non_good_peers": {
+    "0": {
+     "n": 141,
+     "mean_total": 92.77782597542964,
+     "AB": 1.0
+    },
+    "1": {
+     "n": 322,
+     "mean_total": 91.78483336865285,
+     "AB": 0.9906832298136646
+    },
+    "2": {
+     "n": 251,
+     "mean_total": 90.79405446300866,
+     "AB": 0.9721115537848606
+    }
+   },
+   "good_total_with_cheap_or_minimum_peer": 90.70761914061349,
+   "n_with": 253,
+   "good_total_without": 92.14028163748755,
+   "n_without": 461,
+   "ai_original_countries": {
+    "n": 1800,
+    "mean_total": 86.06158127689596,
+    "AB": 0.7222222222222222
+   },
+   "food_short_per_non_idle_country": 0.02758092319479027,
+   "op_short_per_country": 0.3516666666666667,
+   "trade_units_per_game": 189.41,
+   "transactions_per_game": 142.315,
+   "role_counts": {
+    "skip_ops": 276,
+    "idle": 179,
+    "cheap": 187,
+    "minimum": 188,
+    "good": 714,
+    "no_invest": 256
+   }
+  },
+  "S6": {
+   "games": 600,
+   "types": {
+    "minimum": {
+     "n": 339,
+     "mean_total": 74.95586487127066,
+     "dist": {
+      "A": 0,
+      "B": 107,
+      "C": 222,
+      "D": 10
+     },
+     "A": 0.0,
+     "AB": 0.31563421828908556,
+     "D": 0.029498525073746312
+    },
+    "good": {
+     "n": 1458,
+     "mean_total": 89.52848388749678,
+     "dist": {
+      "A": 785,
+      "B": 605,
+      "C": 67,
+      "D": 1
+     },
+     "A": 0.5384087791495199,
+     "AB": 0.953360768175583,
+     "D": 0.0006858710562414266
+    },
+    "no_invest": {
+     "n": 527,
+     "mean_total": 74.3256933724873,
+     "dist": {
+      "A": 0,
+      "B": 55,
+      "C": 465,
+      "D": 7
+     },
+     "A": 0.0,
+     "AB": 0.10436432637571158,
+     "D": 0.013282732447817837
+    },
+    "skip_ops": {
+     "n": 547,
+     "mean_total": 84.12153540353486,
+     "dist": {
+      "A": 94,
+      "B": 336,
+      "C": 109,
+      "D": 8
+     },
+     "A": 0.17184643510054845,
+     "AB": 0.7861060329067642,
+     "D": 0.014625228519195612
+    },
+    "cheap": {
+     "n": 374,
+     "mean_total": 87.93602366488389,
+     "dist": {
+      "A": 128,
+      "B": 222,
+      "C": 24,
+      "D": 0
+     },
+     "A": 0.3422459893048128,
+     "AB": 0.9358288770053476,
+     "D": 0.0
+    },
+    "idle": {
+     "n": 355,
+     "mean_total": 22.01718204555285,
+     "dist": {
+      "A": 0,
+      "B": 0,
+      "C": 0,
+      "D": 355
+     },
+     "A": 0.0,
+     "AB": 0.0,
+     "D": 1.0
+    }
+   },
+   "good_by_country_AB": {
+    "Grainia": 0.890625,
+    "Technia": 1.0,
+    "Tropia": 0.98,
+    "Oilia": 0.9659574468085106,
+    "Mechania": 0.9747899159663865,
+    "Mineria": 0.9128630705394191
+   },
+   "good_by_country_n": {
+    "Grainia": 256,
+    "Technia": 238,
+    "Tropia": 250,
+    "Oilia": 235,
+    "Mechania": 238,
+    "Mineria": 241
+   },
+   "good_AB_when_half_peers_not_good": 0.9382321618743344,
+   "n_mixed_good": 939,
+   "good_by_number_of_non_good_peers": {
+    "0": {
+     "n": 36,
+     "mean_total": 93.47810945237137,
+     "AB": 1.0
+    },
+    "1": {
+     "n": 115,
+     "mean_total": 91.34462986029249,
+     "AB": 0.991304347826087
+    },
+    "2": {
+     "n": 368,
+     "mean_total": 90.36434205585022,
+     "AB": 0.9755434782608695
+    },
+    "3": {
+     "n": 459,
+     "mean_total": 89.6071588756325,
+     "AB": 0.9673202614379085
+    },
+    "4": {
+     "n": 374,
+     "mean_total": 88.40094346494644,
+     "AB": 0.9278074866310161
+    },
+    "5": {
+     "n": 106,
+     "mean_total": 86.95253280559565,
+     "AB": 0.8490566037735849
+    }
+   },
+   "good_total_with_cheap_or_minimum_peer": 88.86530674401888,
+   "n_with": 986,
+   "good_total_without": 90.91384969993156,
+   "n_without": 472,
+   "ai_original_countries": {
+    "n": 0,
+    "mean_total": NaN,
+    "AB": NaN
+   },
+   "food_short_per_non_idle_country": 0.03686818632309217,
+   "op_short_per_country": 0.6731481481481482,
+   "trade_units_per_game": 180.09333333333333,
+   "transactions_per_game": 134.99333333333334,
+   "role_counts": {
+    "minimum": 339,
+    "good": 1458,
+    "no_invest": 527,
+    "skip_ops": 547,
+    "cheap": 374,
+    "idle": 355
+   }
+  },
+  "AI": {
+   "games": 100,
+   "types": {},
+   "good_by_country_AB": {},
+   "good_by_country_n": {},
+   "good_AB_when_half_peers_not_good": NaN,
+   "n_mixed_good": 0,
+   "good_by_number_of_non_good_peers": {},
+   "good_total_with_cheap_or_minimum_peer": NaN,
+   "n_with": 0,
+   "good_total_without": NaN,
+   "n_without": 0,
+   "ai_original_countries": {
+    "n": 600,
+    "mean_total": 88.16091111303263,
+    "AB": 0.7383333333333333
+   },
+   "food_short_per_non_idle_country": 0.0,
+   "op_short_per_country": 0.0077777777777777776,
+   "trade_units_per_game": 201.12,
+   "transactions_per_game": 152.38,
+   "role_counts": {}
+  },
+  "G3": {
+   "games": 100,
+   "types": {
+    "good": {
+     "n": 300,
+     "mean_total": 92.8150539917334,
+     "dist": {
+      "A": 261,
+      "B": 39,
+      "C": 0,
+      "D": 0
+     },
+     "A": 0.87,
+     "AB": 1.0,
+     "D": 0.0
+    }
+   },
+   "good_by_country_AB": {
+    "Oilia": 1.0,
+    "Mineria": 1.0,
+    "Technia": 1.0,
+    "Grainia": 1.0,
+    "Mechania": 1.0,
+    "Tropia": 1.0
+   },
+   "good_by_country_n": {
+    "Oilia": 47,
+    "Mineria": 54,
+    "Technia": 48,
+    "Grainia": 44,
+    "Mechania": 46,
+    "Tropia": 61
+   },
+   "good_AB_when_half_peers_not_good": NaN,
+   "n_mixed_good": 0,
+   "good_by_number_of_non_good_peers": {
+    "0": {
+     "n": 300,
+     "mean_total": 92.8150539917334,
+     "AB": 1.0
+    }
+   },
+   "good_total_with_cheap_or_minimum_peer": NaN,
+   "n_with": 0,
+   "good_total_without": 92.8150539917334,
+   "n_without": 300,
+   "ai_original_countries": {
+    "n": 300,
+    "mean_total": 87.4956503609918,
+    "AB": 0.72
+   },
+   "food_short_per_non_idle_country": 0.0,
+   "op_short_per_country": 0.04111111111111111,
+   "trade_units_per_game": 198.67,
+   "transactions_per_game": 148.87,
+   "role_counts": {
+    "good": 300
+   }
+  },
+  "G6": {
+   "games": 100,
+   "types": {
+    "good": {
+     "n": 600,
+     "mean_total": 92.48033767606125,
+     "dist": {
+      "A": 496,
+      "B": 103,
+      "C": 1,
+      "D": 0
+     },
+     "A": 0.8266666666666667,
+     "AB": 0.9983333333333333,
+     "D": 0.0
+    }
+   },
+   "good_by_country_AB": {
+    "Tropia": 1.0,
+    "Grainia": 1.0,
+    "Oilia": 1.0,
+    "Mechania": 1.0,
+    "Mineria": 0.99,
+    "Technia": 1.0
+   },
+   "good_by_country_n": {
+    "Tropia": 100,
+    "Grainia": 100,
+    "Oilia": 100,
+    "Mechania": 100,
+    "Mineria": 100,
+    "Technia": 100
+   },
+   "good_AB_when_half_peers_not_good": NaN,
+   "n_mixed_good": 0,
+   "good_by_number_of_non_good_peers": {
+    "0": {
+     "n": 600,
+     "mean_total": 92.48033767606125,
+     "AB": 0.9983333333333333
+    }
+   },
+   "good_total_with_cheap_or_minimum_peer": NaN,
+   "n_with": 0,
+   "good_total_without": 92.48033767606125,
+   "n_without": 600,
+   "ai_original_countries": {
+    "n": 0,
+    "mean_total": NaN,
+    "AB": NaN
+   },
+   "food_short_per_non_idle_country": 0.0,
+   "op_short_per_country": 0.06888888888888889,
+   "trade_units_per_game": 197.65,
+   "transactions_per_game": 147.66,
+   "role_counts": {
+    "good": 600
+   }
+  }
+ },
+ "criteria": {
+  "F1_good_AB_0.8_each_country": true,
+  "F2_good_AB_0.7_with_half_non_good_peers": true,
+  "F3_good_highest_idle_lowest": true,
+  "F4_no_type_A_rate_above_good": true,
+  "F5_food_short_le_0.2": true,
+  "F6_scale_3_vs_6": true,
+  "F7_idle_D_0.9": true
+ }
+}

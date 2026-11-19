@@ -30,6 +30,7 @@
 
 - 나라별 수출 목표 숫자(트로피아 205, 그레니아 155, 오일리아 340, 메카니아 235, 미네리아 315, 테크니아 765G)는 잠정이다. 시범 수업 뒤 다시 본다.
 - 실제 학생의 이해도, 80분 진행, 학생용 화면은 확인하지 않았다.
+- 최종 시뮬레이션(혼합 행동, 학생 3명 vs 6명)은 기준 F1~F7을 모두 통과했다(`docs/final_simulation.md`). 추가 3개국에는 수출 목표가 없어 학생 7명 이상이면 따로 정해야 한다.
 - 학생 투자를 흉내 낼 때는 AI 예비금 조건을 빼고 본다(`sim_lib.LevelUpNoReserve`, `MainIndustryStudent`). 예비금은 AI 정책이지 학생 규칙이 아니다.
 - 시뮬레이터 기본값(`operating_profile='none'` 등)은 원본 그대로다. 확정 규칙은 `sim_lib.make_game(seed, fee=1.0, l3_flat=True)`와 `final_validation.py`의 점수 함수로 적용한다.
 

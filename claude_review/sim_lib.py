@@ -52,6 +52,18 @@ class Skip(engine.Game):
 class Emergency(Skip):
     mult = 1.0
     l3_flat = False  # option: level-3 investment costs the same as level 2 (no 1.5x step)
+    no_invest = ()   # countries that never invest (otherwise normal AI trading)
+
+    def plan(self, c):
+        if c.name in self.no_invest and not self._operating_initializing:
+            self.plan_cache[(self.r, c.name)] = None
+            return None
+        return super().plan(c)
+
+    def invest(self, c, *a, **kw):
+        if c.name in self.no_invest:
+            return False
+        return super().invest(c, *a, **kw)
 
     def upgrade_cost(self, c, g):
         if not self.l3_flat or c.levels.get(g, 0) != 2:
@@ -220,24 +232,26 @@ def export_measures(game):
 
 def make_game(seed, profile='light', mode='baseline', fee=None, focal=None, style='normal',
               behaviors=None, skip=(), wash=(), levelup=None, no_reserve=False, main_k=None,
-              l3_flat=False):
+              l3_flat=False, no_invest=()):
     """fee=None -> original v17 engine; fee=<float> -> Emergency with that multiplier."""
     kw = dict(mode=mode, operating_profile=profile)
     if focal is not None:
         kw.update(focal=focal, style=style)
     if behaviors:
         kw['behaviors'] = dict(behaviors)
-    if fee is None and not skip and not wash and not levelup and not main_k and not l3_flat:
+    if fee is None and not skip and not wash and not levelup and not main_k and not l3_flat and not no_invest:
         return engine.Game(seed, **kw)
     base = MainIndustryStudent if main_k else (LevelUpNoReserve if no_reserve else LevelUpStudent) if levelup else WashTrade if wash else (Emergency if fee is not None else Skip)
     cls = type('Variant', (base,), {'skip': tuple(skip), 'mult': fee if fee is not None else 0,
                                     'pairs': tuple(wash), 'levelup_k': dict(levelup or {}),
-                                    'main_k': dict(main_k or {}), 'l3_flat': l3_flat})
+                                    'main_k': dict(main_k or {}), 'l3_flat': l3_flat,
+                                    'no_invest': tuple(no_invest)})
     return cls(seed, **kw)
 
 
-def run_metrics(game):
-    """Run a game; return per-country growth metrics plus fixed (v15 steps) score."""
+def run_metrics(game, with_world=False):
+    """Run a game; return per-country growth metrics plus fixed (v15 steps) score.
+    with_world=True also returns world health for all 9 countries."""
     result = R.normalize_extended(game.run())
     rec = {'countries': result['countries'], 'world': result['world']}
     R.attach_fixed_scores(game, rec, growth, GOALS)
@@ -263,4 +277,12 @@ def run_metrics(game):
                   'blocked': game.cs[n].blocked, 'attempts': game.cs[n].attempts,
                   'cash_rounds': list(game.cs[n].cash_rounds),
                   'happy': c['happy'], **ex[n]}
+        out[n]['food_short'] = c['food_short_rounds']
+    if with_world:
+        world = {'food_short': {k: v['food_short_rounds'] for k, v in result['countries'].items()},
+                 'op_short': {k: v['national_operation']['any_shortage_rounds'] for k, v in result['countries'].items()},
+                 'happy': {k: v['happy'] for k, v in result['countries'].items()},
+                 'transactions': result['world']['transactions'], 'trade_units': result['world']['trade_units'],
+                 'barter': result['world']['barter']}
+        return out, world
     return out
