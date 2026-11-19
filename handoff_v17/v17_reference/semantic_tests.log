@@ -1,0 +1,16 @@
+test_a_public_schedules_and_boundaries (__main__.OperatingTests.test_a_public_schedules_and_boundaries) ... ok
+test_b_partial_consumption_shortage_income_once (__main__.OperatingTests.test_b_partial_consumption_shortage_income_once) ... ok
+test_c_physical_foreign_initial_and_produced_use (__main__.OperatingTests.test_c_physical_foreign_initial_and_produced_use) ... ok
+test_d_current_target_once_and_no_round_ten (__main__.OperatingTests.test_d_current_target_once_and_no_round_ten) ... ok
+test_e_protect_and_recall_own_listed_essentials (__main__.OperatingTests.test_e_protect_and_recall_own_listed_essentials) ... ok
+test_f_unaffordable_basic_want_is_not_double_counted (__main__.OperatingTests.test_f_unaffordable_basic_want_is_not_double_counted) ... ok
+test_g_food_budget_first_and_merged_budget_bound (__main__.OperatingTests.test_g_food_budget_first_and_merged_budget_bound) ... ok
+test_h_no_duplicate_credit_or_extra_industry_bonus (__main__.OperatingTests.test_h_no_duplicate_credit_or_extra_industry_bonus) ... ok
+test_i_idle_still_settles_national_obligations (__main__.OperatingTests.test_i_idle_still_settles_national_obligations) ... ok
+test_z_none_profile_full_history_compatibility (__main__.OperatingTests.test_z_none_profile_full_history_compatibility) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 3.574s
+
+OK
+{"schema": "v17-operating-semantic-tests-1", "status": "PASS", "completed_at": "2026-11-19T02:17:33.957145+00:00", "tests": 10, "failures": 0, "errors": 0, "completed_economic_games": 12, "new_economic_games": 12, "economic_execution_attempts": 12, "backcompat_pairs": 6, "isolated_fixture_instances": 15, "fixtures_are_completed_games": false, "engine_sha256": "c0b344162a32e40b1c5b71d56b6073d3c5291993f8ef10a3e600666ca6f43ed1", "engine_after_sha256": "c0b344162a32e40b1c5b71d56b6073d3c5291993f8ef10a3e600666ca6f43ed1", "test_sha256": "2fc97932a1cc24ce332df89278f75a739444f58ee03adb7dd90cf8c3f9757714", "protocol_sha256": "007b028885b2ede2e17703cf02b80a2178b0716424ce694a3413c471c87dba8b", "scope": "Exact recursive old-field projections of countries, world and full trace; added zero-operation instrumentation allowed. No candidate performance analysis."}

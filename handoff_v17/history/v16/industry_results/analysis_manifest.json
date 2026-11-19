@@ -1,0 +1,21 @@
+{
+  "archived_economic_games_replayed": 2180,
+  "behavior_contrasts": 64,
+  "behavior_pair_records": 1920,
+  "completed_at": "2026-11-19T01:39:37.337180+00:00",
+  "elapsed_seconds": 6.996084360000168,
+  "errors": [],
+  "exception_records": 8,
+  "frozen_inputs_preserved": true,
+  "groups": 68,
+  "input_sha256": "69e4f0dabe7233055522223a646a77452f05985148efbff95f9848b901919f41",
+  "new_economic_games": 0,
+  "output_sha256": {
+    "behavior_cases.jsonl.gz": "7f6614b4f44b980aab388669ee9ad9f9af73b0dc1faadb4d14dc56a9427329a0",
+    "summary.json": "33fa73e9a7e3d9f0b81ad8a369af25ab0e4ca137b60af824ad66417ef18256fc"
+  },
+  "replay_manifest_sha256": "af3468c79def01e66d79772d7e8fa12bc0113468ae6e01ba8508219a93a3086b",
+  "schema": "v16-industry-analysis-manifest-1",
+  "status": "PASS",
+  "view_contrasts": 204
+}

@@ -1,0 +1,141 @@
+{
+  "schema": "v16-industry-comparison-protocol-1",
+  "authored_at": "2026-11-19T01:37:21.314646+00:00",
+  "purpose": "Compare the relationship between capacity15 and actual utilization10 using fixed v15 trajectories, without changing any economic rule or fitting new national targets.",
+  "status": "FIXED_BEFORE_V16_CANDIDATE_REPLAY",
+  "design_type": "Retrospective paired score replay on previously seen v15 validation data; not a fresh holdout.",
+  "source": {
+    "file": "inputs_v15/validation_runs.jsonl.gz",
+    "sha256": "438e3078d962bd94553da7d7116bec0f747729bf103c9c5f59017fb692171c30",
+    "economic_games_reused": 2180,
+    "new_economic_games": 0,
+    "scored_country_count": 6,
+    "country_count": 9,
+    "rounds": 9,
+    "main_games": 200,
+    "stress_games": 1980,
+    "main_seeds": [
+      120000,
+      120099
+    ],
+    "stress_seeds": [
+      122000,
+      122029
+    ],
+    "main_per_condition": 100,
+    "stress_per_condition": 30,
+    "modes": [
+      "baseline",
+      "electronics_input"
+    ]
+  },
+  "preserved": {
+    "baseline_view": "v15 steps",
+    "capital_recognition": 0.45,
+    "economic_targets": "v15 economic_old",
+    "industrial_targets": "v15 industrial_steps",
+    "economic_points": 25,
+    "wellbeing_points": 25,
+    "trade_points": 25,
+    "industry_points": 25,
+    "additional_countries_ranked": false,
+    "prices_production_cash_inventory_rules": "unchanged",
+    "policy_feedback_from_new_score": false
+  },
+  "definitions": {
+    "q": "clip((final_capacity-initial_capacity)/initial_capacity / frozen industrial target,0,1)",
+    "u": "Unique own-origin born>0 units ever used domestically or abroad / max(1,all own-origin born>0 units)",
+    "use_exclusions": [
+      "initial gifts born=0",
+      "foreign-origin imports from this producer numerator",
+      "repeat durable use or resale multiplication"
+    ],
+    "not_unused_inventory": "Owned unused inventory can include imports and gifts; it is not produced-minus-used.",
+    "use_is_not_marginal_expansion_attribution": true
+  },
+  "views": {
+    "baseline": {
+      "formula": "15*q+10*u",
+      "capacity_base": "15*q",
+      "capacity_linked": "0",
+      "usage": "10*u",
+      "role": "Chosen v15 steps control"
+    },
+    "reweight": {
+      "formula": "10*q+15*u",
+      "capacity_base": "10*q",
+      "capacity_linked": "0",
+      "usage": "15*u",
+      "role": "Move5 points from capacity to usage"
+    },
+    "partial": {
+      "formula": "10*q+5*q*u+10*u",
+      "capacity_base": "10*q",
+      "capacity_linked": "5*q*u",
+      "usage": "10*u",
+      "role": "Link5 of the15 capacity points to overall actual use"
+    },
+    "full": {
+      "formula": "15*q*u+10*u",
+      "capacity_base": "0",
+      "capacity_linked": "15*q*u",
+      "usage": "10*u",
+      "role": "Strong-coupling diagnostic, not presumed improvement"
+    }
+  },
+  "no_parameter_fitting": true,
+  "comparison_groups": {
+    "group_count": 68,
+    "paired_behavior_count": 64,
+    "group_view_contrast_count": 204,
+    "behavior_styles": [
+      "minimum",
+      "minimum_passive",
+      "idle",
+      "invest",
+      "trade"
+    ],
+    "other_scenarios": [
+      "Technia:cheap",
+      "None:no_trade"
+    ],
+    "controls": "Each stress behavior paired with same-mode same-seed stress normal; main100 kept separate."
+  },
+  "primary_diagnostics": [
+    "Investment amount up, unique used own output not up, total score up: diagnostic flag, not proof of waste.",
+    "Investment strategy paired score and component changes, with actual use, produced units, cash, unused inventory, satisfaction and useful trade.",
+    "Trade strategy paired total and industry changes, including capacity progress intentionally forgone.",
+    "Public1G and passive-public1G positive-score exceptions: inspect actual usage, useful exports, capacity and all components.",
+    "Idle total up count. Automatic production/income still operate; human inaction not fully represented.",
+    "Per-country main mean, top count including ties, actual q/u and mean within-game max-minus-min range. Equal top counts are not a goal."
+  ],
+  "structural_checks": [
+    "All scores bounded, finite, source baseline exactly reproduced, non-industry components unchanged.",
+    "At fixed q and production, more actually used units never reduces industry points.",
+    "At fixed q and used count, extra unused production never increases points.",
+    "At fixed u, additional target progress never reduces points.",
+    "q=u=1 gives25 for all; q=u=0 gives0; P=0 impliesu=0.",
+    "partial-baseline=-5q(1-u), full-baseline=-15q(1-u), reweight-baseline=5(u-q).",
+    "Constructed final states demonstrate that even full coupling may reward more capacity with unchanged used units.",
+    "Initial stock/import/repeated use exclusions checked against266 saved detailed unit traces."
+  ],
+  "decision_rules": [
+    "No country-specific new coefficients, target refitting or equal-win matching.",
+    "Prefer the least complicated, least disruptive candidate only if behavior diagnostics and national opportunity costs justify it. A smaller range alone is insufficient.",
+    "Preserve15/10 display for partial/full, explicitly disclose5-point or15-point use linkage. Reweight changes the prior split and remains a candidate.",
+    "No claim that capacity-linked usage measures causal use of new machinery.",
+    "No automatic penalty for low prices; a positive score with real consumption/export gain is not automatically a bug.",
+    "If coupling amplifies existing low-utilization country disadvantage or risky low-price incentives, retain the prior baseline rather than forcing adoption.",
+    "Candidate assessment is provisional because AI policies do not optimize the revised score."
+  ],
+  "limits": [
+    "No new economic simulations;2180 prior games replayed once into4 score views.",
+    "No score-aware strategic optimization, human3student80minute or livecloudtest.",
+    "Same-unit aggregation across goods; fixed-price capacity weights and equal-unit utilization differ.",
+    "Round9 production has fewer usage opportunities; first use of durable counts once and productive-service duration is not measured.",
+    "Aggregates cannot assign use to particular expansion; detailedtrace evidence266 only.",
+    "Development raw-material consumption is real use, not proof of beneficial development.",
+    "Seed intervals describe fixed-policy variation, not confidence about student behavior."
+  ],
+  "stop_rule": "After semantic tests, frozen replay,68groups/64behavior/204view comparisons, independent formula and trace audit, report number QA, save artifacts. Do not retune coefficients or rerun economies to seek a favorable result."
+}

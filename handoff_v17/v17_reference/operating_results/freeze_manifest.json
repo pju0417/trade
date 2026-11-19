@@ -1,0 +1,660 @@
+{
+  "created_at": "2026-11-19T02:20:01.664944+00:00",
+  "execution_plan": {
+    "actual_game_count_note": "Semantic/backward-compatibility test executions reported separately in their receipt.",
+    "country_count": 9,
+    "daily_scope": "Normal-operation boundary diagnostic only; no daily stress conclusions.",
+    "formal_games": 6740,
+    "formal_ledger_rows_per_kind": 545940,
+    "formal_traces": 998,
+    "main_games": 800,
+    "main_profiles": [
+      "none",
+      "light",
+      "regular",
+      "daily"
+    ],
+    "modes": [
+      "baseline",
+      "electronics_input"
+    ],
+    "phases": {
+      "main": {
+        "n_per_condition": 100,
+        "profiles": [
+          "none",
+          "light",
+          "regular",
+          "daily"
+        ],
+        "scenarios": [
+          {
+            "focal": null,
+            "overrides": {},
+            "scenario": "None:normal",
+            "style": "normal"
+          }
+        ],
+        "seed_range": [
+          130000,
+          130099
+        ]
+      },
+      "stress": {
+        "n_per_condition": 30,
+        "profiles": [
+          "none",
+          "light",
+          "regular"
+        ],
+        "scenarios": [
+          {
+            "focal": null,
+            "overrides": {},
+            "scenario": "None:normal",
+            "style": "normal"
+          },
+          {
+            "focal": "Tropia",
+            "overrides": {},
+            "scenario": "Tropia:minimum",
+            "style": "minimum"
+          },
+          {
+            "focal": "Tropia",
+            "overrides": {},
+            "scenario": "Tropia:idle",
+            "style": "idle"
+          },
+          {
+            "focal": "Tropia",
+            "overrides": {},
+            "scenario": "Tropia:invest",
+            "style": "invest"
+          },
+          {
+            "focal": "Tropia",
+            "overrides": {},
+            "scenario": "Tropia:trade",
+            "style": "trade"
+          },
+          {
+            "focal": "Tropia",
+            "overrides": {},
+            "scenario": "Tropia:minimum_passive",
+            "style": "minimum_passive"
+          },
+          {
+            "focal": "Grainia",
+            "overrides": {},
+            "scenario": "Grainia:minimum",
+            "style": "minimum"
+          },
+          {
+            "focal": "Grainia",
+            "overrides": {},
+            "scenario": "Grainia:idle",
+            "style": "idle"
+          },
+          {
+            "focal": "Grainia",
+            "overrides": {},
+            "scenario": "Grainia:invest",
+            "style": "invest"
+          },
+          {
+            "focal": "Grainia",
+            "overrides": {},
+            "scenario": "Grainia:trade",
+            "style": "trade"
+          },
+          {
+            "focal": "Grainia",
+            "overrides": {},
+            "scenario": "Grainia:minimum_passive",
+            "style": "minimum_passive"
+          },
+          {
+            "focal": "Oilia",
+            "overrides": {},
+            "scenario": "Oilia:minimum",
+            "style": "minimum"
+          },
+          {
+            "focal": "Oilia",
+            "overrides": {},
+            "scenario": "Oilia:idle",
+            "style": "idle"
+          },
+          {
+            "focal": "Oilia",
+            "overrides": {},
+            "scenario": "Oilia:invest",
+            "style": "invest"
+          },
+          {
+            "focal": "Oilia",
+            "overrides": {},
+            "scenario": "Oilia:trade",
+            "style": "trade"
+          },
+          {
+            "focal": "Oilia",
+            "overrides": {},
+            "scenario": "Oilia:minimum_passive",
+            "style": "minimum_passive"
+          },
+          {
+            "focal": "Mechania",
+            "overrides": {},
+            "scenario": "Mechania:minimum",
+            "style": "minimum"
+          },
+          {
+            "focal": "Mechania",
+            "overrides": {},
+            "scenario": "Mechania:idle",
+            "style": "idle"
+          },
+          {
+            "focal": "Mechania",
+            "overrides": {},
+            "scenario": "Mechania:invest",
+            "style": "invest"
+          },
+          {
+            "focal": "Mechania",
+            "overrides": {},
+            "scenario": "Mechania:trade",
+            "style": "trade"
+          },
+          {
+            "focal": "Mechania",
+            "overrides": {},
+            "scenario": "Mechania:minimum_passive",
+            "style": "minimum_passive"
+          },
+          {
+            "focal": "Mineria",
+            "overrides": {},
+            "scenario": "Mineria:minimum",
+            "style": "minimum"
+          },
+          {
+            "focal": "Mineria",
+            "overrides": {},
+            "scenario": "Mineria:idle",
+            "style": "idle"
+          },
+          {
+            "focal": "Mineria",
+            "overrides": {},
+            "scenario": "Mineria:invest",
+            "style": "invest"
+          },
+          {
+            "focal": "Mineria",
+            "overrides": {},
+            "scenario": "Mineria:trade",
+            "style": "trade"
+          },
+          {
+            "focal": "Mineria",
+            "overrides": {},
+            "scenario": "Mineria:minimum_passive",
+            "style": "minimum_passive"
+          },
+          {
+            "focal": "Technia",
+            "overrides": {},
+            "scenario": "Technia:minimum",
+            "style": "minimum"
+          },
+          {
+            "focal": "Technia",
+            "overrides": {},
+            "scenario": "Technia:idle",
+            "style": "idle"
+          },
+          {
+            "focal": "Technia",
+            "overrides": {},
+            "scenario": "Technia:invest",
+            "style": "invest"
+          },
+          {
+            "focal": "Technia",
+            "overrides": {},
+            "scenario": "Technia:trade",
+            "style": "trade"
+          },
+          {
+            "focal": "Technia",
+            "overrides": {},
+            "scenario": "Technia:minimum_passive",
+            "style": "minimum_passive"
+          },
+          {
+            "focal": "Technia",
+            "overrides": {},
+            "scenario": "Technia:cheap",
+            "style": "cheap"
+          },
+          {
+            "focal": null,
+            "overrides": {},
+            "scenario": "None:no_trade",
+            "style": "no_trade"
+          }
+        ],
+        "seed_range": [
+          132000,
+          132029
+        ]
+      }
+    },
+    "ranked_countries": [
+      "Tropia",
+      "Grainia",
+      "Oilia",
+      "Mechania",
+      "Mineria",
+      "Technia"
+    ],
+    "rounds": 9,
+    "schema": "v17-fresh-operating-execution-plan-1",
+    "score_feedback_to_actions": false,
+    "score_reference": "v15 steps; frozen goals and capacity15+utilization10",
+    "smoke_games": 24,
+    "smoke_tasks": [
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "baseline",
+        "operating_profile": "none",
+        "phase": "smoke",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "style": "normal"
+      },
+      {
+        "behaviors": {
+          "Technia": "invest"
+        },
+        "focal": "Technia",
+        "mode": "electronics_input",
+        "operating_profile": "none",
+        "phase": "smoke",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "style": "invest"
+      },
+      {
+        "behaviors": {
+          "Mineria": "idle"
+        },
+        "focal": "Mineria",
+        "mode": "baseline",
+        "operating_profile": "none",
+        "phase": "smoke",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "style": "idle"
+      },
+      {
+        "behaviors": {
+          "Grainia": "minimum"
+        },
+        "focal": "Grainia",
+        "mode": "electronics_input",
+        "operating_profile": "none",
+        "phase": "smoke",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "style": "minimum"
+      },
+      {
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        },
+        "focal": "Tropia",
+        "mode": "baseline",
+        "operating_profile": "none",
+        "phase": "smoke",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "style": "minimum_passive"
+      },
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "electronics_input",
+        "operating_profile": "none",
+        "phase": "smoke",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "style": "no_trade"
+      },
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "baseline",
+        "operating_profile": "light",
+        "phase": "smoke",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "style": "normal"
+      },
+      {
+        "behaviors": {
+          "Technia": "invest"
+        },
+        "focal": "Technia",
+        "mode": "electronics_input",
+        "operating_profile": "light",
+        "phase": "smoke",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "style": "invest"
+      },
+      {
+        "behaviors": {
+          "Mineria": "idle"
+        },
+        "focal": "Mineria",
+        "mode": "baseline",
+        "operating_profile": "light",
+        "phase": "smoke",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "style": "idle"
+      },
+      {
+        "behaviors": {
+          "Grainia": "minimum"
+        },
+        "focal": "Grainia",
+        "mode": "electronics_input",
+        "operating_profile": "light",
+        "phase": "smoke",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "style": "minimum"
+      },
+      {
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        },
+        "focal": "Tropia",
+        "mode": "baseline",
+        "operating_profile": "light",
+        "phase": "smoke",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "style": "minimum_passive"
+      },
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "electronics_input",
+        "operating_profile": "light",
+        "phase": "smoke",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "style": "no_trade"
+      },
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "baseline",
+        "operating_profile": "regular",
+        "phase": "smoke",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "style": "normal"
+      },
+      {
+        "behaviors": {
+          "Technia": "invest"
+        },
+        "focal": "Technia",
+        "mode": "electronics_input",
+        "operating_profile": "regular",
+        "phase": "smoke",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "style": "invest"
+      },
+      {
+        "behaviors": {
+          "Mineria": "idle"
+        },
+        "focal": "Mineria",
+        "mode": "baseline",
+        "operating_profile": "regular",
+        "phase": "smoke",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "style": "idle"
+      },
+      {
+        "behaviors": {
+          "Grainia": "minimum"
+        },
+        "focal": "Grainia",
+        "mode": "electronics_input",
+        "operating_profile": "regular",
+        "phase": "smoke",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "style": "minimum"
+      },
+      {
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        },
+        "focal": "Tropia",
+        "mode": "baseline",
+        "operating_profile": "regular",
+        "phase": "smoke",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "style": "minimum_passive"
+      },
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "electronics_input",
+        "operating_profile": "regular",
+        "phase": "smoke",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "style": "no_trade"
+      },
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "baseline",
+        "operating_profile": "daily",
+        "phase": "smoke",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "style": "normal"
+      },
+      {
+        "behaviors": {
+          "Technia": "invest"
+        },
+        "focal": "Technia",
+        "mode": "electronics_input",
+        "operating_profile": "daily",
+        "phase": "smoke",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "style": "invest"
+      },
+      {
+        "behaviors": {
+          "Mineria": "idle"
+        },
+        "focal": "Mineria",
+        "mode": "baseline",
+        "operating_profile": "daily",
+        "phase": "smoke",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "style": "idle"
+      },
+      {
+        "behaviors": {
+          "Grainia": "minimum"
+        },
+        "focal": "Grainia",
+        "mode": "electronics_input",
+        "operating_profile": "daily",
+        "phase": "smoke",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "style": "minimum"
+      },
+      {
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        },
+        "focal": "Tropia",
+        "mode": "baseline",
+        "operating_profile": "daily",
+        "phase": "smoke",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "style": "minimum_passive"
+      },
+      {
+        "behaviors": {},
+        "focal": null,
+        "mode": "electronics_input",
+        "operating_profile": "daily",
+        "phase": "smoke",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "style": "no_trade"
+      }
+    ],
+    "stress_games": 5940,
+    "stress_profiles": [
+      "none",
+      "light",
+      "regular"
+    ],
+    "trace_scope": "Every main trajectory and the first seed of each stress condition.",
+    "unranked_countries": [
+      "Novia",
+      "Agrea",
+      "Ferria"
+    ]
+  },
+  "formal_not_executed": true,
+  "schema": "v17-operating-freeze-1",
+  "smoke_manifest_sha256": "ae8d7f3be7482725ee942af2c9e45c128c7aec2e89c9b882fd45644eeb814dc3",
+  "source_snapshot": {
+    "inherited_source_sha256": {
+      "audit_causal_results.py": "767f494f4a0392fe978c11f74b17e74d4ad0085e2bdb6dba4a2d49b458712e08",
+      "audit_development_results.py": "e1f1e934e328eaf8d799d8a840db1249a8d3b3d77e2038c25bf28731f3e4e553",
+      "audit_evaluation_results.py": "da212d3c1ac947008372549c070382726981cf9d67758a7dd1400cc160842c14",
+      "audit_growth_results.py": "20024acc870892c56ded6fe32b0ef07fe40ab7433248eb0e4b8dd3c703c61996",
+      "audit_machinery_results.py": "d3f4780360e10e776a23cad8f4a49e05c8f4fc4a591861dd21d9cca325725000",
+      "audit_raw_results.py": "ab9e835e56b44554440e12cba327aa064e1e933b2383f15deecab7bee6dfaf41",
+      "audit_recommendation_results.py": "3548e674675fe5131bd8c0890fbdb5bb06d60bc4a6ce3c6ddae410711daca065",
+      "audit_routing_results.py": "9f88cdc17563fe3080930ba29860e006f29ff8f2d6b2afadb35e12c83c0d5b52",
+      "baseline/audit_costs.py": "2dde48c31da776531674c3f8862aea417a7816151ef98c46c68e3b9efa0e8baa",
+      "baseline/audit_previous.py": "46adcd64756033cbe4708689dfbc5849deb73af3263993c3255219ac3de2dc43",
+      "baseline/build_report.py": "207ee5b9c4f7aeb3eb847b70535612c5d5590c24f9712ec91b67b973bf8051a5",
+      "baseline/engine.py": "4e0ffaf48d38c36714a27b0dd27ab64ca0bf2bda6cf92ae722dc925176aa74f5",
+      "baseline/reference_engine.py": "f17b14c05f899eaa3cb5eab4abf15fe7c1549d284725aa887782bb2fd7217dea",
+      "baseline/run_staged.py": "80fc13d682e3afe844268b952ca5f6178236dc0ff167195061e39a404121583f",
+      "baseline/run_validation.py": "9a1b9b2f9f028f63762e3600548bb8be060212791e62f07c638570426aec2a6d",
+      "baseline/scoring.py": "f89d70fbcf204b5840486a8524711132e9ce7ee282c4d167c3b4ad4f50d3732c",
+      "baseline/test_fixes.py": "a500b9d7275abd16801a0c170c9b92f2f8854663130a7ebb25685c47d17f1c74",
+      "baseline/test_previous.py": "a8936e9cb9c13e604041c3b0365bdfd43679fbf9796d4ae2b721f36639f31a79",
+      "budget_engine.py": "03b39f7a989e2144012888005de673632844b0a36c996f32180a8e21127688d2",
+      "budget_trace.py": "5e36be42dde30a921178b861aee86192871407e9ae95a7eebe1e03d507e660d3",
+      "build_budget_report.py": "31e39fe97e491e70e0e3facebb679a87cc6cb2e460d3563ae55c7935cbe07cea",
+      "build_causal_report.py": "0225a31756882f01ee14421e1faed74b41dc3b42a9e55af5c7da2d848c214394",
+      "build_development_report.py": "e7c09d5e73ee7a8ec8afe0d7092bf927b898c2e3bf090fa971f85bd5a65153c4",
+      "build_evaluation_report.py": "19e2e6cb44e15cc94065f622af7d5155fbc2deabcbd296abdf111dbdf6ad34db",
+      "build_expansion_report.py": "76c2c92119a4a2f31c87a667638ea7b19d844fd0811cc73b3d5e706474dae5fb",
+      "build_growth_report.py": "7c009fcad2a62182891b70cbd3e8b11f53e1b5002ea87ca81ff6bf101f6a1e03",
+      "build_machinery_report.py": "fb6a61e56fbde72fbfd01d3810d595d0786b85411ffb75cd25512abf0d423af4",
+      "build_raw_report.py": "1126943c51bf21dc67b03ec95a82b7d9f308f22c393ad915447314068f72d919",
+      "build_recommendation_report.py": "bb670babe9c6d7f42d33fd359b5853b49940cba4cb8920b0247d431072d6a09d",
+      "build_routing_report.py": "06fbb50bf759f08a8daec93531a333aa174b9b2ee18153d73ac7d01556480b70",
+      "causal_engine.py": "cfdaea8357f2434ee51c992bac0e571caeefef57898d07f806710090e547d7ac",
+      "check_causal_fixed_targets.py": "ac3ae843dc7009d9393916eb8df967ee2453909c97e763fafc966038be5eda94",
+      "core_engine.py": "4b62606c6ead051ab0c7b3f6f17b7dfe9dcfc873c64aa5e0d5c81884170aa956",
+      "derive_causal_diagnostics.py": "f801326824845b2f1724c960f7be30e23486be365075c9ca54cb1f95bed446cc",
+      "development_engine.py": "7b8952488a0590eeb4aba923d994c34b785713ee168f4ea5bcb2cda2c81439be",
+      "engine.py": "c365133c676c18530b0f8c2febb8a7f4118966526d06aa9bc497574aae167e35",
+      "evaluation_engine.py": "e88356cb6e009190b382b19a631958eb6b808bbade405900f13c8ad29a942afd",
+      "expansion_engine.py": "409a4c158681aa415a7f04064b1559e17c0df5807c4826fc1ef9160c09d359d7",
+      "growth_scoring.py": "199f1068d498502b438fa3b85127b14d46fd5fe54c0f0db7d5277fb09a5e664c",
+      "machinery_engine.py": "f911b0a983ef8e384a610401031bb655544f31f67db417b9f260f400a7106732",
+      "package_causal.py": "25e4a693682929bdab6023fbf9bbdce6d4e3e905cf664250ec51123ebeec310b",
+      "package_development.py": "dce642c2b96c6e1d4684e35decf5a2dbe9ee5cf92a7b66043b914877b9973215",
+      "package_evaluation.py": "ec0365c5c341db8bcf8e7f3ea78fe5adbaec8693ddb0d07bf9964ab4f325f679",
+      "package_growth.py": "f96c13356b442f568d51cccee0457b9898d4cbbeeeb22f753743c02ebf55495b",
+      "package_routing.py": "d0c537e9cd329d3cd665e2d256f8c9062ce1ae7e88a9a0d87807dedce6ede8a2",
+      "raw_engine.py": "4b54df2a121f293a057715f1b983b2e7179dd957bc3eb746885807a8e076d6cb",
+      "recommendation_engine.py": "844ae2796f1056e346d32175393bcdb29a15cc11028423981ef84fdd10433104",
+      "reference_engine.py": "bb5163fe13d372d347b75a2fe7f3ad9f6bfc5a2006d780eae6d79fb2c251ed4f",
+      "routing_engine.py": "82ef555ae10e95036a47c380c48fca17c2acf747233b8aa19479914f652075d1",
+      "run_batches.py": "0ef893a58d7f2c17faf7e2dfd8b2ffe99619edf0a34205a7ce9bfae0270f9301",
+      "run_budget_pilot.py": "c8ee9a32da3117767f47f883fff76c5a8424be72177850c93fe5aca0c144c2f6",
+      "run_budget_validation.py": "20ace05a4045628d12aeb6670bb234fb92a1cb9d431ba9e0fd65ee675a2ee29f",
+      "run_causal_validation.py": "2b6cb63d348b97b31eb14e10f7fe08a7cbc94dd524f5b3387474e6ed617f6c28",
+      "run_development_pilot.py": "51fae47ccf18eb0a3e9c31bcb37bd13bb697bf7691479ae40cde37108dfe55d6",
+      "run_development_validation.py": "d880df0599b145585bbd055513a85543f2624883e702854b0c9c9e1a49e69e0f",
+      "run_evaluation_pilot.py": "d13843fb878600211d6756f0df56b8e03cec1a904556208d7fec4d25d6fa4d8b",
+      "run_evaluation_validation.py": "970a47072edff506477f98115b631275022432879e4c60c762edfd8c5a042a00",
+      "run_expansion.py": "a88bdf68d9fa46bdbaf61ef2929b8365dff9c9f3f3e1aa69ed17d8fbf0b52887",
+      "run_growth_validation.py": "66efa0204898b5e2731e16468053a56136034b77c7390a7aea487f9b4b19ab9f",
+      "run_machinery_pilot.py": "4e7c369d1a4ed3a17844c667a8752ed883b1d6274f49de224126de7761b25896",
+      "run_machinery_validation.py": "e67259156bd86d9dd729a8a291001bbcf16a716ffdb5dd65b7400f840dfe1164",
+      "run_raw_pilot.py": "8642c99d47fb163a2a0d9046322d4a238ebb2d0b30fddfda687f241344a79868",
+      "run_raw_validation.py": "3ddd07e1cfbc13271fc803d9fccc76db618ce5af0188b16543344f2ebe253549",
+      "run_recommendation_pilot.py": "74ba73aba9f9c5f05f9430079d3becb4f17fdf0f124ea82749d60473db5876b8",
+      "run_recommendation_validation.py": "2ad975d546b77d15eae211bc487c8c776bcb2656f31055db0f9f6ea3f9dd9c50",
+      "run_routing_pilot.py": "9c83f4cb08a05568af8a2453d0ad46e62a51651eb2b16e138d6df34518801da4",
+      "run_routing_validation.py": "21bca5a6bf385bfda08c98331f1609e22b4afaf0540aa034bfad11d3da28986b",
+      "scoring.py": "f89d70fbcf204b5840486a8524711132e9ce7ee282c4d167c3b4ad4f50d3732c",
+      "test_budget.py": "d5f8c6d9e2305c5f5cfa1dcb4b6aaf4b4a47da654767f75140a50596a7d621bb",
+      "test_causal.py": "8aa4f32e85034a00a438dd70337a9a867b025ba7781d1ab4518eb46e4deeb4c5",
+      "test_costs.py": "59ba06901337b0551ec57d48b45f24e5c167a458ea10760ce8f222d5a1b25db0",
+      "test_development.py": "3c5957f12078c24e0fdc9e2251ffa4f5b87ef18ec908c84765d153a4cf35ffd6",
+      "test_evaluation.py": "5a4b46ddf3a0e49f0eed7730d2434fa4387d29a452534cdfcf0b011b0fc682c2",
+      "test_expansion.py": "949b45a49572dd5e51eb5c0f3ceb0357b3c8ce6d95b52b063e2371b2c8b018df",
+      "test_fixes.py": "a500b9d7275abd16801a0c170c9b92f2f8854663130a7ebb25685c47d17f1c74",
+      "test_growth_scoring.py": "3f57a24eb8fec9ff5ada896790ec78a0879c865cf1f5093e20a5be74020c27f6",
+      "test_machinery.py": "4e384af3bea3641c51bd95aa5f2d0abf21badc58c23b9e51721e27ab5d231c76",
+      "test_previous.py": "a8936e9cb9c13e604041c3b0365bdfd43679fbf9796d4ae2b721f36639f31a79",
+      "test_raw_resources.py": "365a516c4eb3e9150a29679b2e60bef5f7c4a1eeff4076c658f033334e6f969f",
+      "test_recommendation.py": "6d0621798b5d2f91a74ef87e5e720c799afcdab5040e79e18d55b445f1691bce",
+      "test_routing.py": "3f3e7b36b32861d96ad03c606bc3495d1d70ab271af2b2f934a09333bc969928",
+      "validate_causal_report.py": "cb76814f0b4fdf39ee5605ff38ac963f21bf7bb17e886e3d8e293837a64e600f",
+      "validate_evaluation_report.py": "5aaa974e4a1427672219795b19c8147d4190627631958fda70c1ad5b50102341",
+      "validate_growth_report.py": "77959b18d523504cc62f989855018ded4d46bdaad87551dcf1d578bdc4322729",
+      "validate_routing_report.py": "839e06a5cd1fd7e4ecc03c7f501c01997f9f9e3509c4c5d4f7c6aa419f665101"
+    },
+    "new_source_sha256": {
+      "INPUT_PROVENANCE_V17.json": "460256a928f52275a85ddbb6d498e051ceb523b201601b389adb48c0c66d38df",
+      "OPERATING_PROTOCOL_V17.json": "007b028885b2ede2e17703cf02b80a2178b0716424ce694a3413c471c87dba8b",
+      "SCORE_TARGETS_V15.json": "4a88b018c4adb9b21774b45e7f7b90fa4af1149aff76e29b126a3887b7d53ca3",
+      "analyze_operating_validation.py": "2e31707454bc98e9fc6e9c3027235df7a34e3e88b5a7c8131b2c89eab168a5fa",
+      "operating_engine.py": "c0b344162a32e40b1c5b71d56b6073d3c5291993f8ef10a3e600666ca6f43ed1",
+      "run_operating_validation.py": "afecb8333cee91ae353a404815045a978844aa501c51d729688471572e0b00ed",
+      "test_operating_engine.py": "2fc97932a1cc24ce332df89278f75a739444f58ee03adb7dd90cf8c3f9757714"
+    }
+  },
+  "status": "PASS",
+  "test_receipt": "semantic_tests.json",
+  "test_receipt_sha256": "f89eac9d985b20fb9590870aa99e34272b1a2545c6b008d8a38bceeaef2efb83"
+}

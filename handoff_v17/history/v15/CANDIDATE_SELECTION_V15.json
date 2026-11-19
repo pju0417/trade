@@ -1,0 +1,62 @@
+{
+  "schema": "v15-candidate-selection-1",
+  "recommended_view": "steps",
+  "status": "검증본의 기준안; 실제 학생용 앱에 배포하거나 기존 저장 공식 점수를 덮어쓰지 않음",
+  "economic_meaning": "보유 자산의 성장과 현금 여력; 참여·실제 활용은 기존 별도 항목으로 평가",
+  "capital_recognition_fraction": 0.45,
+  "economic_targets": {
+    "Tropia": 305,
+    "Grainia": 265,
+    "Oilia": 245,
+    "Mechania": 230,
+    "Mineria": 185,
+    "Technia": 895
+  },
+  "industrial_targets": {
+    "Tropia": 0.3333333333333333,
+    "Grainia": 0.4,
+    "Oilia": 0.8333333333333334,
+    "Mechania": 0.4166666666666667,
+    "Mineria": 0.6,
+    "Technia": 1.5
+  },
+  "weights": {
+    "economic_growth": 20,
+    "reserve": 5,
+    "capacity": 15,
+    "utilization": 10,
+    "wellbeing": 25,
+    "trade": 25
+  },
+  "accepted_change": "기존 v12 산업 목표 중 3국의 상향 반올림을 실제 관측된 개발 단계로 교정",
+  "not_selected": {
+    "views": [
+      "capital",
+      "steps_capital",
+      "capital_fixed_goal"
+    ],
+    "reason": "100% 투자자산 인정은 같은 기준 자료로 경제 목표를 다시 설정한 뒤 국가 간 점수 범위를 확대하고 일부 투자 중심 정책의 점수상 이점을 강화함. 현금→설비 전환 중립 항등식은 성립하지만 공정성·실제 활용 개선은 입증되지 않음."
+  },
+  "unchanged": [
+    "국가 구성9개·9라운드",
+    "시장·생산·투자·소득 규칙",
+    "재고 평가",
+    "국민 만족도·무역·현금 여유·실제 활용 점수",
+    "과거 공식 점수"
+  ],
+  "evidence": {
+    "fresh_formal_games": 2180,
+    "smoke_games": 6,
+    "calibration_games_reused": 780,
+    "summary_sha256": "d61c0913a15f42bd40ec8908a7c8413cf93c6df83acd51233fd79d25c0804d73",
+    "independent_audit_sha256": "e6f3b3e7f0697fbcf3207a353785ad142d4a1f344f65b2149376ba8e1b06a8e0",
+    "targets_sha256": "4a88b018c4adb9b21774b45e7f7b90fa4af1149aff76e29b126a3887b7d53ca3"
+  },
+  "remaining_question": "개발된 생산 능력15점과 실제 활용10점이 각 국가의 전략을 어떻게 보상해야 하는지; 목표 달성 이후의 추가 성장과 실제 사용을 어떤 방식으로 설명할지.",
+  "limitations": [
+    "이산 목표 교정으로 점수 격차가 해소됐다는 뜻은 아님",
+    "관측한 정상 경로에서 목표 달성 확인, 모든 시장 조건에서 달성 보장 아님",
+    "최저가 정책은 자동 구매·생활 운영을 계속함",
+    "점수를 보고 전략을 바꾸는 AI·학생 반응, 학생3명의80분 교실 운영은 별도검증"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "v17-package-receipt-1",
+  "status": "PASS",
+  "members": 128,
+  "zip_crc": "PASS",
+  "member_hashes_match": true,
+  "new_packaging_games": 0,
+  "deliverables": [
+    {
+      "path": "/workspace/scratch/c5c0a9638d2f/deliverables/TRADE_NATIONAL_RESOURCES_V17_KO.html",
+      "bytes": 387292,
+      "sha256": "d573c9e5ea1099935ff9d11d9b3dbcf6426140d0f971d8ba93b162c559372d8d"
+    },
+    {
+      "path": "/workspace/scratch/c5c0a9638d2f/deliverables/trade_game_national_resources_v17.zip",
+      "bytes": 179804112,
+      "sha256": "46acddc740cfa0e9de5190bb87f436592c2f3c768846779483f0ad4b2b29769f"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+### new_skip.json 180
+   Tropia dScore (6.72, 4.41, 9.03) better 29 / 30 {'econ': 3.98, 'well': -0.75, 'trade': -1.31, 'cap': 5, 'util': -0.2, 'reserve': 0.0} opShortRounds 4.87 emergencyG 0 dCash 31.3
+   others(AI) dScore (-1.07, -1.59, -0.54) op_short_sum 4.87 fuel_trade 23.63
+   Grainia dScore (2.08, 1.46, 2.7) better 26 / 30 {'econ': 4.44, 'well': -0.75, 'trade': -1.52, 'cap': 0, 'util': -0.09, 'reserve': 0.0} opShortRounds 5 emergencyG 0 dCash 45.6
+   others(AI) dScore (-0.53, -0.99, -0.08) op_short_sum 5 fuel_trade 23.57
+   Oilia dScore (-0.86, -2.11, 0.39) better 9 / 30 {'econ': 0.43, 'well': -0.82, 'trade': -0.12, 'cap': 0.0, 'util': -0.35, 'reserve': 0.0} opShortRounds 4.73 emergencyG 0 dCash 23.6
+   others(AI) dScore (-0.38, -1.19, 0.43) op_short_sum 4.73 fuel_trade 26.57
+   Mechania dScore (1.27, 0.25, 2.29) better 21 / 30 {'econ': 3.44, 'well': -0.78, 'trade': -1.27, 'cap': 0, 'util': -0.13, 'reserve': 0.01} opShortRounds 4.7 emergencyG 0 dCash 49.7
+   others(AI) dScore (-0.94, -1.59, -0.3) op_short_sum 4.7 fuel_trade 23.5
+   Mineria dScore (1.0, -1.18, 3.19) better 11 / 30 {'econ': 0.66, 'well': -0.95, 'trade': -0.02, 'cap': 2, 'util': -0.82, 'reserve': 0.12} opShortRounds 5 emergencyG 0 dCash -5.0
+   others(AI) dScore (-0.18, -0.94, 0.58) op_short_sum 5 fuel_trade 26.43
+   Technia dScore (-1.14, -2.71, 0.43) better 7 / 30 {'econ': -0.38, 'well': -0.37, 'trade': -0.87, 'cap': -0.0, 'util': 0.33, 'reserve': 0.14} opShortRounds 1.67 emergencyG 0 dCash 39
+   others(AI) dScore (-0.78, -1.34, -0.23) op_short_sum 1.67 fuel_trade 24.6
+### new_class3.json 90
+   Tropia dScore (-42.77, -45.5, -40.04) better 0 / 30 {'econ': 0.49, 'well': -5.62, 'trade': -23.77, 'cap': -10, 'util': -3.87, 'reserve': 0.0} opShortRounds 5 emergencyG 0 dCash 126.7
+   Oilia dScore (-50.3, -51.49, -49.12) better 0 / 30 {'econ': -1.17, 'well': -9.88, 'trade': -24.14, 'cap': -11.2, 'util': -3.91, 'reserve': 0.0} opShortRounds 0 emergencyG 0 dCash 120.6
+   Technia dScore (-56.75, -58.37, -55.14) better 0 / 30 {'econ': -10.52, 'well': -7.44, 'trade': -24.92, 'cap': -12.95, 'util': -1.11, 'reserve': 0.19} opShortRounds 5 emergencyG 0 dCash 157.3
+   others(AI) dScore (-2.0, -3.14, -0.87) op_short_sum 10.03 fuel_trade 17.33
+   Tropia dScore (4.77, 1.97, 7.57) better 24 / 30 {'econ': -1.81, 'well': -0.35, 'trade': 0.21, 'cap': 4.5, 'util': 2.22, 'reserve': 0.0} opShortRounds 0 emergencyG 0 dCash -31.8
+   Oilia dScore (-7.69, -9.51, -5.87) better 2 / 30 {'econ': -8.05, 'well': -0.69, 'trade': -0.09, 'cap': -0.8, 'util': 1.94, 'reserve': 0.0} opShortRounds 0 emergencyG 0 dCash -56.5
+   Technia dScore (-26.33, -28.03, -24.63) better 0 / 30 {'econ': -15.04, 'well': -0.75, 'trade': 0.08, 'cap': -12.95, 'util': 2.13, 'reserve': 0.19} opShortRounds 0 emergencyG 0 dCash -37.3
+   others(AI) dScore (0.97, -0.28, 2.23) op_short_sum 0 fuel_trade 26.97
+   Tropia dScore (7.01, 4.8, 9.21) better 30 / 30 {'econ': 4.24, 'well': -0.75, 'trade': -1.36, 'cap': 5, 'util': -0.12, 'reserve': 0.0} opShortRounds 4.83 emergencyG 0 dCash 32.6
+   Oilia dScore (-2.4, -3.7, -1.11) better 5 / 30 {'econ': 0.27, 'well': -0.87, 'trade': -0.05, 'cap': -0.8, 'util': -0.95, 'reserve': 0.0} opShortRounds 4.8 emergencyG 0 dCash -4.1
+   Technia dScore (0.46, -1.65, 2.57) better 13 / 30 {'econ': 0.54, 'well': -0.4, 'trade': -0.9, 'cap': 0.67, 'util': 0.42, 'reserve': 0.14} opShortRounds 1.8 emergencyG 0 dCash 83.3
+   others(AI) dScore (-1.5, -2.37, -0.63) op_short_sum 11.43 fuel_trade 21.37
+### new_class3_cheap.json 30
+   Tropia dScore (9.0, 6.45, 11.56) better 29 / 30 {'econ': 3.87, 'well': 0.34, 'trade': 0.13, 'cap': 5, 'util': -0.35, 'reserve': 0.0} opShortRounds 0 emergencyG 0 dCash 10.8
+   Oilia dScore (1.44, -0.11, 2.99) better 19 / 30 {'econ': 0.23, 'well': 0.31, 'trade': -0.07, 'cap': 1.0, 'util': -0.03, 'reserve': 0.0} opShortRounds 0 emergencyG 0 dCash -13.6
+   Technia dScore (-3.53, -6.23, -0.84) better 10 / 30 {'econ': -2.75, 'well': -0.06, 'trade': 0.07, 'cap': -2.0, 'util': 1.09, 'reserve': 0.11} opShortRounds 0 emergencyG 0 dCash 49.3
+   others(AI) dScore (3.64, 2.2, 5.07) op_short_sum 0 fuel_trade 25.53
+### new_fix.json 210
+  all6 dScore (0.0, -0.0, 0.0) op_short_sum 0 {'Tropia': 0.0, 'Grainia': 0.0, 'Oilia': 0.0, 'Mechania': 0.0, 'Mineria': 0.0, 'Technia': 0.0}
+   Tropia dScore (-15.81, -18.51, -13.11) better 0 / 30 {'econ': -7.25, 'well': -0.14, 'trade': -1.5, 'cap': -7, 'util': 0.1, 'reserve': -0.02} opShortRounds 5 emergencyG 194.6 dCash -86
+   others(AI) dScore (-0.9, -1.38, -0.42) op_short_sum 5 fuel_trade 23.43
+   Grainia dScore (-11.2, -11.88, -10.52) better 0 / 30 {'econ': -8.71, 'well': -0.33, 'trade': -1.67, 'cap': 0, 'util': -0.03, 'reserve': -0.47} opShortRounds 5 emergencyG 194.5 dCash -104.8
+   others(AI) dScore (-0.85, -1.36, -0.34) op_short_sum 5 fuel_trade 23.33
+   Oilia dScore (-13.45, -15.11, -11.78) better 0 / 30 {'econ': -8.93, 'well': -0.16, 'trade': -0.22, 'cap': -3.4, 'util': -0.18, 'reserve': -0.56} opShortRounds 5 emergencyG 195 dCash -107.7
+   others(AI) dScore (-0.41, -1.31, 0.49) op_short_sum 5 fuel_trade 26.47
+   Mechania dScore (-14.46, -15.97, -12.94) better 0 / 30 {'econ': -10.03, 'well': -0.22, 'trade': -1.19, 'cap': -0.5, 'util': -0.08, 'reserve': -2.44} opShortRounds 4.83 emergencyG 186.4 dCash -102.5
+   others(AI) dScore (-0.97, -1.5, -0.45) op_short_sum 4.83 fuel_trade 23.37
+   Mineria dScore (-17.02, -19.19, -14.86) better 0 / 30 {'econ': -10.46, 'well': -0.09, 'trade': 0.05, 'cap': -4, 'util': -0.78, 'reserve': -1.75} opShortRounds 5 emergencyG 194.9 dCash -108.3
+   others(AI) dScore (0.0, -0.78, 0.78) op_short_sum 5 fuel_trade 26.43
+   Technia dScore (-2.68, -4.22, -1.15) better 3 / 30 {'econ': -1.7, 'well': -0.0, 'trade': -0.85, 'cap': -0.43, 'util': 0.34, 'reserve': -0.05} opShortRounds 1.63 emergencyG 73.5 dCash -15.2
+   others(AI) dScore (-0.68, -1.2, -0.16) op_short_sum 1.63 fuel_trade 24.57

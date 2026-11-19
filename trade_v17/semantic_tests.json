@@ -1,0 +1,167 @@
+{
+  "schema": "v17-operating-semantic-tests-1",
+  "status": "PASS",
+  "completed_at": "2026-11-19T02:17:33.957145+00:00",
+  "tests": 10,
+  "failures": 0,
+  "errors": 0,
+  "completed_economic_games": 12,
+  "new_economic_games": 12,
+  "economic_execution_attempts": 12,
+  "backcompat_pairs": 6,
+  "isolated_fixture_instances": 15,
+  "fixtures_are_completed_games": false,
+  "engine_sha256": "c0b344162a32e40b1c5b71d56b6073d3c5291993f8ef10a3e600666ca6f43ed1",
+  "engine_after_sha256": "c0b344162a32e40b1c5b71d56b6073d3c5291993f8ef10a3e600666ca6f43ed1",
+  "test_sha256": "2fc97932a1cc24ce332df89278f75a739444f58ee03adb7dd90cf8c3f9757714",
+  "protocol_sha256": "007b028885b2ede2e17703cf02b80a2178b0716424ce694a3413c471c87dba8b",
+  "executions": [
+    {
+      "seed": 129000,
+      "mode": "baseline",
+      "focal": null,
+      "style": "normal",
+      "trade_enabled": true,
+      "engine": "previous",
+      "completed": true
+    },
+    {
+      "seed": 129000,
+      "mode": "baseline",
+      "focal": null,
+      "style": "normal",
+      "trade_enabled": true,
+      "engine": "v17_none",
+      "completed": true
+    },
+    {
+      "seed": 129001,
+      "mode": "electronics_input",
+      "focal": "Technia",
+      "style": "minimum",
+      "trade_enabled": true,
+      "engine": "previous",
+      "completed": true
+    },
+    {
+      "seed": 129001,
+      "mode": "electronics_input",
+      "focal": "Technia",
+      "style": "minimum",
+      "trade_enabled": true,
+      "engine": "v17_none",
+      "completed": true
+    },
+    {
+      "seed": 129002,
+      "mode": "baseline",
+      "focal": "Mineria",
+      "style": "minimum_passive",
+      "trade_enabled": true,
+      "engine": "previous",
+      "completed": true
+    },
+    {
+      "seed": 129002,
+      "mode": "baseline",
+      "focal": "Mineria",
+      "style": "minimum_passive",
+      "trade_enabled": true,
+      "engine": "v17_none",
+      "completed": true
+    },
+    {
+      "seed": 129003,
+      "mode": "electronics_input",
+      "focal": "Tropia",
+      "style": "idle",
+      "trade_enabled": true,
+      "engine": "previous",
+      "completed": true
+    },
+    {
+      "seed": 129003,
+      "mode": "electronics_input",
+      "focal": "Tropia",
+      "style": "idle",
+      "trade_enabled": true,
+      "engine": "v17_none",
+      "completed": true
+    },
+    {
+      "seed": 129004,
+      "mode": "baseline",
+      "focal": "Grainia",
+      "style": "invest",
+      "trade_enabled": true,
+      "engine": "previous",
+      "completed": true
+    },
+    {
+      "seed": 129004,
+      "mode": "baseline",
+      "focal": "Grainia",
+      "style": "invest",
+      "trade_enabled": true,
+      "engine": "v17_none",
+      "completed": true
+    },
+    {
+      "seed": 129005,
+      "mode": "electronics_input",
+      "focal": null,
+      "style": "normal",
+      "trade_enabled": false,
+      "engine": "previous",
+      "completed": true
+    },
+    {
+      "seed": 129005,
+      "mode": "electronics_input",
+      "focal": null,
+      "style": "normal",
+      "trade_enabled": false,
+      "engine": "v17_none",
+      "completed": true
+    }
+  ],
+  "matched_pairs": [
+    {
+      "seed": 129000,
+      "mode": "baseline",
+      "style": "normal",
+      "matched": true
+    },
+    {
+      "seed": 129001,
+      "mode": "electronics_input",
+      "style": "minimum",
+      "matched": true
+    },
+    {
+      "seed": 129002,
+      "mode": "baseline",
+      "style": "minimum_passive",
+      "matched": true
+    },
+    {
+      "seed": 129003,
+      "mode": "electronics_input",
+      "style": "idle",
+      "matched": true
+    },
+    {
+      "seed": 129004,
+      "mode": "baseline",
+      "style": "invest",
+      "matched": true
+    },
+    {
+      "seed": 129005,
+      "mode": "electronics_input",
+      "style": "normal",
+      "matched": true
+    }
+  ],
+  "scope": "Exact recursive old-field projections of countries, world and full trace; added zero-operation instrumentation allowed. No candidate performance analysis."
+}

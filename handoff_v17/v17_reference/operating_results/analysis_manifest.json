@@ -1,0 +1,27 @@
+{
+  "analysis_source_sha256": "2e31707454bc98e9fc6e9c3027235df7a34e3e88b5a7c8131b2c89eab168a5fa",
+  "behavior_contrasts": 192,
+  "behavior_country_comparisons": 6660,
+  "behavior_pair_records": 5760,
+  "completed_at": "2026-11-19T02:32:19.346486+00:00",
+  "detailed_cases_streamed": true,
+  "economic_contrasts": 103,
+  "elapsed_seconds": 44.77444302200092,
+  "errors": [],
+  "formal_economic_games_analyzed": 6740,
+  "full_game_records_retained": false,
+  "group_count": 206,
+  "max_rss_kib": 549124,
+  "metrics_per_group": 1125,
+  "new_economic_games": 0,
+  "output_sha256": {
+    "behavior_cases.jsonl.gz": "145a02a1d33930b7461fc2486a0b0218e6c2caa08250b46e70f347364b114b6e",
+    "summary.json": "982075c9fb102a7821e4d1b8e2a96b7b7f9375e21437463f631cbb23f1dfa147"
+  },
+  "positive_exception_records": 2,
+  "profile_contrasts": 138,
+  "run_manifest_sha256": "0d5846e7cc54c1f38a564874a7bc9f32742fc8327f9c150ce4c59bfd9ddb67f5",
+  "schema": "v17-analysis-manifest-1",
+  "source_sha256": "308f40ed059de4d1a7a1aafaea8ebdae941dff2d5833be7caa89cbb3725153d9",
+  "status": "PASS"
+}

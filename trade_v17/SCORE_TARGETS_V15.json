@@ -1,0 +1,283 @@
+{
+  "schema": "v15-score-targets-1",
+  "status": "FROZEN_CANDIDATES",
+  "meaning": "Research comparison candidates; original game result score remains unchanged.",
+  "names": [
+    "Tropia",
+    "Grainia",
+    "Oilia",
+    "Mechania",
+    "Mineria",
+    "Technia"
+  ],
+  "views": [
+    "legacy",
+    "targets",
+    "steps",
+    "capital",
+    "steps_capital",
+    "capital_fixed_goal"
+  ],
+  "weights": {
+    "economic_growth": 20,
+    "reserve": 5,
+    "capacity": 15,
+    "utilization": 10,
+    "wellbeing": 25,
+    "trade": 25
+  },
+  "calibration": {
+    "source": "existing_v12_calibration_only",
+    "sha256": "a87d6cc7fc622e1c800b2a5f50f9245320b637f5cb3aef1f272247cb9c38719b",
+    "unique_archived_games": 780,
+    "seeds": [
+      90000,
+      90001,
+      90002,
+      90003,
+      90004,
+      90005,
+      90006,
+      90007,
+      90008,
+      90009,
+      90010,
+      90011,
+      90012,
+      90013,
+      90014,
+      90015,
+      90016,
+      90017,
+      90018,
+      90019,
+      90020,
+      90021,
+      90022,
+      90023,
+      90024,
+      90025,
+      90026,
+      90027,
+      90028,
+      90029,
+      90030,
+      90031,
+      90032,
+      90033,
+      90034,
+      90035,
+      90036,
+      90037,
+      90038,
+      90039,
+      90040,
+      90041,
+      90042,
+      90043,
+      90044,
+      90045,
+      90046,
+      90047,
+      90048,
+      90049,
+      90050,
+      90051,
+      90052,
+      90053,
+      90054,
+      90055,
+      90056,
+      90057,
+      90058,
+      90059
+    ],
+    "policies": [
+      "normal",
+      "invest",
+      "trade"
+    ],
+    "samples_per_country": 180,
+    "equal_policy_weight": true,
+    "peer_policy_outcomes_excluded": true,
+    "new_calibration_games": 0
+  },
+  "method": {
+    "economic_quantile": 0.75,
+    "economic_floor": 50,
+    "economic_step": 5,
+    "industrial": "Smallest actually observed calibration growth at or above the original raw P75, without percent rounding.",
+    "capital_recognition_fraction": 1.0,
+    "previous_capital_fraction": 0.45,
+    "curve": "linear capped at target; no headroom curve"
+  },
+  "source_old_targets_sha256": "47e78fe6a9cebab256bb52a3b7dbef9c9b46cec4363d15700290ddfa2e4620d5",
+  "target_opportunities_sha256": "9032c82f96b473fc547f31a65bdca785d8a9d49c3033a273ef64869c26799478",
+  "economic_old": {
+    "Tropia": 305,
+    "Grainia": 265,
+    "Oilia": 245,
+    "Mechania": 230,
+    "Mineria": 185,
+    "Technia": 895
+  },
+  "economic_capital": {
+    "Tropia": 360,
+    "Grainia": 280,
+    "Oilia": 320,
+    "Mechania": 295,
+    "Mineria": 230,
+    "Technia": 1305
+  },
+  "raw_economic_capital": {
+    "Tropia": 357.125,
+    "Grainia": 279.125,
+    "Oilia": 316.125,
+    "Mechania": 291.625,
+    "Mineria": 226.875,
+    "Technia": 1300.8999999999999
+  },
+  "capital_calibration_by_policy": {
+    "Tropia": {
+      "normal": {
+        "n": 60,
+        "mean": 319.325,
+        "p75": 346.875
+      },
+      "invest": {
+        "n": 60,
+        "mean": 365.05,
+        "p75": 390.375
+      },
+      "trade": {
+        "n": 60,
+        "mean": 274.0083333333333,
+        "p75": 293.0
+      }
+    },
+    "Grainia": {
+      "normal": {
+        "n": 60,
+        "mean": 267.06666666666666,
+        "p75": 308.0
+      },
+      "invest": {
+        "n": 60,
+        "mean": 273.31666666666666,
+        "p75": 327.0
+      },
+      "trade": {
+        "n": 60,
+        "mean": 244.70833333333334,
+        "p75": 261.125
+      }
+    },
+    "Oilia": {
+      "normal": {
+        "n": 60,
+        "mean": 290.81666666666666,
+        "p75": 313.375
+      },
+      "invest": {
+        "n": 60,
+        "mean": 314.21666666666664,
+        "p75": 336.375
+      },
+      "trade": {
+        "n": 60,
+        "mean": 231.40833333333333,
+        "p75": 241.625
+      }
+    },
+    "Mechania": {
+      "normal": {
+        "n": 60,
+        "mean": 311.8666666666667,
+        "p75": 328.375
+      },
+      "invest": {
+        "n": 60,
+        "mean": 102.125,
+        "p75": 107.75
+      },
+      "trade": {
+        "n": 60,
+        "mean": 176.675,
+        "p75": 188.625
+      }
+    },
+    "Mineria": {
+      "normal": {
+        "n": 60,
+        "mean": 185.25833333333333,
+        "p75": 215.125
+      },
+      "invest": {
+        "n": 60,
+        "mean": 243.50833333333333,
+        "p75": 261.125
+      },
+      "trade": {
+        "n": 60,
+        "mean": 163.53833333333333,
+        "p75": 181.125
+      }
+    },
+    "Technia": {
+      "normal": {
+        "n": 60,
+        "mean": 1219.7483333333332,
+        "p75": 1408.2749999999999
+      },
+      "invest": {
+        "n": 60,
+        "mean": 1241.5266666666669,
+        "p75": 1415.7999999999997
+      },
+      "trade": {
+        "n": 60,
+        "mean": 536.45,
+        "p75": 632.25
+      }
+    }
+  },
+  "industrial_old": {
+    "Tropia": 0.35,
+    "Grainia": 0.4,
+    "Oilia": 0.85,
+    "Mechania": 0.45,
+    "Mineria": 0.6,
+    "Technia": 1.5
+  },
+  "industrial_steps": {
+    "Tropia": 0.3333333333333333,
+    "Grainia": 0.4,
+    "Oilia": 0.8333333333333334,
+    "Mechania": 0.4166666666666667,
+    "Mineria": 0.6,
+    "Technia": 1.5
+  },
+  "official_economic": {
+    "Tropia": 250,
+    "Grainia": 240,
+    "Oilia": 140,
+    "Mechania": 160,
+    "Mineria": 140,
+    "Technia": 160
+  },
+  "official_industrial": {
+    "Tropia": 0.9,
+    "Grainia": 0.9,
+    "Oilia": 0.48,
+    "Mechania": 0.25,
+    "Mineria": 0.48,
+    "Technia": 0.27
+  },
+  "warnings": [
+    "A bookkeeping convention for the game; neither liquidation prices nor real-world accounting advice.",
+    "Includes development and research cash spending as capital; no depreciation or proof of usefulness.",
+    "Automatic satisfaction-linked income and inventory valuations are kept.",
+    "Targets are not fitted to v13, v14, smoke or v15 formal validation outcomes.",
+    "AI policies do not read these alternative scores."
+  ]
+}

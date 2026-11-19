@@ -1,0 +1,704 @@
+{
+  "schema": "v17-national-operation-protocol-1",
+  "status": "FIXED_BEFORE_NEW_GAMES",
+  "created_at": "2026-11-19T02:13:22.006016+00:00",
+  "purpose": "Test the user proposal that fuel and mineral-based basic materials are needed for national operation even without industrial production or technology investment.",
+  "execution": {
+    "schema": "v17-fresh-operating-execution-plan-1",
+    "modes": [
+      "baseline",
+      "electronics_input"
+    ],
+    "main_profiles": [
+      "none",
+      "light",
+      "regular",
+      "daily"
+    ],
+    "stress_profiles": [
+      "none",
+      "light",
+      "regular"
+    ],
+    "ranked_countries": [
+      "Tropia",
+      "Grainia",
+      "Oilia",
+      "Mechania",
+      "Mineria",
+      "Technia"
+    ],
+    "unranked_countries": [
+      "Novia",
+      "Agrea",
+      "Ferria"
+    ],
+    "country_count": 9,
+    "rounds": 9,
+    "phases": {
+      "main": {
+        "seed_range": [
+          130000,
+          130099
+        ],
+        "n_per_condition": 100,
+        "profiles": [
+          "none",
+          "light",
+          "regular",
+          "daily"
+        ],
+        "scenarios": [
+          {
+            "scenario": "None:normal",
+            "focal": null,
+            "style": "normal",
+            "overrides": {}
+          }
+        ]
+      },
+      "stress": {
+        "seed_range": [
+          132000,
+          132029
+        ],
+        "n_per_condition": 30,
+        "profiles": [
+          "none",
+          "light",
+          "regular"
+        ],
+        "scenarios": [
+          {
+            "scenario": "None:normal",
+            "focal": null,
+            "style": "normal",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:minimum",
+            "focal": "Tropia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:idle",
+            "focal": "Tropia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:invest",
+            "focal": "Tropia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:trade",
+            "focal": "Tropia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:minimum_passive",
+            "focal": "Tropia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:minimum",
+            "focal": "Grainia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:idle",
+            "focal": "Grainia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:invest",
+            "focal": "Grainia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:trade",
+            "focal": "Grainia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:minimum_passive",
+            "focal": "Grainia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:minimum",
+            "focal": "Oilia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:idle",
+            "focal": "Oilia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:invest",
+            "focal": "Oilia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:trade",
+            "focal": "Oilia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:minimum_passive",
+            "focal": "Oilia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:minimum",
+            "focal": "Mechania",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:idle",
+            "focal": "Mechania",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:invest",
+            "focal": "Mechania",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:trade",
+            "focal": "Mechania",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:minimum_passive",
+            "focal": "Mechania",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:minimum",
+            "focal": "Mineria",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:idle",
+            "focal": "Mineria",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:invest",
+            "focal": "Mineria",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:trade",
+            "focal": "Mineria",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:minimum_passive",
+            "focal": "Mineria",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:minimum",
+            "focal": "Technia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:idle",
+            "focal": "Technia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:invest",
+            "focal": "Technia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:trade",
+            "focal": "Technia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:minimum_passive",
+            "focal": "Technia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:cheap",
+            "focal": "Technia",
+            "style": "cheap",
+            "overrides": {}
+          },
+          {
+            "scenario": "None:no_trade",
+            "focal": null,
+            "style": "no_trade",
+            "overrides": {}
+          }
+        ]
+      }
+    },
+    "main_games": 800,
+    "stress_games": 5940,
+    "formal_games": 6740,
+    "smoke_games": 24,
+    "smoke_tasks": [
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "none",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "focal": null,
+        "style": "normal",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "none",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "focal": "Technia",
+        "style": "invest",
+        "behaviors": {
+          "Technia": "invest"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "none",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "focal": "Mineria",
+        "style": "idle",
+        "behaviors": {
+          "Mineria": "idle"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "none",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "focal": "Grainia",
+        "style": "minimum",
+        "behaviors": {
+          "Grainia": "minimum"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "none",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "focal": "Tropia",
+        "style": "minimum_passive",
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "none",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "focal": null,
+        "style": "no_trade",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "light",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "focal": null,
+        "style": "normal",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "light",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "focal": "Technia",
+        "style": "invest",
+        "behaviors": {
+          "Technia": "invest"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "light",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "focal": "Mineria",
+        "style": "idle",
+        "behaviors": {
+          "Mineria": "idle"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "light",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "focal": "Grainia",
+        "style": "minimum",
+        "behaviors": {
+          "Grainia": "minimum"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "light",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "focal": "Tropia",
+        "style": "minimum_passive",
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "light",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "focal": null,
+        "style": "no_trade",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "regular",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "focal": null,
+        "style": "normal",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "regular",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "focal": "Technia",
+        "style": "invest",
+        "behaviors": {
+          "Technia": "invest"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "regular",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "focal": "Mineria",
+        "style": "idle",
+        "behaviors": {
+          "Mineria": "idle"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "regular",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "focal": "Grainia",
+        "style": "minimum",
+        "behaviors": {
+          "Grainia": "minimum"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "regular",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "focal": "Tropia",
+        "style": "minimum_passive",
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "regular",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "focal": null,
+        "style": "no_trade",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "daily",
+        "scenario": "None:normal",
+        "seed": 128000,
+        "focal": null,
+        "style": "normal",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "daily",
+        "scenario": "Technia:invest",
+        "seed": 128001,
+        "focal": "Technia",
+        "style": "invest",
+        "behaviors": {
+          "Technia": "invest"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "daily",
+        "scenario": "Mineria:idle",
+        "seed": 128002,
+        "focal": "Mineria",
+        "style": "idle",
+        "behaviors": {
+          "Mineria": "idle"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "daily",
+        "scenario": "Grainia:minimum",
+        "seed": 128003,
+        "focal": "Grainia",
+        "style": "minimum",
+        "behaviors": {
+          "Grainia": "minimum"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "operating_profile": "daily",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 128004,
+        "focal": "Tropia",
+        "style": "minimum_passive",
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "operating_profile": "daily",
+        "scenario": "None:no_trade",
+        "seed": 128005,
+        "focal": null,
+        "style": "no_trade",
+        "behaviors": {}
+      }
+    ],
+    "formal_ledger_rows_per_kind": 545940,
+    "formal_traces": 998,
+    "trace_scope": "Every main trajectory and the first seed of each stress condition.",
+    "score_reference": "v15 steps; frozen goals and capacity15+utilization10",
+    "score_feedback_to_actions": false,
+    "daily_scope": "Normal-operation boundary diagnostic only; no daily stress conclusions.",
+    "actual_game_count_note": "Semantic/backward-compatibility test executions reported separately in their receipt."
+  },
+  "profiles": {
+    "none": {
+      "fuel_rounds": [],
+      "ore_rounds": [],
+      "role": "unchanged control"
+    },
+    "light": {
+      "fuel_rounds": [
+        3,
+        6,
+        9
+      ],
+      "ore_rounds": [
+        4,
+        8
+      ],
+      "role": "low recurring national demand"
+    },
+    "regular": {
+      "fuel_rounds": [
+        2,
+        4,
+        6,
+        8
+      ],
+      "ore_rounds": [
+        3,
+        6,
+        9
+      ],
+      "role": "more frequent recurring national demand"
+    },
+    "daily": {
+      "fuel_rounds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "ore_rounds": [
+        3,
+        6,
+        9
+      ],
+      "role": "high fuel intensity boundary; main normal only"
+    }
+  },
+  "quantity_per_due": 1,
+  "population_scaled": false,
+  "settlement_semantics": "One whole bundle consumed on each public scheduled date after trading. Periodic settlement abstraction; no fractional prepaid credits, no assertion of daily shortage effect on non-due rounds. No current burden in rounds before the first scheduled due date.",
+  "design_rationale": {
+    "basis": "Simple whole-unit schedules, selected before fresh outcomes. Past v15 main baseline100 scale checked only to avoid treating everyround1bundle as tiny.",
+    "archived_scale_reference": {
+      "games": 100,
+      "world_ore_produced_mean": 45.04,
+      "world_ore_consumed_mean": 19.57,
+      "world_ore_ending_mean": 27.47,
+      "world_fuel_produced_mean": 51.36,
+      "world_fuel_consumed_mean": 10.7,
+      "world_fuel_ending_mean": 42.66
+    },
+    "extra_world_need": {
+      "light": {
+        "fuel": 27,
+        "ore": 18
+      },
+      "regular": {
+        "fuel": 36,
+        "ore": 27
+      },
+      "daily": {
+        "fuel": 81,
+        "ore": 27
+      }
+    },
+    "not_fitted_to_new_scores_or_win_counts": true
+  },
+  "implementation": {
+    "resource_purpose": "national",
+    "partition": "raw_consumed=production+research+national",
+    "targets": "Legacy industrial/development target plus unsettled current national due exactly once; existing protection/recall applies to own items.",
+    "procurement": "Food first, then current national fuel/ore budget with no optional15G cushion, then existing household electronics/additional raw/machine order. Requests/budgets for same raw good merged to one basic row; inherited execution tags and trading sweeps retained.",
+    "no_double_request": "Subtract prior requested national quantities from remaining raw request, not merely quantities affordable in the plan.",
+    "forecast": "Add remaining public national obligations per remaining round to world_potential_need for ore/fuel; no new foresight about others or newAIservice.",
+    "reserve": "Existing reserve formula kept, no new buffer grant, no new protection of future national bills.",
+    "household_guard": "Existing food/electronics guard unchanged; raw national shortage can still coexist with development. This is observed as a possible remaining AI issue.",
+    "settlement": "Parent food/living settlement and its income happen once; national consumption afterward then same-round happiness/history and net income correction.",
+    "satisfaction": "final=max(0,base-8*missing_fuel/required_fuel-4*missing_ore/required_ore), absent requirement contributes0, rounded6decimals.",
+    "income": "Same10+floor(happiness/10+.5); no extra fine and no additional monetarygrant.",
+    "trade_credit": "Record full requested national need before consume; inherited actualuse/import/export accounting applies once.",
+    "end_of_game": "Only currentR9 operation is due. NoR10 inventory target/national consumption."
+  },
+  "unchanged": [
+    "85inheritedsourcefiles",
+    "9countries9rounds",
+    "original6rankedadditional3unranked",
+    "startingcash/stocks",
+    "physicalproductionrecipes andmachinefallback",
+    "referenceprices/pricebounds/marketnegotiation",
+    "inventoryvaluation andstorage-feeconfiguration",
+    "investmentcosts and45percentcapitalrecognition",
+    "v15steps economic/industrialgoals",
+    "15capacity10use25economy25wellbeing25trade scoreweights"
+  ],
+  "score_interpretation": "Frozen targets are diagnostic under a changed economy. Do not interpret rank equality as fairness or fit new goals to these outcomes.",
+  "primary_metrics": [
+    "Newproduction,rawconsumptionbyproduction/research/national,initial/endingstock andunusedown-outputpergood",
+    "Nationalrequired/consumed/missing andshortagerounds",
+    "All9countrycash,rawpurchase/sales,outcomeincome,liquidity,investment,foodshortages,householdhappiness",
+    "Original6countryfrozen-goalscorecomponents/tops/range",
+    "Rawproductionfailure anddevelopmentcompletions",
+    "Matchedbehavior minimum/minimum_passive/idle/invest/trade; lowpricepositiveexceptions withactualuse andproducerwelfare",
+    "Trade-disabled consequence andsupplier dependency; nohumanlearningclaim",
+    "Round-by-round national andindustrial shortage tocatch scheduled demandclustering"
+  ],
+  "comparisons": "Same seeds under each profile/mode. Main100kept separatefromstress30. Dailyonlymainnormal, no behavioral extrapolation.",
+  "decision_rules": [
+    "Inventory shrinkage alone is insufficient for adoption. Check acquired-and-used resources, shortages, food/living harm, liquidity, investment and allnations outcomes.",
+    "No forcedbuyers,tradecreationwithoutrealuse,cashsubsidiesorpricefloors tohide imbalance.",
+    "Lowpriceadvantage requirescaseinspection; zeroobservedidlewinsisnot universalproof.",
+    "Prefer lighter schedule if stronger demand causespersistent shortagesorhurtscorelesson; no automaticcoefficienttuningafterresults.",
+    "Retainbaselineifnonecandidatejustifiesadoption; labelbestfollowupcandidateclearly.",
+    "Newnational demand islegitimatechangedphysicalrule, notrewrittenhistoricusage orbonuspoints."
+  ],
+  "validation": [
+    "12semanticbackcompat completedgames in6pairedcases excludedfromformal",
+    "24 integration smoke completedgames excludedfromformal",
+    "Allformalroundscash/raw/nationalledgers preserved",
+    "Goodsownership/escrow/use/cash invariants andpurposepartition validated",
+    "Independentcountry/round/UIDtrace/formula/statisticalaudit",
+    "ReportnumericQA andpackagehashes"
+  ],
+  "limits": [
+    "Fixedautomatedpolicies; noLLMAPI,score-awareoptimization,human3student80minuteorlivecloudtest",
+    "No population scaling inthisfirstcomparison; sharedschedule mightcausedemandclustering",
+    "Normalagents do notnewlyreservefuturebasicbills; effectmustreported",
+    "Nationalresource consumptionraisesrawutilizationbydesign, notproof ofproductiveindustrialgrowth",
+    "Periodicmodelssettleonlyonlistedrounds; notliteralcontinuousenergy-usemodel"
+  ],
+  "stop_rule": "Afterpredeclaredsemanticchecks/smoke/frozen6740formal/invariant+independentaudit/reportQA,deliver. Preserveadverseresults; no optionalparametersearch."
+}

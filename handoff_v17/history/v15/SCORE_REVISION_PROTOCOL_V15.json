@@ -1,0 +1,443 @@
+{
+  "schema": "v15-score-revision-protocol-1",
+  "purpose": "Implement minimally changed attainable capacity goals and compare investment capital recognition while preserving the economic engine and original official score.",
+  "execution": {
+    "schema": "v15-fresh-execution-plan-1",
+    "modes": [
+      "baseline",
+      "electronics_input"
+    ],
+    "ranked_countries": [
+      "Tropia",
+      "Grainia",
+      "Oilia",
+      "Mechania",
+      "Mineria",
+      "Technia"
+    ],
+    "unranked_countries": [
+      "Novia",
+      "Agrea",
+      "Ferria"
+    ],
+    "rounds": 9,
+    "country_count": 9,
+    "phases": {
+      "main": {
+        "seed_range": [
+          120000,
+          120099
+        ],
+        "n_per_condition": 100,
+        "scenarios": [
+          {
+            "scenario": "None:normal",
+            "focal": null,
+            "style": "normal",
+            "overrides": {}
+          }
+        ]
+      },
+      "stress": {
+        "seed_range": [
+          122000,
+          122029
+        ],
+        "n_per_condition": 30,
+        "scenarios": [
+          {
+            "scenario": "None:normal",
+            "focal": null,
+            "style": "normal",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:minimum",
+            "focal": "Tropia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:idle",
+            "focal": "Tropia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:invest",
+            "focal": "Tropia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:trade",
+            "focal": "Tropia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Tropia:minimum_passive",
+            "focal": "Tropia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:minimum",
+            "focal": "Grainia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:idle",
+            "focal": "Grainia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:invest",
+            "focal": "Grainia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:trade",
+            "focal": "Grainia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Grainia:minimum_passive",
+            "focal": "Grainia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:minimum",
+            "focal": "Oilia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:idle",
+            "focal": "Oilia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:invest",
+            "focal": "Oilia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:trade",
+            "focal": "Oilia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Oilia:minimum_passive",
+            "focal": "Oilia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:minimum",
+            "focal": "Mechania",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:idle",
+            "focal": "Mechania",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:invest",
+            "focal": "Mechania",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:trade",
+            "focal": "Mechania",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mechania:minimum_passive",
+            "focal": "Mechania",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:minimum",
+            "focal": "Mineria",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:idle",
+            "focal": "Mineria",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:invest",
+            "focal": "Mineria",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:trade",
+            "focal": "Mineria",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Mineria:minimum_passive",
+            "focal": "Mineria",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:minimum",
+            "focal": "Technia",
+            "style": "minimum",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:idle",
+            "focal": "Technia",
+            "style": "idle",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:invest",
+            "focal": "Technia",
+            "style": "invest",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:trade",
+            "focal": "Technia",
+            "style": "trade",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:minimum_passive",
+            "focal": "Technia",
+            "style": "minimum_passive",
+            "overrides": {}
+          },
+          {
+            "scenario": "Technia:cheap",
+            "focal": "Technia",
+            "style": "cheap",
+            "overrides": {}
+          },
+          {
+            "scenario": "None:no_trade",
+            "focal": null,
+            "style": "no_trade",
+            "overrides": {}
+          }
+        ]
+      }
+    },
+    "main_games": 200,
+    "stress_games": 1980,
+    "formal_games": 2180,
+    "smoke_games": 6,
+    "smoke_tasks": [
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "scenario": "None:normal",
+        "seed": 98000,
+        "focal": null,
+        "style": "normal",
+        "behaviors": {}
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "scenario": "Technia:invest",
+        "seed": 98001,
+        "focal": "Technia",
+        "style": "invest",
+        "behaviors": {
+          "Technia": "invest"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "scenario": "Mineria:idle",
+        "seed": 98002,
+        "focal": "Mineria",
+        "style": "idle",
+        "behaviors": {
+          "Mineria": "idle"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "scenario": "Grainia:minimum",
+        "seed": 98003,
+        "focal": "Grainia",
+        "style": "minimum",
+        "behaviors": {
+          "Grainia": "minimum"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "baseline",
+        "scenario": "Tropia:minimum_passive",
+        "seed": 98004,
+        "focal": "Tropia",
+        "style": "minimum_passive",
+        "behaviors": {
+          "Tropia": "minimum_passive"
+        }
+      },
+      {
+        "phase": "smoke",
+        "mode": "electronics_input",
+        "scenario": "None:no_trade",
+        "seed": 98005,
+        "focal": null,
+        "style": "no_trade",
+        "behaviors": {}
+      }
+    ],
+    "new_economic_games_including_smoke": 2186,
+    "formal_cash_ledger_rows": 176580,
+    "formal_raw_ledger_rows": 176580,
+    "formal_traces": 266,
+    "trace_scope": "All 200 main games and the first seed of all 66 stress conditions.",
+    "score_feedback_to_actions": false,
+    "score_views": [
+      "legacy",
+      "targets",
+      "steps",
+      "capital",
+      "steps_capital",
+      "capital_fixed_goal"
+    ],
+    "input_behavior_scope": "Policies are inherited fixed automated behaviors, not human students or adaptive scoring agents."
+  },
+  "inherited_source_files": 85,
+  "calibration": {
+    "existing_games": 780,
+    "new_games": 0,
+    "seeds": [
+      90000,
+      90059
+    ],
+    "per_country_samples": 180,
+    "policies": [
+      "normal",
+      "invest",
+      "trade"
+    ],
+    "equal_policy_weight": true,
+    "exclude_peer_policy_outcomes": true
+  },
+  "changes": {
+    "industrial_target": "At or above existing raw v12 P75, choose the smallest growth actually observed in own-policy calibration; do not round the percentage upward.",
+    "economic_candidate": "Keep wealth as economic meaning. Recognize cumulative investment cash spending as 100% capital rather than45%; gain=old_asset_gain+0.55*investment.",
+    "economic_target": "Use the same calibration policies, P75, floor50G and upward5G rounding for the new wealth metric.",
+    "scores": "All six components and total100 retained. Linear target cap only; headroom excluded."
+  },
+  "view_definitions": {
+    "legacy": "Original official targets and45%asset recognition.",
+    "targets": "Frozen v12 economic+industrial targets and45%asset recognition.",
+    "steps": "Discrete industrial goals, original v12 economic target,45%asset recognition.",
+    "capital": "Original v12 industrial target,new calibrated economic target,100%asset recognition.",
+    "steps_capital": "Discrete industrial goals,new calibrated economic target,100%asset recognition.",
+    "capital_fixed_goal": "Diagnostic only:discrete industrial goals,original v12 economic target,100%asset recognition; separates numerator and denominator changes."
+  },
+  "primary_factorial_views": [
+    "targets",
+    "steps",
+    "capital",
+    "steps_capital"
+  ],
+  "paired_factorial_contrasts": [
+    [
+      "targets",
+      "steps"
+    ],
+    [
+      "targets",
+      "capital"
+    ],
+    [
+      "steps",
+      "steps_capital"
+    ],
+    [
+      "capital",
+      "steps_capital"
+    ],
+    [
+      "steps",
+      "capital_fixed_goal"
+    ],
+    [
+      "capital_fixed_goal",
+      "steps_capital"
+    ]
+  ],
+  "invariants": [
+    "Source85 and old targets unchanged",
+    "Production,prices,resource requirements and market decisions unchanged",
+    "Automatic income and inventory valuation unchanged",
+    "Cash reserve5,usage10,wellbeing25,trade25 unchanged",
+    "Additional3 haveNone scores",
+    "New scoring runs only after completed game and cannot feed actions",
+    "All original fields and official results preserved",
+    "Each successful development has resource/cash/machine evidence",
+    "Record hashes before/after scoring and source snapshots before/after execution"
+  ],
+  "report_metrics": [
+    "six-country means and paired score contributions",
+    "top count includingties and averagewithin-game maxminusmin",
+    "capacity targets and capfrequencies",
+    "normal actualdevelopmentwitnesses",
+    "cash,old andcapitalasset gains,investment,unusedstock,tax,production,actualuse",
+    "usefulimports/exports,wellbeing,foodshortage,productionfailures",
+    "minimum,minimum_passive,idle,invest,trade effects againstsame stressnormal controls",
+    "discount exceptions with usefuloutcomes",
+    "investmentup/usagenotincrease/scoreup flags,not automaticwaste verdict"
+  ],
+  "comparisons": {
+    "normal_main": "100 newseeds per economicmode",
+    "behavior": "30 separate newstressseeds,paired withsamemode stressnormal",
+    "mode": "baseline andelectronics_input paired byseed/scenario",
+    "calibration": "Never merged withformal results",
+    "smoke": "6 technicalintegrationgames excludedfromformal summaries"
+  },
+  "decision_rules": [
+    "Do not refit after formal results",
+    "No equal-win or equal-investment-count objective",
+    "Attainable thresholds fix explanation even if caps increase",
+    "Assess bookkeeping candidate with strategy/usage/liquidity effects,not narrowranges alone",
+    "Keep all adverse results and smallminimum-price exceptions",
+    "Do not count replayed scores as newgames",
+    "Verifiedactualroutes prove onlytheir observedpolicy/marketconditions",
+    "100%capital is a gamebook-value convention,notliquidationcash or realaccountingclaim"
+  ],
+  "scope_limits": [
+    "Fixed automatedpolicies rather than score-aware optimizingagents",
+    "No human3student/80minute/livecloudtest",
+    "minimum andminimum_passive retainbuying/livingmanagement;passive hasnodevelopment",
+    "Worldnodevelopment/nobuyinghumanbehavior notfullymodeled",
+    "Onlytwoeconomicmodes in thisfresh test"
+  ],
+  "stop_rule": "After frozen-targets, meaningfulscorerchecks,6smoke,2180formal,independentformula/accounting/pathaudit andreportnumberQA,deliver without newcoefficienttuning or optionaladditionalgames."
+}

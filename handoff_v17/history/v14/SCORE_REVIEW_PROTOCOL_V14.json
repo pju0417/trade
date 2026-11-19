@@ -1,0 +1,133 @@
+{
+  "schema": "v14-score-only-review-1",
+  "purpose": "Review the four previously fixed growth-target and ceiling views on archived v13 economic outcomes; distinguish attainable objectives, score saturation and sources of asset growth.",
+  "input": {
+    "source": "v13 causal_results/runs.jsonl.gz",
+    "actual_prior_game_executions": 5100,
+    "pilot_records": 180,
+    "formal_records": 4920,
+    "main_records": 600,
+    "stress_records": 4320,
+    "new_economic_games": 0,
+    "views_per_ranked_country": 4,
+    "ranked_countries": [
+      "Tropia",
+      "Grainia",
+      "Oilia",
+      "Mechania",
+      "Mineria",
+      "Technia"
+    ],
+    "unranked_countries": [
+      "Novia",
+      "Agrea",
+      "Ferria"
+    ],
+    "derived_country_view_records": 122400,
+    "goals_file": "V12_FROZEN_GOALS.json",
+    "goals_sha256": "47e78fe6a9cebab256bb52a3b7dbef9c9b46cec4363d15700290ddfa2e4620d5"
+  },
+  "views": {
+    "legacy": "Original country goals and linear cap at goal.",
+    "targets": "Frozen v12 country goals and linear cap at goal.",
+    "headroom": "Original goals; 80% of growth component at goal, 100% at twice goal.",
+    "targets_headroom": "Frozen v12 goals; same 80%/two-times-goal curve."
+  },
+  "fixed_components": {
+    "economic_growth": 20,
+    "reserve": 5,
+    "industrial_capacity": 15,
+    "actual_utilization": 10,
+    "wellbeing": 25,
+    "trade": 25
+  },
+  "no_changes": [
+    "Economic production, prices, raw requirements, starting conditions and investment rules",
+    "Official saved scores",
+    "Growth metrics including asset and utilization definitions",
+    "Frozen goals, score curves, weights and benchmark selection",
+    "AI actions or adaptation to the alternative scores"
+  ],
+  "analysis_status": "Posthoc review of already inspected archived outcomes using previously frozen views. Not a fresh independent simulation or a score-aware policy experiment.",
+  "cohorts": {
+    "primary": "main:baseline:None:normal, 100 seeds",
+    "candidate_sensitivity": "main:electronics_input:None:normal, 100 paired seeds",
+    "other_modes": "All other four economic modes kept separately as sensitivity checks.",
+    "behavior_controls": "Use same mode and stress seed normal control, 30 seeds; do not pair with main100.",
+    "pilot": "Rescore and verify lineage only; never combine with formal summaries or claim independent holdout."
+  },
+  "summary_metrics": [
+    "Mean total and six score contributions (economic growth, reserve, capacity, utilization, wellbeing, trade)",
+    "Economic-growth and capacity at-cap and >=95% near-cap frequencies",
+    "Existing relative +5% growth sensitivities, with zero-growth limitation identified",
+    "Arithmetic-only +10G asset-gain and +0.10 capacity-growth sensitivity; not feasible game actions",
+    "Original-six top-score counts with ties and 1e-9 tolerance",
+    "Mean of per-game original-six max-minus-min score ranges, separate from range of country means",
+    "Same-record view differences and 2x2 view interaction"
+  ],
+  "behavior_scope": {
+    "minimum_idle": "Original six each, all six economic modes, same stress seeds.",
+    "cheap": "Technia only; existing public half-reference pricing scenario.",
+    "invest_trade": "Mineria and Technia only; no claims for the other four countries.",
+    "compound": "Rescore all archived compound and mixed cases; compare only available same-seed controls.",
+    "no_trade": "Archived zero-trade scenario, never fabricate a new control."
+  },
+  "behavior_diagnostics": [
+    "Total and six score contribution paired deltas with mean, approximate 95% interval, up/tie/down counts",
+    "Idle asset gain > normal; economic component > normal; total score > normal counted separately",
+    "Investment rises and actual use fails to rise while score rises: review flag, not automatic proof of waste or a bug",
+    "Minimum-price and half-price score exceptions retained and explained, not tuned away"
+  ],
+  "asset_identity": "asset_gain = cash_sales - cash_purchases + automatic_operating_income - 0.55*investment + (end_stock_value - start_stock_value); start_stock_value = start_asset_value - start_cash. This decomposes the existing metric without replacing it.",
+  "structural_capacity_review": {
+    "type": "Exhaustive dynamic enumeration of relaxed industrial-level states, not economic games.",
+    "rounds": 9,
+    "investment_rounds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "max_investments_per_round": 1,
+    "max_level": 4,
+    "expansion": "Only the configured expansion good, starting in round3; original owned industries remain available.",
+    "capacity": "Existing fixed-base-price weighted base production; food gains two base units per level, other goods one.",
+    "relaxed_constraints": [
+      "Cash",
+      "Raw materials",
+      "Machines",
+      "Household guards",
+      "AI plan preference"
+    ],
+    "outputs": [
+      "Maximum capacity growth upper bound with witness",
+      "First attainable growth at or above each frozen goal and full-score threshold",
+      "Minimum successful investments lower bound for those thresholds",
+      "Raw percentile vs rounded goal threshold crossings",
+      "Impossible full-capacity score if threshold exceeds even the relaxed upper bound"
+    ],
+    "interpretation": "A relaxed bound below the threshold proves impossibility. A bound above it does not prove economic reachability or appropriate difficulty."
+  },
+  "invariants": [
+    "All5100 identities and exact source schedule match, with source hashes before/after.",
+    "The copied source and frozen goals remain unchanged.",
+    "Pure score_record is used; Game, extract_metrics and make_goals are not called.",
+    "All original official scores and archived targets views reproduce within tolerance.",
+    "An independent auditor recomputes raw formulas before the legacy overwrite.",
+    "Reserve, utilization, wellbeing and trade are identical across views.",
+    "Total view changes equal economic-growth plus capacity changes.",
+    "Finite bounded scores, original-six only, additional-three None.",
+    "No non-score economic input field is mutated; compact replay inputs retain source identity and hashes."
+  ],
+  "reporting": [
+    "Do not treat lower caps, narrower spreads or more even top-score counts alone as fairness.",
+    "Do not equate 122400 derived country-view results with new games or independent samples.",
+    "No new objective coefficients will be fitted to these results.",
+    "Show candidate choices separately from approved game rules.",
+    "Learning, three human players, 80-minute pacing and score-aware strategy response remain untested."
+  ],
+  "stop_rule": "Complete the declared score replay, structural opportunity audit, independent formula/data checks and concise report-number QA; then package and deliver without optional new games, targets or curve tuning."
+}

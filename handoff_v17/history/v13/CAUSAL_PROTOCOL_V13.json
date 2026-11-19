@@ -1,0 +1,157 @@
+{
+  "schema": "v13-causal-protocol-1",
+  "purpose": "Separate audited execution rules, AI budget priority, AI investment multiplier and one common electronics input coefficient; keep official scores fixed.",
+  "rounds": 9,
+  "countries": 9,
+  "ranked_countries": [
+    "Tropia",
+    "Grainia",
+    "Oilia",
+    "Mechania",
+    "Mineria",
+    "Technia"
+  ],
+  "baseline": "Frozen v12 economics and legacy official score, with storage, extra bonus inputs and machine upkeep experiments OFF.",
+  "ai_factors": {
+    "operating_first": "Reserve virtual wallet for food, then only installed-capacity next-cycle ore/fuel shortage, then missing household electronics, then research/project extra raw. Merge each raw good into one execution row; preserve original trading order and transaction tags. No added negotiation opportunity. A reserved but unavailable input can tie up the living-goods budget; measure that downside.",
+    "remove_durable_boost": "Change only original early durable industry multiplier 1.8 to1; retain scores other terms, threshold, cash/raw/household guards, route choice/waiting and focus rules."
+  },
+  "economic_factor": {
+    "name": "electronics_extra_raw",
+    "values": [
+      0,
+      1
+    ],
+    "scope": "For every country, each electronics production cycle at industry level>=2 consumes one additional bundle of that cycle existing alternating raw type. Level1, starting goods, machine recipe, research materials, prices, cash fees and score rules unchanged."
+  },
+  "modes": [
+    "baseline",
+    "operating_first",
+    "no_durable_boost",
+    "ai_combined",
+    "electronics_input",
+    "combined_input"
+  ],
+  "stages": {
+    "ai_pilot": {
+      "seeds": [
+        96000,
+        96029
+      ],
+      "modes": [
+        "baseline",
+        "operating_first",
+        "no_durable_boost",
+        "ai_combined"
+      ],
+      "scenario": "normal",
+      "games": 120
+    },
+    "economic_pilot": {
+      "seeds": [
+        96000,
+        96029
+      ],
+      "modes": [
+        "electronics_input",
+        "combined_input"
+      ],
+      "scenario": "normal",
+      "games": 60,
+      "requires": "root review of saved AI pilot; no user reconfirmation required"
+    },
+    "main": {
+      "seeds": [
+        100000,
+        100099
+      ],
+      "scenarios": [
+        "normal"
+      ],
+      "modes": "all six after pilot review",
+      "games": 600
+    },
+    "stress": {
+      "seeds": [
+        102000,
+        102029
+      ],
+      "conditions_per_mode": 24,
+      "modes": "same final frozen modes",
+      "games": 4320
+    }
+  },
+  "economic_pilot_trigger": "Inspect the AI pilot first. If the resource-sector cash-flow disadvantage remains under the AI changes, examine the already defined common electronics input candidate. This is an exploration trigger, not an assumption that trade deficits are necessarily unfair.",
+  "fixed_after_pilot": "No new coefficient fitting from final results. Final modes and source/test/protocol hashes frozen before main/stress.",
+  "policy_comparisons": [
+    "operating_first-baseline",
+    "no_durable_boost-baseline",
+    "ai_combined-baseline",
+    "ai_combined-operating_first-no_durable_boost+baseline",
+    "electronics_input-baseline",
+    "combined_input-ai_combined"
+  ],
+  "behavior_comparisons": "Same mode and same stress seeds, each focal and mixed profile against the normal stress control; compound Mechania-idle profiles additionally versus Mechania-idle alone.",
+  "stress_spec": {
+    "normal_control": 1,
+    "six_original_minimum_and_idle": 12,
+    "Technia_cheap": 1,
+    "Mechania_idle_plus_Technia_or_Novia_minimum": 2,
+    "mixed_three_participant_profiles": 3,
+    "no_trade": 1,
+    "Mineria_and_Technia_invest_and_trade": 4
+  },
+  "mixed_profiles": [
+    [
+      "Mineria:idle",
+      "Technia:minimum",
+      "Grainia:normal"
+    ],
+    [
+      "Technia:idle",
+      "Mineria:minimum",
+      "Grainia:normal"
+    ],
+    [
+      "Grainia:idle",
+      "Technia:minimum",
+      "Mineria:normal"
+    ]
+  ],
+  "planned_total_if_six_modes": 5100,
+  "formal_games": 4920,
+  "pilot_games": 180,
+  "formal_country_round_ledger_rows_per_type": 398520,
+  "detailed_first_seed_traces": 156,
+  "test_seeds": [
+    98000,
+    98099
+  ],
+  "primary_metrics": [
+    "cash and its five-part identity",
+    "cash sales and purchases by good, never mislabeled profit",
+    "investment and physical capacity",
+    "AI-selected legal, affordable, feasible and successful investment attempts",
+    "own produced units actually used, by good",
+    "production shortages and food shortage rounds",
+    "wellbeing",
+    "raw consumption/imports and trading partners",
+    "unmet opportunities, unused stock and its accounting valuation"
+  ],
+  "secondary_metrics": [
+    "unchanged legacy official totals for original six",
+    "frozen v12 targets view without refitting",
+    "maximum score frequency and within-world range, not an equal-win target"
+  ],
+  "fixed_v12_goals_sha256": "47e78fe6a9cebab256bb52a3b7dbef9c9b46cec4363d15700290ddfa2e4620d5",
+  "interpretation": [
+    "All agents are rule based. No human classroom evidence or simultaneous cloud app test.",
+    "Policy effects propagate through the market; paired seed comparisons are controlled policy effects, not isolated one-transaction effects.",
+    "Cash sales minus all purchases is a cash trade balance, not manufacturing profit; purchases include living consumption.",
+    "Investment opportunity counts concern the AI selected project, not all possible legal projects.",
+    "Raw trade is not automatically useful; distinguish an imported unit, its production use and downstream output use.",
+    "Retain any adverse result and exceptions. Do not adopt a change only because Technia loses or Mineria gains.",
+    "The 3 mixed automated profiles are limited stress examples, not all student country assignments."
+  ],
+  "stop_rule": "After meaningful regression checks, the declared runs, independent accounting/source checks and report-number QA, stop optional testing and deliver the candidate verdict. Do not silently turn exploratory options into confirmed rules."
+}

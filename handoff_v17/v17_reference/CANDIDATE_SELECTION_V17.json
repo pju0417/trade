@@ -1,0 +1,41 @@
+{
+  "schema": "v17-national-operation-selection-1",
+  "status": "FOLLOWUP_CANDIDATE_NOT_CLASSROOM_ADOPTION",
+  "recommended_profile": "light",
+  "recommended_context": "Use light with the unchanged baseline manufacturing economy as the next isolated validation reference. Do not simultaneously adopt electronics_input.",
+  "decision_ko": "국가 기본 운영에 연료·기초 자재가 필요한 방향은 실제 소비와 무역 수요를 만든다. 완만한 정기 소비형(light)을 다음 검증의 기준으로 추천하되, 국가별 경제 부담과 점수 공정성이 완전히 해결된 수업용 규칙으로 확정하지 않는다.",
+  "reasons_ko": [
+    "기존 제조 조건의 정상 운영 100회에서 완만안은 세계 기말 광물 재고를 평균27.91→13.66묶음, 연료 재고를43.04→23.49묶음으로 줄였다. 국가 운영용 광물18묶음·연료27묶음을 모두 실제 소비했고, 원래6국의 식량 부족은 없었다.",
+    "완만안에서도 농업 국가와 메카니아의 기말 현금 및 일부 투자가 줄었다. 기존 제조 조건에서 국가별 평균 점수의 최대·최소 격차는14.92→12.90점으로 줄었지만, 모든 국가의 기회가 공정해졌다는 근거로 삼지 않는다.",
+    "전자제품 추가 원료 조건과 완만안을 결합하면 국가별 평균 점수 격차가8.23→14.14점으로 커지고 오일리아·미네리아가 정상 운영100회 중93회1위를 차지했다. 이 결합은 현 단계의 추천안에 포함하지 않는다. 운영용 광물 부족도 게임당 평균0.05묶음 관측됐다.",
+    "더 강한 regular와 daily는 자원국의 수익·점수 편중과 다른 국가의 투자 위축을 키웠다. daily는 정상 운영만 검사했으며 매 라운드 연료 소비를 확정안으로 추천하지 않는다.",
+    "완만안에서 공개시장 최저가1G 반복·최저가와 투자 중단·무행동은 각각360건의 같은 시드 비교에서 일반 운영보다 점수가 높은 사례가0건이었다. 테크니아의 기준가 절반 판매는18/60건에서 점수가 올라 별도 전략으로 구분한다.",
+    "강한 regular의 최저가 계열 양수 예외2건은 같은 국가·시드에서 실제 사용 및 유용한 수출이 늘면서 현금과 만족도 손실을 넘은 경우였다. 기록상 효과 없는 거래나 중복 사용으로 점수만 만든 오류는 아니었다.",
+    "생산·개발·국가 운영 소비의 실물 분할, 수입 이후 실제 사용, 만족도와 기본 수입의 단일 정산, 기존 점수 계산, 모든 집계와 대응 비교를 독립 검산해 통과했다."
+  ],
+  "next_step_ko": "완만한 기본 운영 수요를 다음 검증의 기준으로 두고, 농업 국가와 메카니아의 운영 자원 구매 부담 및 투자 여력을 먼저 점검한다. 현재 필요량과 다음 정산의 필수 구매비를 고려한 투자 판단을 별도로 비교한 뒤, 기존 국가별 성장 목표가 새 경제 조건에서도 적절한지 확인한다. 전자제품 추가 원료 소비나 시작 자금·가격·점수 목표를 한꺼번에 바꾸지는 않는다.",
+  "implementation_scope": {
+    "modified": "Isolated simulation subclass; scheduled national consumption, purchasing targets, actual-use records, household satisfaction and existing income adjustment.",
+    "unchanged": "Frozen inputs, inherited sources, production recipes, starting conditions, investment costs, market rules, existing score goals and weights.",
+    "deployment": "No student web app, cloud server, live classroom session, or permanent classroom-rule adoption in this task.",
+    "new_parameter_search_after_results": false,
+    "formal_games": 6740,
+    "total_completed_economic_executions": 6776
+  },
+  "limitations": [
+    "Fixed automated policies; not human students, LLM policy search or proof against all strategies.",
+    "One whole bundle on specified dates; no continuous fractional operating consumption or population scaling in this comparison.",
+    "All nations share settlement dates; future operating bills are not newly protected in the inherited investment reserve.",
+    "A lower final inventory is not itself success; national operation use is not industrial productivity.",
+    "Frozen country growth goals are diagnostics under the altered economy, not newly calibrated fairness targets.",
+    "Daily profile only has normal-operation formal tests, not behavior stress tests.",
+    "Classroom comprehension, 80-minute pacing and three simultaneous student connections remain untested."
+  ],
+  "evidence_sha256": {
+    "OPERATING_PROTOCOL_V17.json": "007b028885b2ede2e17703cf02b80a2178b0716424ce694a3413c471c87dba8b",
+    "operating_results/run_manifest.json": "0d5846e7cc54c1f38a564874a7bc9f32742fc8327f9c150ce4c59bfd9ddb67f5",
+    "operating_results/analysis_manifest.json": "c1f677df867023979122c1d973d34c03776864eaa954ed319014c2d0ce39eb15",
+    "operating_results/summary.json": "982075c9fb102a7821e4d1b8e2a96b7b7f9375e21437463f631cbb23f1dfa147",
+    "operating_results/independent_audit.json": "aa1d3de4324801edb3035c0bab6579cfbada5ee65ed7c017d196f1a68cb1d576"
+  }
+}

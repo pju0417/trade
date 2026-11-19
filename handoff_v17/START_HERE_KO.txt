@@ -1,0 +1,15 @@
+#11 무역 게임 — Claude에게 전달하는 순서
+
+1. TRADE_GAME_HANDOFF_V17_KO.txt를 먼저 읽게 한다.
+2. CLAUDE_CROSS_CHECK_PROMPT_KO.txt의 내용을 검증 요청으로 보낸다.
+3. 이 ZIP의 코드를 읽고 실행할 수 있는 환경에서 v17_reference/를 분석하게 한다.
+4. 국가별 목표의 근거는 calibration_v15/에 있다.
+5. 기존 게임 전체 원장 재검산에는 아래의 원래 전체 ZIP을 별도로 제공한다.
+
+원래 전체 증거 ZIP:
+https://chatgpt.com/library?file_id=libfile_79545fc825ac81919adb898c18501fe1&account_id=personal
+
+이 묶음은 전달하기 쉽게 대형 원본6개를 제외했다. 생략 목록과 해시는 EVIDENCE_INDEX.json에 있다. 작은 요약만 읽고 전체 검증을 완료했다고 보고하지 않도록 한다.
+v17_reference/ 안의 원래 PACKAGE_CONTENTS.json·영수증은 전체 패키지를 가리킨다. 부분 묶음의 누락은 손상이 아니라 명시한 생략이다. 전체 감사를 바로 실행하려면 원래 전체 ZIP을 사용한다.
+
+원본 데이터·소스·목표는 바꾸지 않았다. 새 인수인계 작성으로 실행한 경제 게임은0이다. 문서의 P/추천 상태와 사용자의 확정 요구를 구분한다.

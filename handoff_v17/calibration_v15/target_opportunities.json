@@ -1,0 +1,4408 @@
+{
+  "schema": "v15-discrete-industrial-targets-1",
+  "status": "passed",
+  "new_economic_games": 0,
+  "official_rules_changed": false,
+  "method": {
+    "source": "preserved_v12_calibration_only",
+    "quantile": 0.75,
+    "policies": [
+      "normal",
+      "invest",
+      "trade"
+    ],
+    "equal_policy_weight": true,
+    "own_policy_records_only_for_target_selection": true,
+    "raw_quantile_refitted": false,
+    "rule": "Smallest observed positive own-policy calibration growth at or above max(existing raw P75, existing 0.10 floor). Do not round it upward to a 0.05 grid.",
+    "score_curve": "Linear cap at the selected target; no headroom or twice-target challenge.",
+    "per_country_samples": 180,
+    "total_source_games": 780,
+    "target_seeds": [
+      90000,
+      90059
+    ],
+    "v13_v14_or_v15_validation_used_for_selection": false
+  },
+  "source_paths": {
+    "old_goals": "V12_FROZEN_GOALS.json",
+    "calibration_runs": "calibration_input/calibration_runs.jsonl.gz",
+    "calibration_traces": "calibration_input/calibration_traces.json.gz",
+    "provenance": "V14_PROVENANCE.json"
+  },
+  "input_sha256": {
+    "old_goals": "47e78fe6a9cebab256bb52a3b7dbef9c9b46cec4363d15700290ddfa2e4620d5",
+    "calibration_runs": "a87d6cc7fc622e1c800b2a5f50f9245320b637f5cb3aef1f272247cb9c38719b",
+    "calibration_traces": "d8ae5fd8879b05e8cee2da9ab7705ad69347b8953b2abeab84ceaf6257dd87f6",
+    "provenance": "008694bd839bdbf2a2e20c0548cf51ea4493b3b987767151d44d8c028295faf3"
+  },
+  "source_python_sha256": {
+    "audit_causal_results.py": "767f494f4a0392fe978c11f74b17e74d4ad0085e2bdb6dba4a2d49b458712e08",
+    "audit_development_results.py": "e1f1e934e328eaf8d799d8a840db1249a8d3b3d77e2038c25bf28731f3e4e553",
+    "audit_evaluation_results.py": "da212d3c1ac947008372549c070382726981cf9d67758a7dd1400cc160842c14",
+    "audit_growth_results.py": "20024acc870892c56ded6fe32b0ef07fe40ab7433248eb0e4b8dd3c703c61996",
+    "audit_machinery_results.py": "d3f4780360e10e776a23cad8f4a49e05c8f4fc4a591861dd21d9cca325725000",
+    "audit_raw_results.py": "ab9e835e56b44554440e12cba327aa064e1e933b2383f15deecab7bee6dfaf41",
+    "audit_recommendation_results.py": "3548e674675fe5131bd8c0890fbdb5bb06d60bc4a6ce3c6ddae410711daca065",
+    "audit_routing_results.py": "9f88cdc17563fe3080930ba29860e006f29ff8f2d6b2afadb35e12c83c0d5b52",
+    "baseline/audit_costs.py": "2dde48c31da776531674c3f8862aea417a7816151ef98c46c68e3b9efa0e8baa",
+    "baseline/audit_previous.py": "46adcd64756033cbe4708689dfbc5849deb73af3263993c3255219ac3de2dc43",
+    "baseline/build_report.py": "207ee5b9c4f7aeb3eb847b70535612c5d5590c24f9712ec91b67b973bf8051a5",
+    "baseline/engine.py": "4e0ffaf48d38c36714a27b0dd27ab64ca0bf2bda6cf92ae722dc925176aa74f5",
+    "baseline/reference_engine.py": "f17b14c05f899eaa3cb5eab4abf15fe7c1549d284725aa887782bb2fd7217dea",
+    "baseline/run_staged.py": "80fc13d682e3afe844268b952ca5f6178236dc0ff167195061e39a404121583f",
+    "baseline/run_validation.py": "9a1b9b2f9f028f63762e3600548bb8be060212791e62f07c638570426aec2a6d",
+    "baseline/scoring.py": "f89d70fbcf204b5840486a8524711132e9ce7ee282c4d167c3b4ad4f50d3732c",
+    "baseline/test_fixes.py": "a500b9d7275abd16801a0c170c9b92f2f8854663130a7ebb25685c47d17f1c74",
+    "baseline/test_previous.py": "a8936e9cb9c13e604041c3b0365bdfd43679fbf9796d4ae2b721f36639f31a79",
+    "budget_engine.py": "03b39f7a989e2144012888005de673632844b0a36c996f32180a8e21127688d2",
+    "budget_trace.py": "5e36be42dde30a921178b861aee86192871407e9ae95a7eebe1e03d507e660d3",
+    "build_budget_report.py": "31e39fe97e491e70e0e3facebb679a87cc6cb2e460d3563ae55c7935cbe07cea",
+    "build_causal_report.py": "0225a31756882f01ee14421e1faed74b41dc3b42a9e55af5c7da2d848c214394",
+    "build_development_report.py": "e7c09d5e73ee7a8ec8afe0d7092bf927b898c2e3bf090fa971f85bd5a65153c4",
+    "build_evaluation_report.py": "19e2e6cb44e15cc94065f622af7d5155fbc2deabcbd296abdf111dbdf6ad34db",
+    "build_expansion_report.py": "76c2c92119a4a2f31c87a667638ea7b19d844fd0811cc73b3d5e706474dae5fb",
+    "build_growth_report.py": "7c009fcad2a62182891b70cbd3e8b11f53e1b5002ea87ca81ff6bf101f6a1e03",
+    "build_machinery_report.py": "fb6a61e56fbde72fbfd01d3810d595d0786b85411ffb75cd25512abf0d423af4",
+    "build_raw_report.py": "1126943c51bf21dc67b03ec95a82b7d9f308f22c393ad915447314068f72d919",
+    "build_recommendation_report.py": "bb670babe9c6d7f42d33fd359b5853b49940cba4cb8920b0247d431072d6a09d",
+    "build_routing_report.py": "06fbb50bf759f08a8daec93531a333aa174b9b2ee18153d73ac7d01556480b70",
+    "causal_engine.py": "cfdaea8357f2434ee51c992bac0e571caeefef57898d07f806710090e547d7ac",
+    "check_causal_fixed_targets.py": "ac3ae843dc7009d9393916eb8df967ee2453909c97e763fafc966038be5eda94",
+    "core_engine.py": "4b62606c6ead051ab0c7b3f6f17b7dfe9dcfc873c64aa5e0d5c81884170aa956",
+    "derive_causal_diagnostics.py": "f801326824845b2f1724c960f7be30e23486be365075c9ca54cb1f95bed446cc",
+    "development_engine.py": "7b8952488a0590eeb4aba923d994c34b785713ee168f4ea5bcb2cda2c81439be",
+    "engine.py": "c365133c676c18530b0f8c2febb8a7f4118966526d06aa9bc497574aae167e35",
+    "evaluation_engine.py": "e88356cb6e009190b382b19a631958eb6b808bbade405900f13c8ad29a942afd",
+    "expansion_engine.py": "409a4c158681aa415a7f04064b1559e17c0df5807c4826fc1ef9160c09d359d7",
+    "growth_scoring.py": "199f1068d498502b438fa3b85127b14d46fd5fe54c0f0db7d5277fb09a5e664c",
+    "machinery_engine.py": "f911b0a983ef8e384a610401031bb655544f31f67db417b9f260f400a7106732",
+    "package_causal.py": "25e4a693682929bdab6023fbf9bbdce6d4e3e905cf664250ec51123ebeec310b",
+    "package_development.py": "dce642c2b96c6e1d4684e35decf5a2dbe9ee5cf92a7b66043b914877b9973215",
+    "package_evaluation.py": "ec0365c5c341db8bcf8e7f3ea78fe5adbaec8693ddb0d07bf9964ab4f325f679",
+    "package_growth.py": "f96c13356b442f568d51cccee0457b9898d4cbbeeeb22f753743c02ebf55495b",
+    "package_routing.py": "d0c537e9cd329d3cd665e2d256f8c9062ce1ae7e88a9a0d87807dedce6ede8a2",
+    "raw_engine.py": "4b54df2a121f293a057715f1b983b2e7179dd957bc3eb746885807a8e076d6cb",
+    "recommendation_engine.py": "844ae2796f1056e346d32175393bcdb29a15cc11028423981ef84fdd10433104",
+    "reference_engine.py": "bb5163fe13d372d347b75a2fe7f3ad9f6bfc5a2006d780eae6d79fb2c251ed4f",
+    "routing_engine.py": "82ef555ae10e95036a47c380c48fca17c2acf747233b8aa19479914f652075d1",
+    "run_batches.py": "0ef893a58d7f2c17faf7e2dfd8b2ffe99619edf0a34205a7ce9bfae0270f9301",
+    "run_budget_pilot.py": "c8ee9a32da3117767f47f883fff76c5a8424be72177850c93fe5aca0c144c2f6",
+    "run_budget_validation.py": "20ace05a4045628d12aeb6670bb234fb92a1cb9d431ba9e0fd65ee675a2ee29f",
+    "run_causal_validation.py": "2b6cb63d348b97b31eb14e10f7fe08a7cbc94dd524f5b3387474e6ed617f6c28",
+    "run_development_pilot.py": "51fae47ccf18eb0a3e9c31bcb37bd13bb697bf7691479ae40cde37108dfe55d6",
+    "run_development_validation.py": "d880df0599b145585bbd055513a85543f2624883e702854b0c9c9e1a49e69e0f",
+    "run_evaluation_pilot.py": "d13843fb878600211d6756f0df56b8e03cec1a904556208d7fec4d25d6fa4d8b",
+    "run_evaluation_validation.py": "970a47072edff506477f98115b631275022432879e4c60c762edfd8c5a042a00",
+    "run_expansion.py": "a88bdf68d9fa46bdbaf61ef2929b8365dff9c9f3f3e1aa69ed17d8fbf0b52887",
+    "run_growth_validation.py": "66efa0204898b5e2731e16468053a56136034b77c7390a7aea487f9b4b19ab9f",
+    "run_machinery_pilot.py": "4e7c369d1a4ed3a17844c667a8752ed883b1d6274f49de224126de7761b25896",
+    "run_machinery_validation.py": "e67259156bd86d9dd729a8a291001bbcf16a716ffdb5dd65b7400f840dfe1164",
+    "run_raw_pilot.py": "8642c99d47fb163a2a0d9046322d4a238ebb2d0b30fddfda687f241344a79868",
+    "run_raw_validation.py": "3ddd07e1cfbc13271fc803d9fccc76db618ce5af0188b16543344f2ebe253549",
+    "run_recommendation_pilot.py": "74ba73aba9f9c5f05f9430079d3becb4f17fdf0f124ea82749d60473db5876b8",
+    "run_recommendation_validation.py": "2ad975d546b77d15eae211bc487c8c776bcb2656f31055db0f9f6ea3f9dd9c50",
+    "run_routing_pilot.py": "9c83f4cb08a05568af8a2453d0ad46e62a51651eb2b16e138d6df34518801da4",
+    "run_routing_validation.py": "21bca5a6bf385bfda08c98331f1609e22b4afaf0540aa034bfad11d3da28986b",
+    "scoring.py": "f89d70fbcf204b5840486a8524711132e9ce7ee282c4d167c3b4ad4f50d3732c",
+    "test_budget.py": "d5f8c6d9e2305c5f5cfa1dcb4b6aaf4b4a47da654767f75140a50596a7d621bb",
+    "test_causal.py": "8aa4f32e85034a00a438dd70337a9a867b025ba7781d1ab4518eb46e4deeb4c5",
+    "test_costs.py": "59ba06901337b0551ec57d48b45f24e5c167a458ea10760ce8f222d5a1b25db0",
+    "test_development.py": "3c5957f12078c24e0fdc9e2251ffa4f5b87ef18ec908c84765d153a4cf35ffd6",
+    "test_evaluation.py": "5a4b46ddf3a0e49f0eed7730d2434fa4387d29a452534cdfcf0b011b0fc682c2",
+    "test_expansion.py": "949b45a49572dd5e51eb5c0f3ceb0357b3c8ce6d95b52b063e2371b2c8b018df",
+    "test_fixes.py": "a500b9d7275abd16801a0c170c9b92f2f8854663130a7ebb25685c47d17f1c74",
+    "test_growth_scoring.py": "3f57a24eb8fec9ff5ada896790ec78a0879c865cf1f5093e20a5be74020c27f6",
+    "test_machinery.py": "4e384af3bea3641c51bd95aa5f2d0abf21badc58c23b9e51721e27ab5d231c76",
+    "test_previous.py": "a8936e9cb9c13e604041c3b0365bdfd43679fbf9796d4ae2b721f36639f31a79",
+    "test_raw_resources.py": "365a516c4eb3e9150a29679b2e60bef5f7c4a1eeff4076c658f033334e6f969f",
+    "test_recommendation.py": "6d0621798b5d2f91a74ef87e5e720c799afcdab5040e79e18d55b445f1691bce",
+    "test_routing.py": "3f3e7b36b32861d96ad03c606bc3495d1d70ab271af2b2f934a09333bc969928",
+    "validate_causal_report.py": "cb76814f0b4fdf39ee5605ff38ac963f21bf7bb17e886e3d8e293837a64e600f",
+    "validate_evaluation_report.py": "5aaa974e4a1427672219795b19c8147d4190627631958fda70c1ad5b50102341",
+    "validate_growth_report.py": "77959b18d523504cc62f989855018ded4d46bdaad87551dcf1d578bdc4322729",
+    "validate_routing_report.py": "839e06a5cd1fd7e4ecc03c7f501c01997f9f9e3509c4c5d4f7c6aa419f665101"
+  },
+  "generator_sha256": "7d7040d8887bfe777b17d329973283cacbd8e8b9597e8b7f685a042c9d8390ef",
+  "industrial": {
+    "Tropia": 0.3333333333333333,
+    "Grainia": 0.4,
+    "Oilia": 0.8333333333333334,
+    "Mechania": 0.4166666666666667,
+    "Mineria": 0.6,
+    "Technia": 1.5
+  },
+  "target_capacities": {
+    "Tropia": 80,
+    "Grainia": 70,
+    "Oilia": 110,
+    "Mechania": 170,
+    "Mineria": 80,
+    "Technia": 350
+  },
+  "countries": {
+    "Tropia": {
+      "initial_capacity": 60,
+      "old_target_growth": 0.35,
+      "raw_p75_growth": 0.3333333333333333,
+      "raw_p75_fraction": "1/3",
+      "candidate_target_growth": 0.3333333333333333,
+      "candidate_target_fraction": "1/3",
+      "candidate_target_capacity": 80,
+      "target_capacity_increase": 20,
+      "old_threshold_capacity": 81.0,
+      "target_changed": true,
+      "old_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 81.0,
+        "next_attainable_capacity": 100,
+        "minimum_developments_lower_bound": 2,
+        "next_capacity_witness": {
+          "capacity": 100,
+          "developments": 2,
+          "levels": {
+            "banana": 3,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana",
+            "banana"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 100,
+          "developments": 2,
+          "levels": {
+            "banana": 3,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana",
+            "banana"
+          ]
+        }
+      },
+      "candidate_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 80.0,
+        "next_attainable_capacity": 80,
+        "minimum_developments_lower_bound": 1,
+        "next_capacity_witness": {
+          "capacity": 80,
+          "developments": 1,
+          "levels": {
+            "banana": 2,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 80,
+          "developments": 1,
+          "levels": {
+            "banana": 2,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana"
+          ]
+        }
+      },
+      "relaxed_maximum_capacity": 200,
+      "relaxed_final_state_count": 70,
+      "maximum_same_outcome_capacity_score_increase": 0.7142857142857143,
+      "own_policy_calibration_counts": {
+        "normal": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 60,
+          "exact_candidate_growth": 60
+        },
+        "invest": {
+          "n": 60,
+          "old_target_met": 43,
+          "candidate_target_met": 60,
+          "exact_candidate_growth": 17
+        },
+        "trade": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 0,
+          "exact_candidate_growth": 0
+        }
+      },
+      "complete_archived_witness": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 0.3333333333333333,
+        "initial_capacity": 60,
+        "final_capacity": 80,
+        "upgrade_rounds": [
+          [
+            2,
+            "banana",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 2,
+          "wheat": 1,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 75,
+        "cash_end": 269,
+        "minimum_observed_cash": 37,
+        "wellbeing": 92.22222222222223,
+        "food_short_rounds": 0,
+        "note": "Full archived witness under the named calibration policy only. Purchases/material costs are additional to displayed investment cash cost. It is not a guarantee of attainability in every seed or in the electronics-input candidate economy.",
+        "trace_key": "calibration:market_first:None:normal:90000",
+        "trace_sha256": "e3e4bb8e7df6a7e77e7ef88af0168fd474bacf65e284af04b6e453785698955f",
+        "snapshots": [
+          {
+            "round": 2,
+            "industry": "banana",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 80,
+            "cash_before": 141,
+            "cash_cost": 75,
+            "required_cash_reserve": 40,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          }
+        ],
+        "cash_ledger": [
+          {
+            "round": 1,
+            "country": "Tropia",
+            "cash_start": 170,
+            "cash_end": 188,
+            "sales": 0,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 18,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 75.0,
+            "levels": {
+              "banana": 1,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 7,
+              "wheat": 3,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            }
+          },
+          {
+            "round": 2,
+            "country": "Tropia",
+            "cash_start": 188,
+            "cash_end": 66,
+            "sales": 0,
+            "purchases": 67,
+            "investment": 75,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 67
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 10,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 3,
+            "country": "Tropia",
+            "cash_start": 66,
+            "cash_end": 58,
+            "sales": 6,
+            "purchases": 34,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 34,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 6,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 14,
+              "wheat": 9,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 4,
+            "country": "Tropia",
+            "cash_start": 58,
+            "cash_end": 83,
+            "sales": 5,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 5,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 18,
+              "wheat": 12,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 5,
+            "country": "Tropia",
+            "cash_start": 83,
+            "cash_end": 56,
+            "sales": 10,
+            "purchases": 56,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 56
+            },
+            "sale_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 20,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 6,
+            "country": "Tropia",
+            "cash_start": 56,
+            "cash_end": 125,
+            "sales": 50,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 35,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 17,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 7,
+            "country": "Tropia",
+            "cash_start": 125,
+            "cash_end": 134,
+            "sales": 30,
+            "purchases": 41,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 41
+            },
+            "sale_by_good": {
+              "banana": 10,
+              "wheat": 20,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 19,
+              "wheat": 14,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 3
+            }
+          },
+          {
+            "round": 8,
+            "country": "Tropia",
+            "cash_start": 134,
+            "cash_end": 194,
+            "sales": 40,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 35,
+              "wheat": 5,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 15,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 3
+            }
+          },
+          {
+            "round": 9,
+            "country": "Tropia",
+            "cash_start": 194,
+            "cash_end": 269,
+            "sales": 55,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 40,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "banana": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 12,
+              "wheat": 11,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 3
+            }
+          }
+        ],
+        "all_actual_policy_conditions_verified": true,
+        "has_investment_policy_waiver": false,
+        "all_ordinary_household_conditions_satisfied": true,
+        "normal_policy_witness": true
+      },
+      "normal_policy_completed_record": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 0.3333333333333333,
+        "initial_capacity": 60,
+        "final_capacity": 80,
+        "upgrade_rounds": [
+          [
+            2,
+            "banana",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 2,
+          "wheat": 1,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 75,
+        "cash_end": 269,
+        "minimum_observed_cash": 37,
+        "wellbeing": 92.22222222222223,
+        "food_short_rounds": 0,
+        "note": "Archived completed execution; final evidence alone does not contain every pre-investment guard snapshot."
+      },
+      "supplemental_normal_trace": null,
+      "economic_reachability_scope": "Observed baseline calibration only. New economy/policy outcomes must be checked separately without changing this target."
+    },
+    "Grainia": {
+      "initial_capacity": 50,
+      "old_target_growth": 0.4,
+      "raw_p75_growth": 0.4,
+      "raw_p75_fraction": "2/5",
+      "candidate_target_growth": 0.4,
+      "candidate_target_fraction": "2/5",
+      "candidate_target_capacity": 70,
+      "target_capacity_increase": 20,
+      "old_threshold_capacity": 70.0,
+      "target_changed": false,
+      "old_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 70.0,
+        "next_attainable_capacity": 70,
+        "minimum_developments_lower_bound": 1,
+        "next_capacity_witness": {
+          "capacity": 70,
+          "developments": 1,
+          "levels": {
+            "banana": 2,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 70,
+          "developments": 1,
+          "levels": {
+            "banana": 2,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana"
+          ]
+        }
+      },
+      "candidate_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 70.0,
+        "next_attainable_capacity": 70,
+        "minimum_developments_lower_bound": 1,
+        "next_capacity_witness": {
+          "capacity": 70,
+          "developments": 1,
+          "levels": {
+            "banana": 2,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 70,
+          "developments": 1,
+          "levels": {
+            "banana": 2,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana"
+          ]
+        }
+      },
+      "relaxed_maximum_capacity": 310,
+      "relaxed_final_state_count": 70,
+      "maximum_same_outcome_capacity_score_increase": 0.0,
+      "own_policy_calibration_counts": {
+        "normal": {
+          "n": 60,
+          "old_target_met": 22,
+          "candidate_target_met": 22,
+          "exact_candidate_growth": 22
+        },
+        "invest": {
+          "n": 60,
+          "old_target_met": 60,
+          "candidate_target_met": 60,
+          "exact_candidate_growth": 40
+        },
+        "trade": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 0,
+          "exact_candidate_growth": 0
+        }
+      },
+      "complete_archived_witness": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "Grainia:invest",
+          "seed": 90000,
+          "focal": "Grainia",
+          "style": "invest",
+          "behaviors": {
+            "Grainia": "invest"
+          }
+        },
+        "record_sha256": "ca2905cb9911a79dc53ad0475664ea99f57dd40325e618f04b4c07b8d0e532f5",
+        "growth": 0.4,
+        "initial_capacity": 50,
+        "final_capacity": 70,
+        "upgrade_rounds": [
+          [
+            2,
+            "wheat",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 1,
+          "wheat": 2,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 75,
+        "cash_end": 144,
+        "minimum_observed_cash": 7,
+        "wellbeing": 94.72222222222223,
+        "food_short_rounds": 0,
+        "note": "Full archived witness under the named calibration policy only. Purchases/material costs are additional to displayed investment cash cost. It is not a guarantee of attainability in every seed or in the electronics-input candidate economy.",
+        "trace_key": "calibration:market_first:Grainia:invest:90000",
+        "trace_sha256": "1c58b26683572815060315ba132ecb6b828ace2c0883ca0c3a9eb25a7ad6883a",
+        "snapshots": [
+          {
+            "round": 2,
+            "industry": "wheat",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 70,
+            "cash_before": 82,
+            "cash_cost": 75,
+            "required_cash_reserve": 0,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": true,
+            "successful": true
+          }
+        ],
+        "cash_ledger": [
+          {
+            "round": 1,
+            "country": "Grainia",
+            "cash_start": 170,
+            "cash_end": 62,
+            "sales": 0,
+            "purchases": 128,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 48,
+              "electronics": 80
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "wheat": 1,
+              "banana": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 3,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 2,
+            "country": "Grainia",
+            "cash_start": 62,
+            "cash_end": 7,
+            "sales": 0,
+            "purchases": 0,
+            "investment": 75,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 4,
+              "wheat": 11,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 3,
+            "country": "Grainia",
+            "cash_start": 7,
+            "cash_end": 51,
+            "sales": 24,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 18,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 2,
+              "wheat": 17,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 4,
+            "country": "Grainia",
+            "cash_start": 51,
+            "cash_end": 86,
+            "sales": 15,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 10,
+              "wheat": 5,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 1,
+              "wheat": 22,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 5,
+            "country": "Grainia",
+            "cash_start": 86,
+            "cash_end": 46,
+            "sales": 15,
+            "purchases": 75,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 75
+            },
+            "sale_by_good": {
+              "banana": 5,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 97.5,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 26,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 6,
+            "country": "Grainia",
+            "cash_start": 46,
+            "cash_end": 75,
+            "sales": 10,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 30,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 7,
+            "country": "Grainia",
+            "cash_start": 75,
+            "cash_end": 94,
+            "sales": 0,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 36,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 8,
+            "country": "Grainia",
+            "cash_start": 94,
+            "cash_end": 120,
+            "sales": 12,
+            "purchases": 5,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 5,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 12,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 0,
+              "wheat": 38,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 9,
+            "country": "Grainia",
+            "cash_start": 120,
+            "cash_end": 144,
+            "sales": 5,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 5,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "wheat": 2,
+              "banana": 1
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 0,
+              "wheat": 40,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          }
+        ],
+        "all_actual_policy_conditions_verified": true,
+        "has_investment_policy_waiver": true,
+        "all_ordinary_household_conditions_satisfied": true,
+        "normal_policy_witness": false
+      },
+      "normal_policy_completed_record": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90001,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "4e1ce4d063bfad9bf2ac30302dca2d98be47fe92a1b51bf5428db643cb61a8d7",
+        "growth": 0.4,
+        "initial_capacity": 50,
+        "final_capacity": 70,
+        "upgrade_rounds": [
+          [
+            2,
+            "wheat",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 1,
+          "wheat": 2,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 75,
+        "cash_end": 194,
+        "minimum_observed_cash": 21,
+        "wellbeing": 92.77777777777777,
+        "food_short_rounds": 0,
+        "note": "Archived completed execution; final evidence alone does not contain every pre-investment guard snapshot."
+      },
+      "supplemental_normal_trace": null,
+      "economic_reachability_scope": "Observed baseline calibration only. New economy/policy outcomes must be checked separately without changing this target."
+    },
+    "Oilia": {
+      "initial_capacity": 60,
+      "old_target_growth": 0.85,
+      "raw_p75_growth": 0.8333333333333334,
+      "raw_p75_fraction": "5/6",
+      "candidate_target_growth": 0.8333333333333334,
+      "candidate_target_fraction": "5/6",
+      "candidate_target_capacity": 110,
+      "target_capacity_increase": 50,
+      "old_threshold_capacity": 111.0,
+      "target_changed": true,
+      "old_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 111.0,
+        "next_attainable_capacity": 120,
+        "minimum_developments_lower_bound": 2,
+        "next_capacity_witness": {
+          "capacity": 120,
+          "developments": 2,
+          "levels": {
+            "banana": 1,
+            "wheat": 0,
+            "fuel": 3,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            "fuel",
+            "fuel"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 120,
+          "developments": 2,
+          "levels": {
+            "banana": 1,
+            "wheat": 0,
+            "fuel": 3,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            "fuel",
+            "fuel"
+          ]
+        }
+      },
+      "candidate_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 110.0,
+        "next_attainable_capacity": 110,
+        "minimum_developments_lower_bound": 2,
+        "next_capacity_witness": {
+          "capacity": 110,
+          "developments": 2,
+          "levels": {
+            "banana": 2,
+            "wheat": 0,
+            "fuel": 2,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana",
+            "fuel"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 110,
+          "developments": 2,
+          "levels": {
+            "banana": 2,
+            "wheat": 0,
+            "fuel": 2,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            "banana",
+            "fuel"
+          ]
+        }
+      },
+      "relaxed_maximum_capacity": 230,
+      "relaxed_final_state_count": 60,
+      "maximum_same_outcome_capacity_score_increase": 0.29411764705882354,
+      "own_policy_calibration_counts": {
+        "normal": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 17,
+          "exact_candidate_growth": 17
+        },
+        "invest": {
+          "n": 60,
+          "old_target_met": 6,
+          "candidate_target_met": 54,
+          "exact_candidate_growth": 48
+        },
+        "trade": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 0,
+          "exact_candidate_growth": 0
+        }
+      },
+      "complete_archived_witness": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "Oilia:invest",
+          "seed": 90000,
+          "focal": "Oilia",
+          "style": "invest",
+          "behaviors": {
+            "Oilia": "invest"
+          }
+        },
+        "record_sha256": "3f4ffd352b9ca8c1977712886346741a27d33234540636e62860348909d669ca",
+        "growth": 0.8333333333333334,
+        "initial_capacity": 60,
+        "final_capacity": 110,
+        "upgrade_rounds": [
+          [
+            1,
+            "fuel",
+            2
+          ],
+          [
+            6,
+            "banana",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 2,
+          "wheat": 0,
+          "fuel": 2,
+          "ore": 1,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 170,
+        "cash_end": 53,
+        "minimum_observed_cash": 0,
+        "wellbeing": 89.44444444444444,
+        "food_short_rounds": 0,
+        "note": "Full archived witness under the named calibration policy only. Purchases/material costs are additional to displayed investment cash cost. It is not a guarantee of attainability in every seed or in the electronics-input candidate economy.",
+        "trace_key": "calibration:market_first:Oilia:invest:90000",
+        "trace_sha256": "7f9559922e7370bc5e66e58b85b6930218cfbf9fc2f12b0dfcaeadff220682a7",
+        "snapshots": [
+          {
+            "round": 1,
+            "industry": "fuel",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 90,
+            "cash_before": 193,
+            "cash_cost": 95,
+            "required_cash_reserve": 0,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 0,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": false,
+            "investment_policy_waives_cash_reserve_and_household_guard": true,
+            "successful": true
+          },
+          {
+            "round": 6,
+            "industry": "banana",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 110,
+            "cash_before": 85,
+            "cash_cost": 75,
+            "required_cash_reserve": 0,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 2,
+            "living_needed": 2,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": true,
+            "successful": true
+          }
+        ],
+        "cash_ledger": [
+          {
+            "round": 1,
+            "country": "Oilia",
+            "cash_start": 175,
+            "cash_end": 98,
+            "sales": 0,
+            "purchases": 0,
+            "investment": 95,
+            "operating_income": 18,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 75.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 2,
+              "wheat": 1,
+              "fuel": 2,
+              "ore": 1,
+              "machine": 0,
+              "electronics": 0
+            }
+          },
+          {
+            "round": 2,
+            "country": "Oilia",
+            "cash_start": 98,
+            "cash_end": 90,
+            "sales": 19,
+            "purchases": 45,
+            "investment": 0,
+            "operating_income": 18,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 45,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 19,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 75.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 2,
+              "wheat": 0,
+              "fuel": 5,
+              "ore": 1,
+              "machine": 1,
+              "electronics": 0
+            }
+          },
+          {
+            "round": 3,
+            "country": "Oilia",
+            "cash_start": 90,
+            "cash_end": 122,
+            "sales": 20,
+            "purchases": 6,
+            "investment": 0,
+            "operating_income": 18,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 20,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 75.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 2,
+              "wheat": 0,
+              "fuel": 8,
+              "ore": 2,
+              "machine": 1,
+              "electronics": 0
+            }
+          },
+          {
+            "round": 4,
+            "country": "Oilia",
+            "cash_start": 122,
+            "cash_end": 69,
+            "sales": 14,
+            "purchases": 87,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 5,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 82
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 14,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 2,
+              "wheat": 0,
+              "fuel": 11,
+              "ore": 2,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 5,
+            "country": "Oilia",
+            "cash_start": 69,
+            "cash_end": 65,
+            "sales": 63,
+            "purchases": 87,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 77
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 28,
+              "ore": 35,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 1,
+              "wheat": 0,
+              "fuel": 13,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 6,
+            "country": "Oilia",
+            "cash_start": 65,
+            "cash_end": 10,
+            "sales": 10,
+            "purchases": 10,
+            "investment": 75,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 10,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 17,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 7,
+            "country": "Oilia",
+            "cash_start": 10,
+            "cash_end": 25,
+            "sales": 5,
+            "purchases": 10,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 5,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 21,
+              "ore": 1,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 8,
+            "country": "Oilia",
+            "cash_start": 25,
+            "cash_end": 48,
+            "sales": 18,
+            "purchases": 15,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 18,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 25,
+              "ore": 0,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 9,
+            "country": "Oilia",
+            "cash_start": 48,
+            "cash_end": 53,
+            "sales": 0,
+            "purchases": 15,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 28,
+              "ore": 1,
+              "machine": 1,
+              "electronics": 2
+            }
+          }
+        ],
+        "all_actual_policy_conditions_verified": true,
+        "has_investment_policy_waiver": true,
+        "all_ordinary_household_conditions_satisfied": false,
+        "normal_policy_witness": false
+      },
+      "normal_policy_completed_record": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90001,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "4e1ce4d063bfad9bf2ac30302dca2d98be47fe92a1b51bf5428db643cb61a8d7",
+        "growth": 0.8333333333333334,
+        "initial_capacity": 60,
+        "final_capacity": 110,
+        "upgrade_rounds": [
+          [
+            3,
+            "fuel",
+            2
+          ],
+          [
+            4,
+            "banana",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 2,
+          "wheat": 0,
+          "fuel": 2,
+          "ore": 1,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 170,
+        "cash_end": 118,
+        "minimum_observed_cash": 39,
+        "wellbeing": 92.22222222222223,
+        "food_short_rounds": 0,
+        "note": "Archived completed execution; final evidence alone does not contain every pre-investment guard snapshot."
+      },
+      "supplemental_normal_trace": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "Technia:trade",
+          "seed": 90000,
+          "focal": "Technia",
+          "style": "trade",
+          "behaviors": {
+            "Technia": "trade"
+          }
+        },
+        "record_sha256": "f594645fa5712914694e502de6363baa56673769eb76d5f3c1d63e15c5b1852c",
+        "growth": 0.8333333333333334,
+        "initial_capacity": 60,
+        "final_capacity": 110,
+        "upgrade_rounds": [
+          [
+            2,
+            "fuel",
+            2
+          ],
+          [
+            4,
+            "banana",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 2,
+          "wheat": 0,
+          "fuel": 2,
+          "ore": 1,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 170,
+        "cash_end": 126,
+        "minimum_observed_cash": 20,
+        "wellbeing": 89.44444444444444,
+        "food_short_rounds": 0,
+        "note": "Full archived witness under the named calibration policy only. Purchases/material costs are additional to displayed investment cash cost. It is not a guarantee of attainability in every seed or in the electronics-input candidate economy.",
+        "trace_key": "calibration:market_first:Technia:trade:90000",
+        "trace_sha256": "502b743f5123d5cf595f3a21694af6373d82d176ccf634b2c2dd5b6f3ca0cfb7",
+        "snapshots": [
+          {
+            "round": 2,
+            "industry": "fuel",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 90,
+            "cash_before": 184,
+            "cash_cost": 95,
+            "required_cash_reserve": 40,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          },
+          {
+            "round": 4,
+            "industry": "banana",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 110,
+            "cash_before": 125,
+            "cash_cost": 75,
+            "required_cash_reserve": 40,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          }
+        ],
+        "cash_ledger": [
+          {
+            "round": 1,
+            "country": "Oilia",
+            "cash_start": 175,
+            "cash_end": 193,
+            "sales": 0,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 18,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 75.0,
+            "levels": {
+              "fuel": 1,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 2,
+              "wheat": 1,
+              "fuel": 2,
+              "ore": 1,
+              "machine": 0,
+              "electronics": 0
+            }
+          },
+          {
+            "round": 2,
+            "country": "Oilia",
+            "cash_start": 193,
+            "cash_end": 89,
+            "sales": 38,
+            "purchases": 67,
+            "investment": 95,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 67
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 38,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "ore",
+            "stock": {
+              "banana": 2,
+              "wheat": 0,
+              "fuel": 4,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 3,
+            "country": "Oilia",
+            "cash_start": 89,
+            "cash_end": 110,
+            "sales": 40,
+            "purchases": 39,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 33,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 40,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 1
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 2,
+              "wheat": 0,
+              "fuel": 4,
+              "ore": 2,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 4,
+            "country": "Oilia",
+            "cash_start": 110,
+            "cash_end": 50,
+            "sales": 0,
+            "purchases": 5,
+            "investment": 75,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 5,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 4,
+              "wheat": 0,
+              "fuel": 6,
+              "ore": 3,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 5,
+            "country": "Oilia",
+            "cash_start": 50,
+            "cash_end": 59,
+            "sales": 0,
+            "purchases": 10,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 85.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "ore",
+            "stock": {
+              "banana": 8,
+              "wheat": 0,
+              "fuel": 8,
+              "ore": 4,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 6,
+            "country": "Oilia",
+            "cash_start": 59,
+            "cash_end": 39,
+            "sales": 10,
+            "purchases": 49,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 39
+            },
+            "sale_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 90.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 7,
+              "wheat": 0,
+              "fuel": 10,
+              "ore": 6,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 7,
+            "country": "Oilia",
+            "cash_start": 39,
+            "cash_end": 84,
+            "sales": 36,
+            "purchases": 10,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 26,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 90.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 9,
+              "wheat": 0,
+              "fuel": 10,
+              "ore": 7,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 8,
+            "country": "Oilia",
+            "cash_start": 84,
+            "cash_end": 112,
+            "sales": 24,
+            "purchases": 15,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 15,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 9,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 90.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 9,
+              "wheat": 0,
+              "fuel": 12,
+              "ore": 7,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 9,
+            "country": "Oilia",
+            "cash_start": 112,
+            "cash_end": 126,
+            "sales": 10,
+            "purchases": 15,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 90.0,
+            "levels": {
+              "fuel": 2,
+              "ore": 1,
+              "banana": 2
+            },
+            "next_focus": "banana",
+            "stock": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 14,
+              "ore": 8,
+              "machine": 1,
+              "electronics": 2
+            }
+          }
+        ],
+        "all_actual_policy_conditions_verified": true,
+        "has_investment_policy_waiver": false,
+        "all_ordinary_household_conditions_satisfied": true,
+        "normal_policy_witness": true,
+        "note_on_scope": "May be a normal peer in another country's calibration policy case. Used only as a feasibility witness, never included in this country's target samples."
+      },
+      "economic_reachability_scope": "Observed baseline calibration only. New economy/policy outcomes must be checked separately without changing this target."
+    },
+    "Mechania": {
+      "initial_capacity": 120,
+      "old_target_growth": 0.45,
+      "raw_p75_growth": 0.4166666666666667,
+      "raw_p75_fraction": "5/12",
+      "candidate_target_growth": 0.4166666666666667,
+      "candidate_target_fraction": "5/12",
+      "candidate_target_capacity": 170,
+      "target_capacity_increase": 50,
+      "old_threshold_capacity": 174.0,
+      "target_changed": true,
+      "old_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 174.0,
+        "next_attainable_capacity": 180,
+        "minimum_developments_lower_bound": 1,
+        "next_capacity_witness": {
+          "capacity": 180,
+          "developments": 3,
+          "levels": {
+            "banana": 0,
+            "wheat": 4,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 1,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            "wheat",
+            "wheat",
+            "wheat"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 200,
+          "developments": 1,
+          "levels": {
+            "banana": 0,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 1,
+            "electronics": 1
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "electronics"
+          ]
+        }
+      },
+      "candidate_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 170.0,
+        "next_attainable_capacity": 170,
+        "minimum_developments_lower_bound": 1,
+        "next_capacity_witness": {
+          "capacity": 170,
+          "developments": 1,
+          "levels": {
+            "banana": 0,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 2,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "machine"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 170,
+          "developments": 1,
+          "levels": {
+            "banana": 0,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 2,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "machine"
+          ]
+        }
+      },
+      "relaxed_maximum_capacity": 590,
+      "relaxed_final_state_count": 70,
+      "maximum_same_outcome_capacity_score_increase": 1.1111111111111112,
+      "own_policy_calibration_counts": {
+        "normal": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 60,
+          "exact_candidate_growth": 60
+        },
+        "invest": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 60,
+          "exact_candidate_growth": 60
+        },
+        "trade": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 0,
+          "exact_candidate_growth": 0
+        }
+      },
+      "complete_archived_witness": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 0.4166666666666667,
+        "initial_capacity": 120,
+        "final_capacity": 170,
+        "upgrade_rounds": [
+          [
+            2,
+            "machine",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 0,
+          "wheat": 1,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 2,
+          "electronics": 0
+        },
+        "investment_cash_cost": 125,
+        "cash_end": 242,
+        "minimum_observed_cash": 74,
+        "wellbeing": 94.44444444444444,
+        "food_short_rounds": 0,
+        "note": "Full archived witness under the named calibration policy only. Purchases/material costs are additional to displayed investment cash cost. It is not a guarantee of attainability in every seed or in the electronics-input candidate economy.",
+        "trace_key": "calibration:market_first:None:normal:90000",
+        "trace_sha256": "e3e4bb8e7df6a7e77e7ef88af0168fd474bacf65e284af04b6e453785698955f",
+        "snapshots": [
+          {
+            "round": 2,
+            "industry": "machine",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 170,
+            "cash_before": 205,
+            "cash_cost": 125,
+            "required_cash_reserve": 40,
+            "raw_available": {
+              "ore": 1,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 1
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          }
+        ],
+        "cash_ledger": [
+          {
+            "round": 1,
+            "country": "Mechania",
+            "cash_start": 215,
+            "cash_end": 261,
+            "sales": 48,
+            "purchases": 20,
+            "investment": 0,
+            "operating_income": 18,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 20,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 48,
+              "electronics": 0
+            },
+            "happy": 75.0,
+            "levels": {
+              "machine": 1,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 1,
+              "wheat": 3,
+              "fuel": 0,
+              "ore": 1,
+              "machine": 1,
+              "electronics": 0
+            }
+          },
+          {
+            "round": 2,
+            "country": "Mechania",
+            "cash_start": 261,
+            "cash_end": 80,
+            "sales": 43,
+            "purchases": 119,
+            "investment": 125,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 119
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 43,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 1,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 3,
+            "country": "Mechania",
+            "cash_start": 80,
+            "cash_end": 134,
+            "sales": 40,
+            "purchases": 6,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 6,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 34,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 9,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 2,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 4,
+            "country": "Mechania",
+            "cash_start": 134,
+            "cash_end": 197,
+            "sales": 62,
+            "purchases": 19,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 5,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 14,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 62,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 13,
+              "fuel": 0,
+              "ore": 1,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 5,
+            "country": "Mechania",
+            "cash_start": 197,
+            "cash_end": 182,
+            "sales": 15,
+            "purchases": 50,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 40,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 13,
+              "fuel": 0,
+              "ore": 4,
+              "machine": 2,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 6,
+            "country": "Mechania",
+            "cash_start": 182,
+            "cash_end": 192,
+            "sales": 0,
+            "purchases": 10,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 16,
+              "fuel": 0,
+              "ore": 3,
+              "machine": 3,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 7,
+            "country": "Mechania",
+            "cash_start": 192,
+            "cash_end": 202,
+            "sales": 0,
+            "purchases": 10,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 19,
+              "fuel": 0,
+              "ore": 3,
+              "machine": 3,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 8,
+            "country": "Mechania",
+            "cash_start": 202,
+            "cash_end": 222,
+            "sales": 15,
+            "purchases": 15,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 15,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 18,
+              "fuel": 0,
+              "ore": 3,
+              "machine": 3,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 9,
+            "country": "Mechania",
+            "cash_start": 222,
+            "cash_end": 242,
+            "sales": 15,
+            "purchases": 15,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 15,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 17,
+              "fuel": 0,
+              "ore": 3,
+              "machine": 3,
+              "electronics": 2
+            }
+          }
+        ],
+        "all_actual_policy_conditions_verified": true,
+        "has_investment_policy_waiver": false,
+        "all_ordinary_household_conditions_satisfied": true,
+        "normal_policy_witness": true
+      },
+      "normal_policy_completed_record": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 0.4166666666666667,
+        "initial_capacity": 120,
+        "final_capacity": 170,
+        "upgrade_rounds": [
+          [
+            2,
+            "machine",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 0,
+          "wheat": 1,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 2,
+          "electronics": 0
+        },
+        "investment_cash_cost": 125,
+        "cash_end": 242,
+        "minimum_observed_cash": 74,
+        "wellbeing": 94.44444444444444,
+        "food_short_rounds": 0,
+        "note": "Archived completed execution; final evidence alone does not contain every pre-investment guard snapshot."
+      },
+      "supplemental_normal_trace": null,
+      "economic_reachability_scope": "Observed baseline calibration only. New economy/policy outcomes must be checked separately without changing this target."
+    },
+    "Mineria": {
+      "initial_capacity": 50,
+      "old_target_growth": 0.6,
+      "raw_p75_growth": 0.6,
+      "raw_p75_fraction": "3/5",
+      "candidate_target_growth": 0.6,
+      "candidate_target_fraction": "3/5",
+      "candidate_target_capacity": 80,
+      "target_capacity_increase": 30,
+      "old_threshold_capacity": 80.0,
+      "target_changed": false,
+      "old_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 80.0,
+        "next_attainable_capacity": 80,
+        "minimum_developments_lower_bound": 1,
+        "next_capacity_witness": {
+          "capacity": 80,
+          "developments": 1,
+          "levels": {
+            "banana": 0,
+            "wheat": 0,
+            "fuel": 2,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "fuel"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 80,
+          "developments": 1,
+          "levels": {
+            "banana": 0,
+            "wheat": 0,
+            "fuel": 2,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "fuel"
+          ]
+        }
+      },
+      "candidate_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 80.0,
+        "next_attainable_capacity": 80,
+        "minimum_developments_lower_bound": 1,
+        "next_capacity_witness": {
+          "capacity": 80,
+          "developments": 1,
+          "levels": {
+            "banana": 0,
+            "wheat": 0,
+            "fuel": 2,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "fuel"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 80,
+          "developments": 1,
+          "levels": {
+            "banana": 0,
+            "wheat": 0,
+            "fuel": 2,
+            "ore": 1,
+            "machine": 0,
+            "electronics": 0
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "fuel"
+          ]
+        }
+      },
+      "relaxed_maximum_capacity": 340,
+      "relaxed_final_state_count": 70,
+      "maximum_same_outcome_capacity_score_increase": 0.0,
+      "own_policy_calibration_counts": {
+        "normal": {
+          "n": 60,
+          "old_target_met": 25,
+          "candidate_target_met": 25,
+          "exact_candidate_growth": 23
+        },
+        "invest": {
+          "n": 60,
+          "old_target_met": 60,
+          "candidate_target_met": 60,
+          "exact_candidate_growth": 43
+        },
+        "trade": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 0,
+          "exact_candidate_growth": 0
+        }
+      },
+      "complete_archived_witness": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 0.6,
+        "initial_capacity": 50,
+        "final_capacity": 80,
+        "upgrade_rounds": [
+          [
+            2,
+            "fuel",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 0,
+          "wheat": 0,
+          "fuel": 2,
+          "ore": 1,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 95,
+        "cash_end": 111,
+        "minimum_observed_cash": 24,
+        "wellbeing": 91.38888888888889,
+        "food_short_rounds": 0,
+        "note": "Full archived witness under the named calibration policy only. Purchases/material costs are additional to displayed investment cash cost. It is not a guarantee of attainability in every seed or in the electronics-input candidate economy.",
+        "trace_key": "calibration:market_first:None:normal:90000",
+        "trace_sha256": "e3e4bb8e7df6a7e77e7ef88af0168fd474bacf65e284af04b6e453785698955f",
+        "snapshots": [
+          {
+            "round": 2,
+            "industry": "fuel",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 80,
+            "cash_before": 165,
+            "cash_cost": 95,
+            "required_cash_reserve": 40,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 0
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          }
+        ],
+        "cash_ledger": [
+          {
+            "round": 1,
+            "country": "Mineria",
+            "cash_start": 175,
+            "cash_end": 193,
+            "sales": 0,
+            "purchases": 0,
+            "investment": 0,
+            "operating_income": 18,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 75.0,
+            "levels": {
+              "ore": 1,
+              "fuel": 1
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 1,
+              "wheat": 1,
+              "fuel": 1,
+              "ore": 2,
+              "machine": 0,
+              "electronics": 0
+            }
+          },
+          {
+            "round": 2,
+            "country": "Mineria",
+            "cash_start": 193,
+            "cash_end": 70,
+            "sales": 19,
+            "purchases": 67,
+            "investment": 95,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 67
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 19,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 3,
+              "ore": 2,
+              "machine": 0,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 3,
+            "country": "Mineria",
+            "cash_start": 70,
+            "cash_end": 84,
+            "sales": 40,
+            "purchases": 46,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 6,
+              "wheat": 6,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 34,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 40,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 4,
+              "ore": 3,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 4,
+            "country": "Mineria",
+            "cash_start": 84,
+            "cash_end": 108,
+            "sales": 14,
+            "purchases": 10,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 5,
+              "wheat": 5,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 14,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 95.0,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "ore",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 7,
+              "ore": 3,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 5,
+            "country": "Mineria",
+            "cash_start": 108,
+            "cash_end": 85,
+            "sales": 34,
+            "purchases": 76,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 56
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 14,
+              "ore": 20,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "ore",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 8,
+              "ore": 3,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 6,
+            "country": "Mineria",
+            "cash_start": 85,
+            "cash_end": 94,
+            "sales": 10,
+            "purchases": 20,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 10,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "ore",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 10,
+              "ore": 5,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 7,
+            "country": "Mineria",
+            "cash_start": 94,
+            "cash_end": 106,
+            "sales": 13,
+            "purchases": 20,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 13,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "fuel",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 11,
+              "ore": 8,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 8,
+            "country": "Mineria",
+            "cash_start": 106,
+            "cash_end": 122,
+            "sales": 27,
+            "purchases": 30,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 15,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 27,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "ore",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 15,
+              "ore": 6,
+              "machine": 1,
+              "electronics": 2
+            }
+          },
+          {
+            "round": 9,
+            "country": "Mineria",
+            "cash_start": 122,
+            "cash_end": 111,
+            "sales": 0,
+            "purchases": 30,
+            "investment": 0,
+            "operating_income": 19,
+            "purchase_by_good": {
+              "banana": 15,
+              "wheat": 15,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 92.5,
+            "levels": {
+              "ore": 1,
+              "fuel": 2
+            },
+            "next_focus": "ore",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 17,
+              "ore": 9,
+              "machine": 1,
+              "electronics": 2
+            }
+          }
+        ],
+        "all_actual_policy_conditions_verified": true,
+        "has_investment_policy_waiver": false,
+        "all_ordinary_household_conditions_satisfied": true,
+        "normal_policy_witness": true
+      },
+      "normal_policy_completed_record": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 0.6,
+        "initial_capacity": 50,
+        "final_capacity": 80,
+        "upgrade_rounds": [
+          [
+            2,
+            "fuel",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 0,
+          "wheat": 0,
+          "fuel": 2,
+          "ore": 1,
+          "machine": 0,
+          "electronics": 0
+        },
+        "investment_cash_cost": 95,
+        "cash_end": 111,
+        "minimum_observed_cash": 24,
+        "wellbeing": 91.38888888888889,
+        "food_short_rounds": 0,
+        "note": "Archived completed execution; final evidence alone does not contain every pre-investment guard snapshot."
+      },
+      "supplemental_normal_trace": null,
+      "economic_reachability_scope": "Observed baseline calibration only. New economy/policy outcomes must be checked separately without changing this target."
+    },
+    "Technia": {
+      "initial_capacity": 140,
+      "old_target_growth": 1.5,
+      "raw_p75_growth": 1.5,
+      "raw_p75_fraction": "3/2",
+      "candidate_target_growth": 1.5,
+      "candidate_target_fraction": "3/2",
+      "candidate_target_capacity": 350,
+      "target_capacity_increase": 210,
+      "old_threshold_capacity": 350.0,
+      "target_changed": false,
+      "old_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 350.0,
+        "next_attainable_capacity": 350,
+        "minimum_developments_lower_bound": 3,
+        "next_capacity_witness": {
+          "capacity": 350,
+          "developments": 3,
+          "levels": {
+            "banana": 0,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 2,
+            "electronics": 3
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            "machine",
+            "electronics",
+            "electronics"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 350,
+          "developments": 3,
+          "levels": {
+            "banana": 0,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 2,
+            "electronics": 3
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            "machine",
+            "electronics",
+            "electronics"
+          ]
+        }
+      },
+      "candidate_threshold_crossing": {
+        "reachable_under_relaxation": true,
+        "threshold_capacity": 350.0,
+        "next_attainable_capacity": 350,
+        "minimum_developments_lower_bound": 3,
+        "next_capacity_witness": {
+          "capacity": 350,
+          "developments": 3,
+          "levels": {
+            "banana": 0,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 2,
+            "electronics": 3
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            "machine",
+            "electronics",
+            "electronics"
+          ]
+        },
+        "minimum_developments_witness": {
+          "capacity": 350,
+          "developments": 3,
+          "levels": {
+            "banana": 0,
+            "wheat": 1,
+            "fuel": 0,
+            "ore": 0,
+            "machine": 2,
+            "electronics": 3
+          },
+          "round_actions": [
+            null,
+            null,
+            null,
+            null,
+            "machine",
+            "electronics",
+            "electronics"
+          ]
+        }
+      },
+      "relaxed_maximum_capacity": 550,
+      "relaxed_final_state_count": 60,
+      "maximum_same_outcome_capacity_score_increase": 0.0,
+      "own_policy_calibration_counts": {
+        "normal": {
+          "n": 60,
+          "old_target_met": 29,
+          "candidate_target_met": 29,
+          "exact_candidate_growth": 28
+        },
+        "invest": {
+          "n": 60,
+          "old_target_met": 42,
+          "candidate_target_met": 42,
+          "exact_candidate_growth": 41
+        },
+        "trade": {
+          "n": 60,
+          "old_target_met": 0,
+          "candidate_target_met": 0,
+          "exact_candidate_growth": 0
+        }
+      },
+      "complete_archived_witness": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 1.5,
+        "initial_capacity": 140,
+        "final_capacity": 350,
+        "upgrade_rounds": [
+          [
+            1,
+            "electronics",
+            2
+          ],
+          [
+            4,
+            "electronics",
+            3
+          ],
+          [
+            5,
+            "machine",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 0,
+          "wheat": 1,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 2,
+          "electronics": 3
+        },
+        "investment_cash_cost": 755,
+        "cash_end": 267,
+        "minimum_observed_cash": 65,
+        "wellbeing": 100.0,
+        "food_short_rounds": 0,
+        "note": "Full archived witness under the named calibration policy only. Purchases/material costs are additional to displayed investment cash cost. It is not a guarantee of attainability in every seed or in the electronics-input candidate economy.",
+        "trace_key": "calibration:market_first:None:normal:90000",
+        "trace_sha256": "e3e4bb8e7df6a7e77e7ef88af0168fd474bacf65e284af04b6e453785698955f",
+        "snapshots": [
+          {
+            "round": 1,
+            "industry": "electronics",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 220,
+            "cash_before": 285,
+            "cash_cost": 220,
+            "required_cash_reserve": 40,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 1
+            },
+            "raw_required_for_next_production_and_development": {
+              "fuel": 1,
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          },
+          {
+            "round": 4,
+            "industry": "electronics",
+            "from_level": 2,
+            "to_level": 3,
+            "capacity_after": 300,
+            "cash_before": 436,
+            "cash_cost": 330,
+            "required_cash_reserve": 40,
+            "raw_available": {
+              "ore": 4,
+              "fuel": 1
+            },
+            "raw_required_for_next_production_and_development": {
+              "ore": 4
+            },
+            "research_ore": 2,
+            "research_ore_ids": [
+              82,
+              110
+            ],
+            "machine_minimum_generation": 2,
+            "machine_used": {
+              "round": 4,
+              "country": "Technia",
+              "uid": 155,
+              "good": "machine",
+              "generation": 2,
+              "born": 3,
+              "origin": "Mechania",
+              "purpose": "development",
+              "import_transaction": 40
+            },
+            "food_met": true,
+            "living_free": 1,
+            "living_needed": 1,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          },
+          {
+            "round": 5,
+            "industry": "machine",
+            "from_level": 1,
+            "to_level": 2,
+            "capacity_after": 350,
+            "cash_before": 377,
+            "cash_cost": 205,
+            "required_cash_reserve": 60,
+            "raw_available": {
+              "ore": 0,
+              "fuel": 3
+            },
+            "raw_required_for_next_production_and_development": {
+              "fuel": 3,
+              "ore": 0
+            },
+            "research_ore": 0,
+            "research_ore_ids": [],
+            "machine_minimum_generation": 0,
+            "machine_used": null,
+            "food_met": true,
+            "living_free": 2,
+            "living_needed": 2,
+            "household_guard_passed_under_actual_policy": true,
+            "ordinary_household_condition_satisfied": true,
+            "investment_policy_waives_cash_reserve_and_household_guard": false,
+            "successful": true
+          }
+        ],
+        "cash_ledger": [
+          {
+            "round": 1,
+            "country": "Technia",
+            "cash_start": 185,
+            "cash_end": 65,
+            "sales": 80,
+            "purchases": 0,
+            "investment": 220,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 80
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 2,
+              "machine": 1,
+              "wheat": 1
+            },
+            "next_focus": "electronics",
+            "stock": {
+              "banana": 1,
+              "wheat": 2,
+              "fuel": 1,
+              "ore": 0,
+              "machine": 2,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 2,
+            "country": "Technia",
+            "cash_start": 65,
+            "cash_end": 360,
+            "sales": 350,
+            "purchases": 75,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 75,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 45,
+              "electronics": 305
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 2,
+              "machine": 1,
+              "wheat": 1
+            },
+            "next_focus": "electronics",
+            "stock": {
+              "banana": 0,
+              "wheat": 2,
+              "fuel": 0,
+              "ore": 4,
+              "machine": 1,
+              "electronics": 1
+            }
+          },
+          {
+            "round": 3,
+            "country": "Technia",
+            "cash_start": 360,
+            "cash_end": 368,
+            "sales": 34,
+            "purchases": 46,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 6,
+              "wheat": 0,
+              "fuel": 40,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 34,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 2,
+              "machine": 1,
+              "wheat": 1
+            },
+            "next_focus": "electronics",
+            "stock": {
+              "banana": 0,
+              "wheat": 2,
+              "fuel": 2,
+              "ore": 3,
+              "machine": 1,
+              "electronics": 4
+            }
+          },
+          {
+            "round": 4,
+            "country": "Technia",
+            "cash_start": 368,
+            "cash_end": 106,
+            "sales": 129,
+            "purchases": 81,
+            "investment": 330,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 5,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 14,
+              "machine": 62,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 10,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 37,
+              "electronics": 82
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 3,
+              "machine": 1,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 1,
+              "ore": 2,
+              "machine": 2,
+              "electronics": 6
+            }
+          },
+          {
+            "round": 5,
+            "country": "Technia",
+            "cash_start": 106,
+            "cash_end": 172,
+            "sales": 289,
+            "purchases": 38,
+            "investment": 205,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 28,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 289
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 3,
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "electronics",
+            "stock": {
+              "banana": 0,
+              "wheat": 2,
+              "fuel": 3,
+              "ore": 0,
+              "machine": 2,
+              "electronics": 5
+            }
+          },
+          {
+            "round": 6,
+            "country": "Technia",
+            "cash_start": 172,
+            "cash_end": 291,
+            "sales": 129,
+            "purchases": 30,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 20,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 129
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 3,
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 1,
+              "fuel": 0,
+              "ore": 2,
+              "machine": 3,
+              "electronics": 8
+            }
+          },
+          {
+            "round": 7,
+            "country": "Technia",
+            "cash_start": 291,
+            "cash_end": 275,
+            "sales": 0,
+            "purchases": 36,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 10,
+              "wheat": 0,
+              "fuel": 26,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 3,
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 3,
+              "fuel": 2,
+              "ore": 0,
+              "machine": 3,
+              "electronics": 11
+            }
+          },
+          {
+            "round": 8,
+            "country": "Technia",
+            "cash_start": 275,
+            "cash_end": 262,
+            "sales": 0,
+            "purchases": 33,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 15,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 18,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 3,
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 4,
+              "fuel": 0,
+              "ore": 2,
+              "machine": 3,
+              "electronics": 14
+            }
+          },
+          {
+            "round": 9,
+            "country": "Technia",
+            "cash_start": 262,
+            "cash_end": 267,
+            "sales": 0,
+            "purchases": 15,
+            "investment": 0,
+            "operating_income": 20,
+            "purchase_by_good": {
+              "banana": 15,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "sale_by_good": {
+              "banana": 0,
+              "wheat": 0,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 0,
+              "electronics": 0
+            },
+            "happy": 100.0,
+            "levels": {
+              "electronics": 3,
+              "machine": 2,
+              "wheat": 1
+            },
+            "next_focus": "wheat",
+            "stock": {
+              "banana": 0,
+              "wheat": 5,
+              "fuel": 0,
+              "ore": 0,
+              "machine": 3,
+              "electronics": 17
+            }
+          }
+        ],
+        "all_actual_policy_conditions_verified": true,
+        "has_investment_policy_waiver": false,
+        "all_ordinary_household_conditions_satisfied": true,
+        "normal_policy_witness": true
+      },
+      "normal_policy_completed_record": {
+        "identity": {
+          "phase": "calibration",
+          "mode": "market_first",
+          "scenario": "None:normal",
+          "seed": 90000,
+          "focal": null,
+          "style": "normal",
+          "behaviors": {}
+        },
+        "record_sha256": "68f5cb3712b569ae59d459c6b3e85a812f5954a518ec1b17b2dde5d30120b374",
+        "growth": 1.5,
+        "initial_capacity": 140,
+        "final_capacity": 350,
+        "upgrade_rounds": [
+          [
+            1,
+            "electronics",
+            2
+          ],
+          [
+            4,
+            "electronics",
+            3
+          ],
+          [
+            5,
+            "machine",
+            2
+          ]
+        ],
+        "end_levels": {
+          "banana": 0,
+          "wheat": 1,
+          "fuel": 0,
+          "ore": 0,
+          "machine": 2,
+          "electronics": 3
+        },
+        "investment_cash_cost": 755,
+        "cash_end": 267,
+        "minimum_observed_cash": 65,
+        "wellbeing": 100.0,
+        "food_short_rounds": 0,
+        "note": "Archived completed execution; final evidence alone does not contain every pre-investment guard snapshot."
+      },
+      "supplemental_normal_trace": null,
+      "economic_reachability_scope": "Observed baseline calibration only. New economy/policy outcomes must be checked separately without changing this target."
+    }
+  },
+  "limitations": [
+    "The correction restores observed development steps. It does not equalize wins, investment counts, cost, or difficulty.",
+    "Full target score frequency can increase. That alone is neither fairness nor unfairness.",
+    "Archived successful paths prove feasibility only under their stated calibration policies and market trajectory.",
+    "Invest policy waives the normal cash reserve and household guard; any such witness is explicitly identified.",
+    "The relaxed state enumeration proves structural reachability, not affordability.",
+    "The official source goals remain byte-for-byte unchanged; these are candidate score-view targets."
+  ],
+  "source_unchanged": true,
+  "input_sha256_after": {
+    "old_goals": "47e78fe6a9cebab256bb52a3b7dbef9c9b46cec4363d15700290ddfa2e4620d5",
+    "calibration_runs": "a87d6cc7fc622e1c800b2a5f50f9245320b637f5cb3aef1f272247cb9c38719b",
+    "calibration_traces": "d8ae5fd8879b05e8cee2da9ab7705ad69347b8953b2abeab84ceaf6257dd87f6",
+    "provenance": "008694bd839bdbf2a2e20c0548cf51ea4493b3b987767151d44d8c028295faf3"
+  },
+  "enumerated_final_states": 400
+}

@@ -1,0 +1,312 @@
+{
+ "1.0": {
+  "skip": {
+   "Tropia": {
+    "d": [
+     6.72,
+     4.41,
+     9.03
+    ],
+    "better": 29,
+    "n": 30,
+    "fee": 0
+   },
+   "Grainia": {
+    "d": [
+     2.08,
+     1.46,
+     2.7
+    ],
+    "better": 26,
+    "n": 30,
+    "fee": 0
+   },
+   "Oilia": {
+    "d": [
+     -0.86,
+     -2.11,
+     0.39
+    ],
+    "better": 9,
+    "n": 30,
+    "fee": 0
+   },
+   "Mechania": {
+    "d": [
+     1.27,
+     0.25,
+     2.29
+    ],
+    "better": 21,
+    "n": 30,
+    "fee": 0
+   },
+   "Mineria": {
+    "d": [
+     1.0,
+     -1.18,
+     3.19
+    ],
+    "better": 11,
+    "n": 30,
+    "fee": 0
+   },
+   "Technia": {
+    "d": [
+     -1.14,
+     -2.71,
+     0.43
+    ],
+    "better": 7,
+    "n": 30,
+    "fee": 0
+   }
+  },
+  "idle": {
+   "Tropia": {
+    "score": 40.98
+   },
+   "Grainia": {
+    "score": 42.66
+   },
+   "Oilia": {
+    "score": 41.14
+   },
+   "Mechania": {
+    "score": 39.43
+   },
+   "Mineria": {
+    "score": 37.82
+   },
+   "Technia": {
+    "score": 35.09
+   }
+  },
+  "criteria": {
+   "skip_loses_all_and_better<=5": false,
+   "normal_change<0.5": true
+  }
+ },
+ "1.2": {
+  "normal": {
+   "mean_diff": -0.0,
+   "max_abs_country_diff": 0.0,
+   "emergency_games": 0
+  },
+  "skip": {
+   "Tropia": {
+    "d": [
+     -13.0,
+     -15.6,
+     -10.4
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 156
+   },
+   "Grainia": {
+    "d": [
+     -7.76,
+     -8.29,
+     -7.23
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 156
+   },
+   "Oilia": {
+    "d": [
+     -9.51,
+     -11.06,
+     -7.96
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 154.4
+   },
+   "Mechania": {
+    "d": [
+     -9.63,
+     -11.1,
+     -8.15
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 152.8
+   },
+   "Mineria": {
+    "d": [
+     -11.9,
+     -14.16,
+     -9.63
+    ],
+    "better": 1,
+    "n": 30,
+    "fee": 155.7
+   },
+   "Technia": {
+    "d": [
+     -2.21,
+     -3.73,
+     -0.69
+    ],
+    "better": 3,
+    "n": 30,
+    "fee": 57.6
+   }
+  },
+  "idle": {
+   "Tropia": {
+    "score": 31.97,
+    "vs_current_idle": -9.01,
+    "fee": 156,
+    "normal": 83.75
+   },
+   "Grainia": {
+    "score": 32.16,
+    "vs_current_idle": -10.51,
+    "fee": 156,
+    "normal": 79.87
+   },
+   "Oilia": {
+    "score": 41.14,
+    "vs_current_idle": 0.0,
+    "fee": 0,
+    "normal": 91.44
+   },
+   "Mechania": {
+    "score": 27.23,
+    "vs_current_idle": -12.2,
+    "fee": 156,
+    "normal": 90.21
+   },
+   "Mineria": {
+    "score": 37.82,
+    "vs_current_idle": 0.0,
+    "fee": 0,
+    "normal": 87.32
+   },
+   "Technia": {
+    "score": 32.6,
+    "vs_current_idle": -2.49,
+    "fee": 156,
+    "normal": 92.03
+   }
+  },
+  "criteria": {
+   "skip_loses_all_and_better<=5": true,
+   "normal_change<0.5": true
+  }
+ },
+ "1.5": {
+  "normal": {
+   "mean_diff": -0.0,
+   "max_abs_country_diff": 0.0,
+   "emergency_games": 0
+  },
+  "skip": {
+   "Tropia": {
+    "d": [
+     -15.81,
+     -18.51,
+     -13.11
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 194.6
+   },
+   "Grainia": {
+    "d": [
+     -11.2,
+     -11.88,
+     -10.52
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 194.5
+   },
+   "Oilia": {
+    "d": [
+     -13.45,
+     -15.11,
+     -11.78
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 195
+   },
+   "Mechania": {
+    "d": [
+     -14.46,
+     -15.97,
+     -12.94
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 186.4
+   },
+   "Mineria": {
+    "d": [
+     -17.02,
+     -19.19,
+     -14.86
+    ],
+    "better": 0,
+    "n": 30,
+    "fee": 194.9
+   },
+   "Technia": {
+    "d": [
+     -2.68,
+     -4.22,
+     -1.15
+    ],
+    "better": 3,
+    "n": 30,
+    "fee": 73.5
+   }
+  },
+  "idle": {
+   "Tropia": {
+    "score": 29.41,
+    "vs_current_idle": -11.57,
+    "fee": 195,
+    "normal": 83.75
+   },
+   "Grainia": {
+    "score": 29.21,
+    "vs_current_idle": -13.45,
+    "fee": 195,
+    "normal": 79.87
+   },
+   "Oilia": {
+    "score": 41.14,
+    "vs_current_idle": 0.0,
+    "fee": 0,
+    "normal": 91.44
+   },
+   "Mechania": {
+    "score": 27.23,
+    "vs_current_idle": -12.2,
+    "fee": 195,
+    "normal": 90.21
+   },
+   "Mineria": {
+    "score": 37.82,
+    "vs_current_idle": 0.0,
+    "fee": 0,
+    "normal": 87.32
+   },
+   "Technia": {
+    "score": 31.73,
+    "vs_current_idle": -3.36,
+    "fee": 195,
+    "normal": 92.03
+   }
+  },
+  "criteria": {
+   "skip_loses_all_and_better<=5": true,
+   "normal_change<0.5": true
+  }
+ }
+}

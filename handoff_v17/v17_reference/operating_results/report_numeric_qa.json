@@ -1,0 +1,20 @@
+{
+  "schema": "v17-report-numeric-qa-1",
+  "status": "PASS",
+  "report_sha256": "d573c9e5ea1099935ff9d11d9b3dbcf6426140d0f971d8ba93b162c559372d8d",
+  "validator_sha256": "fd1fdcb857c7d2e43d32a59efafac9da3d4203b74f613e8d26e3755cc91ffcb7",
+  "source_sha256": {
+    "operating_results/run_manifest.json": "0d5846e7cc54c1f38a564874a7bc9f32742fc8327f9c150ce4c59bfd9ddb67f5",
+    "operating_results/smoke/smoke_manifest.json": "ae8d7f3be7482725ee942af2c9e45c128c7aec2e89c9b882fd45644eeb814dc3",
+    "semantic_tests.json": "f89eac9d985b20fb9590870aa99e34272b1a2545c6b008d8a38bceeaef2efb83",
+    "OPERATING_PROTOCOL_V17.json": "007b028885b2ede2e17703cf02b80a2178b0716424ce694a3413c471c87dba8b",
+    "operating_results/summary.json": "982075c9fb102a7821e4d1b8e2a96b7b7f9375e21437463f631cbb23f1dfa147",
+    "operating_results/independent_audit.json": "aa1d3de4324801edb3035c0bab6579cfbada5ee65ed7c017d196f1a68cb1d576"
+  },
+  "source_wired_numbers": 1534,
+  "tables": 33,
+  "headings": 21,
+  "errors": [],
+  "economic_games": 0,
+  "scope": "Validate actual displayed numeric source references/formatting and HTML structure; no classroom or live game UI claim."
+}
