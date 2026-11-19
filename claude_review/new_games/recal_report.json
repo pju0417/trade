@@ -1,0 +1,227 @@
+{
+ "targets": {
+  "v15": {
+   "economic": {
+    "Tropia": 305,
+    "Grainia": 265,
+    "Oilia": 245,
+    "Mechania": 230,
+    "Mineria": 185,
+    "Technia": 895
+   },
+   "industrial": {
+    "Tropia": 0.3333333333333333,
+    "Grainia": 0.4,
+    "Oilia": 0.8333333333333334,
+    "Mechania": 0.4166666666666667,
+    "Mineria": 0.6,
+    "Technia": 1.5
+   }
+  },
+  "A_v17_none": {
+   "economic": {
+    "Tropia": 305,
+    "Grainia": 265,
+    "Oilia": 245,
+    "Mechania": 230,
+    "Mineria": 185,
+    "Technia": 895
+   },
+   "industrial": {
+    "Tropia": 0.3333333333333333,
+    "Grainia": 0.4,
+    "Oilia": 0.8333333333333334,
+    "Mechania": 0.4166666666666667,
+    "Mineria": 0.6,
+    "Technia": 1.5
+   }
+  },
+  "B_light_fee1": {
+   "economic": {
+    "Tropia": 245,
+    "Grainia": 205,
+    "Oilia": 285,
+    "Mechania": 160,
+    "Mineria": 245,
+    "Technia": 880
+   },
+   "industrial": {
+    "Tropia": 0.3333333333333333,
+    "Grainia": 0.4,
+    "Oilia": 0.8333333333333334,
+    "Mechania": 0.4166666666666667,
+    "Mineria": 0.6,
+    "Technia": 1.5
+   }
+  }
+ },
+ "raw_p75": {
+  "A": {
+   "Tropia": {
+    "economic": 302.3125,
+    "industrial": 0.3333333333333333
+   },
+   "Grainia": {
+    "economic": 261.0,
+    "industrial": 0.4
+   },
+   "Oilia": {
+    "economic": 240.625,
+    "industrial": 0.8333333333333334
+   },
+   "Mechania": {
+    "economic": 225.9375,
+    "industrial": 0.4166666666666667
+   },
+   "Mineria": {
+    "economic": 183.5625,
+    "industrial": 0.6
+   },
+   "Technia": {
+    "economic": 892.8749999999999,
+    "industrial": 1.5
+   }
+  },
+  "B": {
+   "Tropia": {
+    "economic": 243.625,
+    "industrial": 0.3333333333333333
+   },
+   "Grainia": {
+    "economic": 203.5625,
+    "industrial": 0.4
+   },
+   "Oilia": {
+    "economic": 282.625,
+    "industrial": 0.8333333333333334
+   },
+   "Mechania": {
+    "economic": 158.375,
+    "industrial": 0.4166666666666667
+   },
+   "Mineria": {
+    "economic": 245.0,
+    "industrial": 0.6
+   },
+   "Technia": {
+    "economic": 879.875,
+    "industrial": 1.5
+   }
+  }
+ },
+ "v15": {
+  "normal_econ_reach": {
+   "Tropia": 0.0,
+   "Grainia": 0.0,
+   "Oilia": 0.83,
+   "Mechania": 0.09,
+   "Mineria": 0.77,
+   "Technia": 0.2
+  },
+  "normal_ind_reach": {
+   "Tropia": 0.57,
+   "Grainia": 0.32,
+   "Oilia": 0.37,
+   "Mechania": 1.0,
+   "Mineria": 0.68,
+   "Technia": 0.39
+  },
+  "econ_reach_range": 0.83,
+  "ind_reach_range": 0.6799999999999999,
+  "idle_econ_attainment": {
+   "Tropia": 0.3016393442622951,
+   "Grainia": 0.2962264150943396,
+   "Oilia": 0.9204081632653062,
+   "Mechania": 0.1108695652173913,
+   "Mineria": 1.0972972972972972,
+   "Technia": 0.2343761638733706
+  },
+  "auto_income_over_target": {
+   "Tropia": 0.579672131147541,
+   "Grainia": 0.6673207547169812,
+   "Oilia": 0.7251836734693877,
+   "Mechania": 0.7736086956521739,
+   "Mineria": 0.9606486486486486,
+   "Technia": 0.2011173184357542
+  },
+  "normal_econ_attainment_mean": {
+   "Tropia": 0.7027295081967213,
+   "Grainia": 0.6933584905660378,
+   "Oilia": 0.9885510204081632,
+   "Mechania": 0.7780760869565218,
+   "Mineria": 0.9732162162162161,
+   "Technia": 0.8907648044692738
+  },
+  "normal_ind_attainment_mean": {
+   "Tropia": 0.57,
+   "Grainia": 0.32,
+   "Oilia": 0.748,
+   "Mechania": 1.0,
+   "Mineria": 0.68,
+   "Technia": 0.806190476190476
+  }
+ },
+ "B": {
+  "normal_econ_reach": {
+   "Tropia": 0.19,
+   "Grainia": 0.21,
+   "Oilia": 0.39,
+   "Mechania": 0.71,
+   "Mineria": 0.33,
+   "Technia": 0.24
+  },
+  "normal_ind_reach": {
+   "Tropia": 0.57,
+   "Grainia": 0.32,
+   "Oilia": 0.37,
+   "Mechania": 1.0,
+   "Mineria": 0.68,
+   "Technia": 0.39
+  },
+  "econ_reach_range": 0.52,
+  "ind_reach_range": 0.6799999999999999,
+  "idle_econ_attainment": {
+   "Tropia": 0.37551020408163266,
+   "Grainia": 0.3829268292682927,
+   "Oilia": 0.7912280701754386,
+   "Mechania": 0.159375,
+   "Mineria": 0.8285714285714286,
+   "Technia": 0.23837121212121212
+  },
+  "auto_income_over_target": {
+   "Tropia": 0.7216326530612245,
+   "Grainia": 0.8626341463414634,
+   "Oilia": 0.6234035087719297,
+   "Mechania": 1.1120625,
+   "Mineria": 0.7253877551020408,
+   "Technia": 0.20454545454545456
+  },
+  "normal_econ_attainment_mean": {
+   "Tropia": 0.8607755102040816,
+   "Grainia": 0.8831585365853659,
+   "Oilia": 0.938578947368421,
+   "Mechania": 0.9562968750000002,
+   "Mineria": 0.8707755102040816,
+   "Technia": 0.90220625
+  },
+  "normal_ind_attainment_mean": {
+   "Tropia": 0.57,
+   "Grainia": 0.32,
+   "Oilia": 0.748,
+   "Mechania": 1.0,
+   "Mineria": 0.68,
+   "Technia": 0.806190476190476
+  }
+ },
+ "criteria": {
+  "C1_idle_econ_below_0.8_all": false,
+  "C2_econ_reach_range_narrower": true,
+  "C3_ind_reach_range_narrower": false,
+  "C3_every_country_reaches_ind": true
+ },
+ "games": {
+  "A": 780,
+  "B": 780,
+  "valid": 280
+ }
+}

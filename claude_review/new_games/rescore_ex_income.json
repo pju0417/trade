@@ -1,0 +1,48 @@
+{
+ "targets": {
+  "Tropia": 75,
+  "Grainia": 50,
+  "Oilia": 105,
+  "Mechania": 50,
+  "Mineria": 70,
+  "Technia": 700
+ },
+ "raw_p75": {
+  "Tropia": 72.5625,
+  "Grainia": 30.8125,
+  "Oilia": 104.625,
+  "Mechania": -21.25,
+  "Mineria": 68.5625,
+  "Technia": 699.875
+ },
+ "normal_reach": {
+  "Tropia": 0.16,
+  "Grainia": 0.05,
+  "Oilia": 0.4,
+  "Mechania": 0.1,
+  "Mineria": 0.29,
+  "Technia": 0.24
+ },
+ "normal_attainment_mean": {
+  "Tropia": 0.47513333333333335,
+  "Grainia": 0.2791,
+  "Oilia": 0.8491904761904762,
+  "Mechania": 0.28495000000000004,
+  "Mineria": 0.5708214285714286,
+  "Technia": 0.8770592857142857
+ },
+ "idle_attainment": {
+  "Tropia": 0.8,
+  "Grainia": 0.93,
+  "Oilia": 0.7857142857142857,
+  "Mechania": 0.15,
+  "Mineria": 0.9857142857142858,
+  "Technia": 0.26
+ },
+ "reach_range": 0.35000000000000003,
+ "criteria": {
+  "C1": false,
+  "C2": true
+ },
+ "new_games": 0
+}
