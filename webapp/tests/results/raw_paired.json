@@ -1,0 +1,147 @@
+{
+ "games": 30,
+ "seeds": [
+  210000,
+  210029
+ ],
+ "result": {
+  "Oilia:ai": {
+   "produced": {
+    "fuel": 22.0,
+    "banana": 20.4,
+    "ore": 12.6
+   },
+   "sold": {
+    "('fuel', 'market')": 9.3,
+    "('ore', 'market')": 6.4,
+    "('banana', 'market')": 5.7,
+    "('ore', 'direct')": 0.9,
+    "('ore', 'barter')": 0.6,
+    "('fuel', 'barter')": 0.3,
+    "('fuel', 'direct')": 0.0
+   },
+   "revenue": {
+    "fuel": 153.7,
+    "ore": 119.1,
+    "banana": 29.2
+   },
+   "used_home": {
+    "banana": 14.6,
+    "fuel": 3.0,
+    "ore": 2.2
+   },
+   "used_abroad": {
+    "fuel": 9.7,
+    "ore": 7.6,
+    "banana": 5.2
+   },
+   "unused_end": {
+    "fuel": 9.3,
+    "ore": 2.6,
+    "banana": 0.7
+   },
+   "useful_export": 318.6,
+   "final_cash": 177.2
+  },
+  "Mineria:ai": {
+   "produced": {
+    "fuel": 19.1,
+    "ore": 17.6,
+    "machine": 0.3
+   },
+   "sold": {
+    "('ore', 'market')": 9.0,
+    "('fuel', 'market')": 8.1,
+    "('ore', 'direct')": 1.1,
+    "('ore', 'barter')": 0.5,
+    "('electronics', 'market')": 0.1,
+    "('electronics', 'direct')": 0.0
+   },
+   "revenue": {
+    "ore": 162.3,
+    "fuel": 136.6,
+    "electronics": 3.7
+   },
+   "used_home": {
+    "fuel": 3.0,
+    "ore": 2.0
+   },
+   "used_abroad": {
+    "ore": 10.2,
+    "fuel": 8.1
+   },
+   "unused_end": {
+    "fuel": 8.0,
+    "ore": 5.0,
+    "machine": 0.3
+   },
+   "useful_export": 304.4,
+   "final_cash": 155.3
+  },
+  "Oilia:human": {
+   "produced": {
+    "fuel": 26.0,
+    "ore": 9.0,
+    "banana": 9.0
+   },
+   "sold": {
+    "('ore', 'direct')": 1.5,
+    "('fuel', 'direct')": 1.4,
+    "('banana', 'market')": 1.1,
+    "('fuel', 'market')": 0.9,
+    "('ore', 'market')": 0.2
+   },
+   "revenue": {
+    "fuel": 49.5,
+    "ore": 18.1,
+    "banana": 3.9
+   },
+   "used_home": {
+    "banana": 7.9,
+    "fuel": 3.0,
+    "ore": 2.0
+   },
+   "used_abroad": {
+    "fuel": 2.3,
+    "ore": 1.6,
+    "banana": 1.1
+   },
+   "unused_end": {
+    "fuel": 20.7,
+    "ore": 5.3
+   },
+   "useful_export": 71.2,
+   "final_cash": 72.4
+  },
+  "Mineria:human": {
+   "produced": {
+    "ore": 26.0,
+    "fuel": 9.0
+   },
+   "sold": {
+    "('ore', 'market')": 14.0,
+    "('fuel', 'market')": 5.2,
+    "('ore', 'direct')": 1.7,
+    "('fuel', 'direct')": 0.3
+   },
+   "revenue": {
+    "ore": 159.5,
+    "fuel": 98.2
+   },
+   "used_home": {
+    "fuel": 3.0,
+    "ore": 2.0
+   },
+   "used_abroad": {
+    "ore": 15.5,
+    "fuel": 5.5
+   },
+   "unused_end": {
+    "ore": 8.3,
+    "fuel": 0.5
+   },
+   "useful_export": 256.2,
+   "final_cash": 207.3
+  }
+ }
+}

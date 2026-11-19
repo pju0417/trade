@@ -1,0 +1,280 @@
+{
+ "games": 60,
+ "seeds": [
+  200000,
+  200059
+ ],
+ "goods": {
+  "wheat": {
+   "initial": 18,
+   "produced": 176,
+   "producers": {
+    "Mechania": 40.6,
+    "Grainia": 34.5,
+    "Tropia": 32.8,
+    "Ferria": 26.6,
+    "Technia": 20.9,
+    "Novia": 20.6
+   },
+   "used_by_purpose": {
+    "food": 144.0
+   },
+   "unused_end": 50,
+   "unused_holders": {
+    "Mechania": 15.2,
+    "Grainia": 11.7,
+    "Tropia": 9.6,
+    "Ferria": 6.1,
+    "Technia": 3.7
+   },
+   "traded": 42,
+   "barter_units": 0.2,
+   "avg_cash_price": 5.07177033492823,
+   "base_price": null
+  },
+  "banana": {
+   "initial": 18,
+   "produced": 141.83333333333334,
+   "producers": {
+    "Tropia": 50.6,
+    "Grainia": 37.4,
+    "Agrea": 32.5,
+    "Oilia": 21.3
+   },
+   "used_by_purpose": {
+    "food": 144.0
+   },
+   "unused_end": 15.833333333333334,
+   "unused_holders": {
+    "Tropia": 8.1,
+    "Agrea": 3.7,
+    "Grainia": 3.2,
+    "Oilia": 0.8
+   },
+   "traded": 70,
+   "barter_units": 0,
+   "avg_cash_price": 5.073333333333333,
+   "base_price": null
+  },
+  "fuel": {
+   "initial": 2,
+   "produced": 62.75,
+   "producers": {
+    "Oilia": 22.6,
+    "Agrea": 21.1,
+    "Mineria": 19.0
+   },
+   "used_by_purpose": {
+    "national": 27.0,
+    "production": 11.8
+   },
+   "unused_end": 25.966666666666665,
+   "unused_holders": {
+    "Oilia": 9.8,
+    "Agrea": 8.2,
+    "Mineria": 7.9,
+    "Technia": 0.1
+   },
+   "traded": 27.85,
+   "barter_units": 0.5333333333333333,
+   "avg_cash_price": 16.567419158023185,
+   "base_price": 30
+  },
+  "ore": {
+   "initial": 2,
+   "produced": 51.666666666666664,
+   "producers": {
+    "Ferria": 21.7,
+    "Mineria": 17.4,
+    "Oilia": 12.6
+   },
+   "used_by_purpose": {
+    "national": 17.9,
+    "production": 17.1,
+    "development": 4.6
+   },
+   "unused_end": 14.083333333333334,
+   "unused_holders": {
+    "Ferria": 5.4,
+    "Mineria": 4.8,
+    "Oilia": 2.4,
+    "Mechania": 1.2,
+    "Technia": 0.1
+   },
+   "traded": 34.86666666666667,
+   "barter_units": 1.1833333333333333,
+   "avg_cash_price": 15.952003958436418,
+   "base_price": 20
+  },
+  "machine": {
+   "initial": 3,
+   "produced": 12.283333333333333,
+   "producers": {
+    "Mechania": 6.9,
+    "Technia": 4.6,
+    "Novia": 0.4,
+    "Mineria": 0.2,
+    "Ferria": 0.1
+   },
+   "used_by_purpose": {
+    "equipment": 8.3,
+    "development": 1.7
+   },
+   "unused_end": 5.266666666666667,
+   "unused_holders": {
+    "Technia": 2.2,
+    "Mechania": 2.2,
+    "Novia": 0.6,
+    "Mineria": 0.2,
+    "Ferria": 0.1
+   },
+   "traded": 8.083333333333334,
+   "barter_units": 1.1166666666666667,
+   "avg_cash_price": 44.09090909090909,
+   "base_price": null
+  },
+  "electronics": {
+   "initial": 0,
+   "produced": 50.483333333333334,
+   "producers": {
+    "Technia": 25.8,
+    "Novia": 24.7
+   },
+   "used_by_purpose": {
+    "living": 22.7
+   },
+   "unused_end": 27.833333333333332,
+   "unused_holders": {
+    "Technia": 14.5,
+    "Novia": 13.3,
+    "Ferria": 0.0
+   },
+   "traded": 17.683333333333334,
+   "barter_units": 0.3,
+   "avg_cash_price": 77.0882070949185,
+   "base_price": null
+  }
+ },
+ "countries": {
+  "Tropia": {
+   "sales_revenue": 190.8,
+   "by_good": {
+    "banana": 144.0,
+    "wheat": 46.8
+   },
+   "national_income": 174.9,
+   "emergency": 1,
+   "final_cash": 206.16666666666666,
+   "useful_export": 191.18333333333334,
+   "util_pts": 7.892768411079872
+  },
+  "Grainia": {
+   "sales_revenue": 147.2,
+   "by_good": {
+    "banana": 102.7,
+    "wheat": 44.4
+   },
+   "national_income": 176,
+   "emergency": 0.6666666666666666,
+   "final_cash": 187.35,
+   "useful_export": 147.15,
+   "util_pts": 7.992324728585017
+  },
+  "Oilia": {
+   "sales_revenue": 311.6,
+   "by_good": {
+    "fuel": 154.9,
+    "ore": 123.1,
+    "banana": 33.0,
+    "electronics": 0.6
+   },
+   "national_income": 176.45,
+   "emergency": 0,
+   "final_cash": 184.58333333333334,
+   "useful_export": 326.45,
+   "util_pts": 7.6786596484054845
+  },
+  "Mechania": {
+   "sales_revenue": 267.2,
+   "by_good": {
+    "machine": 190.8,
+    "wheat": 57.2,
+    "ore": 15.6,
+    "electronics": 3.7
+   },
+   "national_income": 177.4,
+   "emergency": 0,
+   "final_cash": 136.6,
+   "useful_export": 268.05,
+   "util_pts": 6.40974853915253
+  },
+  "Mineria": {
+   "sales_revenue": 301.5,
+   "by_good": {
+    "ore": 163.5,
+    "fuel": 133.6,
+    "electronics": 4.4
+   },
+   "national_income": 177.53333333333333,
+   "emergency": 0,
+   "final_cash": 165.91666666666666,
+   "useful_export": 299.71666666666664,
+   "util_pts": 6.322807054115104
+  },
+  "Technia": {
+   "sales_revenue": 799.0,
+   "by_good": {
+    "electronics": 684.2,
+    "machine": 91.6,
+    "wheat": 16.1,
+    "ore": 7.1
+   },
+   "national_income": 180,
+   "emergency": 0,
+   "final_cash": 139.91666666666666,
+   "useful_export": 725.65,
+   "util_pts": 6.093222578997747
+  },
+  "Novia": {
+   "sales_revenue": 692.9,
+   "by_good": {
+    "electronics": 645.1,
+    "machine": 24.8,
+    "wheat": 14.2,
+    "ore": 8.4,
+    "fuel": 0.4
+   },
+   "national_income": 180,
+   "emergency": 0,
+   "final_cash": 124.71666666666667,
+   "useful_export": 635.4666666666667,
+   "util_pts": null
+  },
+  "Agrea": {
+   "sales_revenue": 240.8,
+   "by_good": {
+    "fuel": 163.7,
+    "banana": 75.4,
+    "ore": 1.6
+   },
+   "national_income": 175.7,
+   "emergency": 0.3333333333333333,
+   "final_cash": 162.11666666666667,
+   "useful_export": 241.78333333333333,
+   "util_pts": null
+  },
+  "Ferria": {
+   "sales_revenue": 253.3,
+   "by_good": {
+    "ore": 218.1,
+    "wheat": 33.2,
+    "electronics": 2.0
+   },
+   "national_income": 177.81666666666666,
+   "emergency": 0,
+   "final_cash": 189.93333333333334,
+   "useful_export": 246.55,
+   "util_pts": null
+  }
+ }
+}
