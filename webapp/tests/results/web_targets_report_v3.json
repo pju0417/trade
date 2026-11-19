@@ -1,0 +1,216 @@
+{
+ "calibration_games": 180,
+ "validation_games": 120,
+ "p75": {
+  "Tropia": 253.0,
+  "Grainia": 201.0,
+  "Oilia": 425.0,
+  "Mechania": 154.0,
+  "Mineria": 329.25,
+  "Technia": 473.75
+ },
+ "targets_v3_floor": {
+  "Tropia": 250,
+  "Grainia": 200,
+  "Oilia": 425,
+  "Mechania": 150,
+  "Mineria": 325,
+  "Technia": 470
+ },
+ "targets_v2_ceil": {
+  "Tropia": 255,
+  "Grainia": 205,
+  "Oilia": 425,
+  "Mechania": 155,
+  "Mineria": 330,
+  "Technia": 475
+ },
+ "v3": {
+  "countries": {
+   "Tropia": {
+    "mean": 92.36548075998076,
+    "min": 88.28489898989899,
+    "grades": {
+     "A": 42,
+     "B": 18,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.6,
+    "export_pts": 19.168,
+    "export_value_mean": 241.3
+   },
+   "Grainia": {
+    "mean": 90.45269416895803,
+    "min": 85.44011954992968,
+    "grades": {
+     "A": 35,
+     "B": 25,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.2833333333333333,
+    "export_pts": 17.446666666666665,
+    "export_value_mean": 177.23333333333332
+   },
+   "Oilia": {
+    "mean": 92.66467081202467,
+    "min": 81.4732174688057,
+    "grades": {
+     "A": 50,
+     "B": 10,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.23333333333333334,
+    "export_pts": 18.498039215686276,
+    "export_value_mean": 396.1
+   },
+   "Mechania": {
+    "mean": 87.71525355312589,
+    "min": 81.87967269595175,
+    "grades": {
+     "A": 17,
+     "B": 43,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.55,
+    "export_pts": 17.711111111111112,
+    "export_value_mean": 135.53333333333333
+   },
+   "Mineria": {
+    "mean": 94.49352863413866,
+    "min": 90.47942433383609,
+    "grades": {
+     "A": 60,
+     "B": 0,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.23333333333333334,
+    "export_pts": 19.106666666666666,
+    "export_value_mean": 313.9166666666667
+   },
+   "Technia": {
+    "mean": 92.48039520531378,
+    "min": 88.87502149151085,
+    "grades": {
+     "A": 58,
+     "B": 2,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.4,
+    "export_pts": 18.9822695035461,
+    "export_value_mean": 448.23333333333335
+   }
+  },
+  "criteria": {
+   "W1": true,
+   "W2": false,
+   "W3": true,
+   "W3_spread": 6.778275081012765
+  }
+ },
+ "v2_on_new_seeds": {
+  "countries": {
+   "Tropia": {
+    "mean": 92.12297095605919,
+    "min": 87.93352644087938,
+    "grades": {
+     "A": 42,
+     "B": 18,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.0,
+    "export_pts": 18.92549019607843,
+    "export_value_mean": 241.3
+   },
+   "Grainia": {
+    "mean": 90.12472668928324,
+    "min": 85.09621711090529,
+    "grades": {
+     "A": 30,
+     "B": 30,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.16666666666666666,
+    "export_pts": 17.11869918699187,
+    "export_value_mean": 177.23333333333332
+   },
+   "Oilia": {
+    "mean": 92.66467081202467,
+    "min": 81.4732174688057,
+    "grades": {
+     "A": 50,
+     "B": 10,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.23333333333333334,
+    "export_pts": 18.498039215686276,
+    "export_value_mean": 396.1
+   },
+   "Mechania": {
+    "mean": 87.41489513018684,
+    "min": 81.40225334111305,
+    "grades": {
+     "A": 16,
+     "B": 44,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.2,
+    "export_pts": 17.410752688172042,
+    "export_value_mean": 135.53333333333333
+   },
+   "Mineria": {
+    "mean": 94.27474075535078,
+    "min": 90.22021687462863,
+    "grades": {
+     "A": 60,
+     "B": 0,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.23333333333333334,
+    "export_pts": 18.887878787878787,
+    "export_value_mean": 313.9166666666667
+   },
+   "Technia": {
+    "mean": 92.34303798246944,
+    "min": 88.6819643806486,
+    "grades": {
+     "A": 57,
+     "B": 3,
+     "C": 0,
+     "D": 0
+    },
+    "ab_share": 1.0,
+    "full_export_share": 0.08333333333333333,
+    "export_pts": 18.844912280701756,
+    "export_value_mean": 448.23333333333335
+   }
+  },
+  "criteria": {
+   "W1": true,
+   "W2": false,
+   "W3": true,
+   "W3_spread": 6.859845625163942
+  }
+ }
+}
