@@ -1,0 +1,163 @@
+{
+ "web_targets": {
+  "Tropia": 190,
+  "Grainia": 150,
+  "Oilia": 105,
+  "Mechania": 150,
+  "Mineria": 240,
+  "Technia": 470
+ },
+ "sim_targets": {
+  "Tropia": 205,
+  "Grainia": 155,
+  "Oilia": 340,
+  "Mechania": 235,
+  "Mineria": 315,
+  "Technia": 765
+ },
+ "observations": {
+  "Tropia": 90,
+  "Grainia": 90,
+  "Oilia": 90,
+  "Mechania": 90,
+  "Mineria": 90,
+  "Technia": 90
+ },
+ "calibration_export": {
+  "Tropia": {
+   "median": 186.0,
+   "p75": 187.0,
+   "max": 190.0
+  },
+  "Grainia": {
+   "median": 126.0,
+   "p75": 147.0,
+   "max": 158.0
+  },
+  "Oilia": {
+   "median": 71.0,
+   "p75": 103.0,
+   "max": 249.0
+  },
+  "Mechania": {
+   "median": 145.0,
+   "p75": 148.0,
+   "max": 186.0
+  },
+  "Mineria": {
+   "median": 172.0,
+   "p75": 238.0,
+   "max": 344.0
+  },
+  "Technia": {
+   "median": 427.0,
+   "p75": 470.0,
+   "max": 474.0
+  }
+ },
+ "validation_games": 120,
+ "countries": {
+  "Tropia": {
+   "n": 60,
+   "mean_web": 91.92830991620465,
+   "mean_sim_targets": 90.54666678398385,
+   "grades_web": {
+    "A": 39,
+    "B": 21,
+    "C": 0,
+    "D": 0
+   },
+   "ab_share": 1.0,
+   "full_export_share": 0.016666666666666666,
+   "export_pts_web": 18.882456140350875,
+   "export_value_mean": 179.38333333333333,
+   "min_web": 87.56299840510366
+  },
+  "Grainia": {
+   "n": 60,
+   "mean_web": 89.33063251916315,
+   "mean_sim_targets": 88.9177292933567,
+   "grades_web": {
+    "A": 23,
+    "B": 37,
+    "C": 0,
+    "D": 0
+   },
+   "ab_share": 1.0,
+   "full_export_share": 0.2,
+   "export_pts_web": 16.6,
+   "export_value_mean": 125.63333333333334,
+   "min_web": 83.53020393811533
+  },
+  "Oilia": {
+   "n": 60,
+   "mean_web": 79.88047317690764,
+   "mean_sim_targets": 70.67785879782268,
+   "grades_web": {
+    "A": 9,
+    "B": 25,
+    "C": 25,
+    "D": 1
+   },
+   "ab_share": 0.5666666666666667,
+   "full_export_share": 0.3333333333333333,
+   "export_pts_web": 14.355555555555556,
+   "export_value_mean": 87.6,
+   "min_web": 58.18590179200644
+  },
+  "Mechania": {
+   "n": 60,
+   "mean_web": 88.3050019738731,
+   "mean_sim_targets": 81.75157407789202,
+   "grades_web": {
+    "A": 21,
+    "B": 39,
+    "C": 0,
+    "D": 0
+   },
+   "ab_share": 1.0,
+   "full_export_share": 0.25,
+   "export_pts_web": 18.255555555555556,
+   "export_value_mean": 137.5,
+   "min_web": 80.9459517657192
+  },
+  "Mineria": {
+   "n": 60,
+   "mean_web": 84.6857813958917,
+   "mean_sim_targets": 81.77691896202926,
+   "grades_web": {
+    "A": 22,
+    "B": 23,
+    "C": 15,
+    "D": 0
+   },
+   "ab_share": 0.75,
+   "full_export_share": 0.3333333333333333,
+   "export_pts_web": 14.675,
+   "export_value_mean": 185.53333333333333,
+   "min_web": 64.00443510737628
+  },
+  "Technia": {
+   "n": 60,
+   "mean_web": 92.26446250604249,
+   "mean_sim_targets": 85.06186666865317,
+   "grades_web": {
+    "A": 55,
+    "B": 5,
+    "C": 0,
+    "D": 0
+   },
+   "ab_share": 1.0,
+   "full_export_share": 0.25,
+   "export_pts_web": 18.721985815602835,
+   "export_value_mean": 440.6166666666667,
+   "min_web": 89.69635181603266
+  }
+ },
+ "criteria": {
+  "W1": false,
+  "W2": false,
+  "W3": false,
+  "W3_spread": 12.383989329134849
+ }
+}
