@@ -22,14 +22,14 @@
 - 운영 자원 규칙은 `light`가 후보다. 다만 학생이 연료·광물을 사지 않으면 오히려 이득인 문제가 있었다.
 - 이를 막는 '긴급 조달' 규칙을 시험했다. 정산일에 부족하면 기초 가격(연료 30G, 광물 20G)을 국가 수입에서 빼는 것만으로 충분했다. 정상 플레이 점수는 변하지 않았다. 아직 확정은 아니다.
 
-- 새 경제(light + 긴급 조달 1.0배)에서 목표를 다시 뽑았다(`docs/recalibration_light_fee1.md`). 경제 목표의 나라 간 난도 차이는 줄었다. 하지만 무행동 미네리아가 여전히 목표의 83%를 채운다. 원인은 '경제 성장' 점수가 자산 증가를 재는 방식이다.
+- 새 경제(light + 긴급 조달 1.0배)에서 자산 증가 방식으로 목표를 다시 뽑았다(`docs/recalibration_light_fee1.md`). 무행동 미네리아가 여전히 목표의 83%를 채웠다.
+- 그래서 경제 점수를 **수출 매출**로 재기로 했다(사용자 결정). 다른 나라가 실제로 쓴 물건만, 기준 가격까지만 인정하는 '쓰인 수출 가치'로 시험했다(`docs/export_revenue_experiment.md`). 무행동은 경제 점수 0, 혼자 1G 판매는 30/30판 손해, 나라 간 난도도 가장 고르다. 맞거래로 달성도가 0.09~0.11 오르는 허점이 남았다.
 
 ## 다음 할 일
 
-1. 경제 점수가 무엇을 잴지 정하기(사용자 결정 필요). 예: 수출 매출처럼 무역 행동으로만 생기는 값
-2. 정한 방식으로 목표를 다시 산출하고 무행동·정상 플레이로 검증하기(`claude_review/recalibrate_targets.py` 재사용)
-3. 산업 목표의 나라 간 난도 차이 점검하기(메카니아 100% 달성, 그레니아 32%)
-4. 목표 달성도의 등급 기준 정하기
+1. 맞거래 막기: "같은 나라와 같은 라운드에 같은 물건을 주고받으면 수출로 치지 않는다" 규칙을 1요인 실험으로 시험하기
+2. 산업 목표의 나라 간 난도 차이 점검하기(메카니아 100% 달성, 그레니아 32%)
+3. 목표 달성도의 등급 기준 정하기
 
 ## 실행 방법
 
@@ -49,7 +49,7 @@ python3 -X utf8 claude_review/compare_new.py claude_review/games_compact.json.gz
 python3 -X utf8 claude_review/analyze_mult.py claude_review
 ```
 
-`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
+`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`)이다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
 
 `new_sims.py`의 실험 이름: `repro`, `skip`, `class3`, `class3_cheap`, `fix`, `mult<배수>_normal|skip|idle`. 한 판에 약 0.35초 걸린다.
 

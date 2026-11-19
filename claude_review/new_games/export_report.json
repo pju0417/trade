@@ -1,0 +1,355 @@
+{
+ "targets_useful_export": {
+  "Tropia": 200,
+  "Grainia": 160,
+  "Oilia": 300,
+  "Mechania": 230,
+  "Mineria": 290,
+  "Technia": 905
+ },
+ "raw_p75_useful_export": {
+  "Tropia": 199.5,
+  "Grainia": 158.0,
+  "Oilia": 297.0,
+  "Mechania": 226.0,
+  "Mineria": 286.0,
+  "Technia": 900.25
+ },
+ "targets_plain_revenue": {
+  "Tropia": 200,
+  "Grainia": 160,
+  "Oilia": 305,
+  "Mechania": 235,
+  "Mineria": 290,
+  "Technia": 990
+ },
+ "raw_p75_plain_revenue": {
+  "Tropia": 199.5,
+  "Grainia": 158.0,
+  "Oilia": 303.0,
+  "Mechania": 233.25,
+  "Mineria": 287.25,
+  "Technia": 985.25
+ },
+ "normal": {
+  "Tropia": {
+   "reach": 0.25,
+   "attain": 0.90405,
+   "old_econ_attain": 0.7027295081967213,
+   "score_old": 82.58597136641954,
+   "score_new": 86.61238120248512,
+   "barter_share": 0.0
+  },
+  "Grainia": {
+   "reach": 0.27,
+   "attain": 0.8899375,
+   "old_econ_attain": 0.6933584905660378,
+   "score_old": 78.63815498694981,
+   "score_new": 82.56973517562905,
+   "barter_share": 0.0
+  },
+  "Oilia": {
+   "reach": 0.29,
+   "attain": 0.9062333333333333,
+   "old_econ_attain": 0.9885510204081632,
+   "score_old": 91.54109936544754,
+   "score_new": 89.89474562395095,
+   "barter_share": 0.008058461902626242
+  },
+  "Mechania": {
+   "reach": 0.52,
+   "attain": 0.9268695652173914,
+   "old_econ_attain": 0.7780760869565218,
+   "score_old": 89.642218768271,
+   "score_new": 92.6180883334884,
+   "barter_share": 0.027413482682432724
+  },
+  "Mineria": {
+   "reach": 0.28,
+   "attain": 0.8922413793103448,
+   "old_econ_attain": 0.9732162162162161,
+   "score_old": 88.54050804626259,
+   "score_new": 86.92101130814515,
+   "barter_share": 0.016793512393092035
+  },
+  "Technia": {
+   "reach": 0.2,
+   "attain": 0.7998011049723758,
+   "old_econ_attain": 0.8907648044692738,
+   "score_old": 91.00762977278634,
+   "score_new": 89.18835578284838,
+   "barter_share": 0.02450331955608346
+  }
+ },
+ "idle": {
+  "Tropia": {
+   "attain": 0.0,
+   "score_new": 27.63888888888889,
+   "score_old": 33.67167577413479
+  },
+  "Grainia": {
+   "attain": 0.0,
+   "score_new": 28.194444444444446,
+   "score_old": 34.11897274633124
+  },
+  "Oilia": {
+   "attain": 0.0,
+   "score_new": 22.731481500000005,
+   "score_old": 41.13964476530612
+  },
+  "Mechania": {
+   "attain": 0.0,
+   "score_new": 27.22953216374269,
+   "score_old": 29.446923468090517
+  },
+  "Mineria": {
+   "attain": 0.0,
+   "score_new": 17.824074074074076,
+   "score_old": 37.82407407407407
+  },
+  "Technia": {
+   "attain": 0.0,
+   "score_new": 28.492724886243384,
+   "score_old": 33.18024816371079
+  }
+ },
+ "minimum_single": {
+  "Tropia": {
+   "d_attain": -0.6335,
+   "lower_attain_games": 30,
+   "d_score_new": -17.410774476225026,
+   "better_new": 0,
+   "d_score_old": -14.495965733055625,
+   "better_old": 0,
+   "n": 30
+  },
+  "Grainia": {
+   "d_attain": -0.6097916666666666,
+   "lower_attain_games": 30,
+   "d_score_new": -10.33907846016626,
+   "better_new": 0,
+   "d_score_old": -7.391043868971289,
+   "better_old": 0,
+   "n": 30
+  },
+  "Oilia": {
+   "d_attain": -0.7908888888888889,
+   "lower_attain_games": 30,
+   "d_score_new": -24.356156314261536,
+   "better_new": 0,
+   "d_score_old": -23.766269692946345,
+   "better_old": 0,
+   "n": 30
+  },
+  "Mechania": {
+   "d_attain": -0.8166666666666667,
+   "lower_attain_games": 30,
+   "d_score_new": -28.603578103666358,
+   "better_new": 0,
+   "d_score_old": -28.284737523956213,
+   "better_old": 0,
+   "n": 30
+  },
+  "Mineria": {
+   "d_attain": -0.7985057471264368,
+   "lower_attain_games": 30,
+   "d_score_new": -24.238531380862902,
+   "better_new": 0,
+   "d_score_old": -27.517965987883716,
+   "better_old": 0,
+   "n": 30
+  },
+  "Technia": {
+   "d_attain": -0.8139226519337016,
+   "lower_attain_games": 30,
+   "d_score_new": -28.153070015722587,
+   "better_new": 0,
+   "d_score_old": -28.555510831797157,
+   "better_old": 0,
+   "n": 30
+  }
+ },
+ "trio_cheap": {
+  "Tropia": {
+   "d_attain": -0.12966666666666668,
+   "lower_attain_games": 26,
+   "d_score_new": 2.53749421794552,
+   "better_new": 12,
+   "d_score_old": 9.004598043082133,
+   "better_old": 29,
+   "n": 30
+  },
+  "Grainia": {
+   "d_attain": -0.15875,
+   "lower_attain_games": 27,
+   "d_score_new": 1.745769554202341,
+   "better_new": 11,
+   "d_score_old": 9.437750686277814,
+   "better_old": 30,
+   "n": 30
+  },
+  "Oilia": {
+   "d_attain": -0.20133333333333334,
+   "lower_attain_games": 29,
+   "d_score_new": -2.8135127616984397,
+   "better_new": 11,
+   "d_score_old": 1.4383239729954382,
+   "better_old": 19,
+   "n": 30
+  },
+  "Mechania": {
+   "d_attain": -0.34855072463768116,
+   "lower_attain_games": 27,
+   "d_score_new": -7.9077597810605464,
+   "better_new": 3,
+   "d_score_old": 0.5089068856061199,
+   "better_old": 16,
+   "n": 30
+  },
+  "Mineria": {
+   "d_attain": -0.3273563218390805,
+   "lower_attain_games": 30,
+   "d_score_new": -6.201605625203526,
+   "better_new": 9,
+   "d_score_old": 0.9626379286951993,
+   "better_old": 13,
+   "n": 30
+  },
+  "Technia": {
+   "d_attain": -0.15068139963167587,
+   "lower_attain_games": 21,
+   "d_score_new": -3.7979787593489718,
+   "better_new": 10,
+   "d_score_old": -3.5342949007936664,
+   "better_old": 10,
+   "n": 30
+  }
+ },
+ "trio_minimum": {
+  "Tropia": {
+   "d_attain": -0.5645,
+   "lower_attain_games": 30,
+   "d_score_new": -4.710071506197038,
+   "better_new": 10,
+   "d_score_old": 4.772824668666347,
+   "better_old": 24,
+   "n": 30
+  },
+  "Grainia": {
+   "d_attain": -0.5254166666666666,
+   "lower_attain_games": 29,
+   "d_score_new": -11.78738887417246,
+   "better_new": 2,
+   "d_score_old": 3.2718878553872885,
+   "better_old": 14,
+   "n": 30
+  },
+  "Oilia": {
+   "d_attain": -0.7688888888888888,
+   "lower_attain_games": 30,
+   "d_score_new": -15.018781428025525,
+   "better_new": 0,
+   "d_score_old": -7.694064874737543,
+   "better_old": 2,
+   "n": 30
+  },
+  "Mechania": {
+   "d_attain": -0.45115942028985506,
+   "lower_attain_games": 30,
+   "d_score_new": -14.296964462111244,
+   "better_new": 0,
+   "d_score_old": -1.7607325780532728,
+   "better_old": 7,
+   "n": 30
+  },
+  "Mineria": {
+   "d_attain": -0.4241379310344827,
+   "lower_attain_games": 30,
+   "d_score_new": -7.75556037304803,
+   "better_new": 7,
+   "d_score_old": 1.401973022416398,
+   "better_old": 10,
+   "n": 30
+  },
+  "Technia": {
+   "d_attain": -0.8153591160220994,
+   "lower_attain_games": 30,
+   "d_score_new": -27.602438403318995,
+   "better_new": 0,
+   "d_score_old": -26.331457200195437,
+   "better_old": 0,
+   "n": 30
+  }
+ },
+ "wash": {
+  "wash_TG": {
+   "Tropia": {
+    "d_attain": 0.08983333333333335,
+    "lower_attain_games": 0,
+    "d_score_new": -6.191238962675362,
+    "better_new": 11,
+    "d_score_old": -11.232714372511428,
+    "better_old": 4,
+    "n": 30,
+    "d_attain_plain_revenue": 0.09766666666666667,
+    "d_unclipped_useful": 0.2006666666666667,
+    "d_unclipped_plain": 2.240666666666667,
+    "wash_trades_per_game": 9.733333333333333
+   },
+   "Grainia": {
+    "d_attain": 0.09666666666666668,
+    "lower_attain_games": 0,
+    "d_score_new": 5.736414490591204,
+    "better_new": 25,
+    "d_score_old": 7.4672321006541,
+    "better_old": 23,
+    "n": 30,
+    "d_attain_plain_revenue": 0.09791666666666667,
+    "d_unclipped_useful": 0.35,
+    "d_unclipped_plain": 3.3112500000000002,
+    "wash_trades_per_game": 9.733333333333333
+   }
+  },
+  "wash_OM": {
+   "Oilia": {
+    "d_attain": 0.10633333333333335,
+    "lower_attain_games": 1,
+    "d_score_new": -3.290504073358213,
+    "better_new": 11,
+    "d_score_old": -9.569551692405831,
+    "better_old": 7,
+    "n": 30,
+    "d_attain_plain_revenue": 0.13846994535519125,
+    "d_unclipped_useful": 0.3016666666666667,
+    "d_unclipped_plain": 2.1606557377049183,
+    "wash_trades_per_game": 14.133333333333333
+   },
+   "Mineria": {
+    "d_attain": 0.10804597701149425,
+    "lower_attain_games": 0,
+    "d_score_new": 5.413720822016773,
+    "better_new": 23,
+    "d_score_old": 3.927576056561662,
+    "better_old": 19,
+    "n": 30,
+    "d_attain_plain_revenue": 0.11655172413793104,
+    "d_unclipped_useful": 0.29137931034482756,
+    "d_unclipped_plain": 2.5927586206896556,
+    "wash_trades_per_game": 14.133333333333333
+   }
+  }
+ },
+ "criteria": {
+  "E1_idle_below_0.8": true,
+  "E2_reach_range_below_0.83": true,
+  "E3_single_1G_lower_25of30": true,
+  "E4_trio_sellers_lower": true,
+  "E5_wash_rise_le_0.10": false,
+  "E6_every_country_reaches": true
+ },
+ "reach_range": 0.32,
+ "games": {
+  "cal": 780,
+  "valid": 610
+ }
+}

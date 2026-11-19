@@ -72,18 +72,63 @@ class Emergency(Skip):
         return ok
 
 
+class WashTrade(Emergency):
+    """Diagnostic exploit: each listed pair sells one surplus unit to each other every
+    round at a fixed high price, right before settlement (round-trip 'wash' trade)."""
+    pairs = ()
+    wash_price = 100
+
+    def settle_round(self, c):
+        if getattr(self, '_washed', None) != self.r:
+            self._washed = self.r
+            for a, b in self.pairs:
+                for s, t in ((a, b), (b, a)):
+                    S, T = self.cs[s], self.cs[t]
+                    for g in ('banana', 'wheat', 'fuel', 'ore', 'machine', 'electronics'):
+                        ids = [i for i in self.get_surplus(S, g) if self.units[i].origin == s]
+                        if ids and T.cash >= self.wash_price:
+                            act = f'wash:{self.r}:{s}:{t}:{len(self.transactions)}'
+                            if self.settle_transaction([{'seller': s, 'buyer': t, 'ids': ids[:1]}],
+                                                       (t, s, self.wash_price), 'direct', act):
+                                self.wash_count = getattr(self, 'wash_count', 0) + 1
+                                break
+        return super().settle_round(c)
+
+
+def export_measures(game):
+    """Per country: cash sales revenue, and 'useful export value' = for each unit it sold
+    (cash or barter), min(unit price, base reference value) counted only if some other
+    country actually used the unit by game end. Barter units count at reference value."""
+    out = {n: {'revenue': c.revenue, 'useful_export': 0.0, 'useful_units': 0, 'barter_value': 0.0}
+           for n, c in game.cs.items()}
+    for t in game.transactions:
+        for leg in t['legs']:
+            s = leg['seller']
+            per = (t['cash'][2] / len(leg['ids'])) if t['cash'] else None
+            for uid in leg['ids']:
+                u = game.units[uid]
+                ref = game.unit_ref(u)
+                if u.used and u.use_country not in (None, s):
+                    v = ref if per is None else min(per, ref)
+                    out[s]['useful_export'] += v; out[s]['useful_units'] += 1
+                    if per is None:
+                        out[s]['barter_value'] += v
+    return out
+
+
 def make_game(seed, profile='light', mode='baseline', fee=None, focal=None, style='normal',
-              behaviors=None, skip=()):
+              behaviors=None, skip=(), wash=()):
     """fee=None -> original v17 engine; fee=<float> -> Emergency with that multiplier."""
     kw = dict(mode=mode, operating_profile=profile)
     if focal is not None:
         kw.update(focal=focal, style=style)
     if behaviors:
         kw['behaviors'] = dict(behaviors)
-    if fee is None and not skip:
+    if fee is None and not skip and not wash:
         return engine.Game(seed, **kw)
-    cls = type('Variant', (Emergency if fee is not None else Skip,),
-               {'skip': tuple(skip), 'mult': fee if fee is not None else 0})
+    base = WashTrade if wash else (Emergency if fee is not None else Skip)
+    cls = type('Variant', (base,), {'skip': tuple(skip), 'mult': fee if fee is not None else 0,
+                                    'pairs': tuple(wash)})
     return cls(seed, **kw)
 
 
@@ -93,6 +138,7 @@ def run_metrics(game):
     rec = {'countries': result['countries'], 'world': result['world']}
     R.attach_fixed_scores(game, rec, growth, GOALS)
     out = {}
+    ex = export_measures(game)
     for n in NAMES:
         c = rec['countries'][n]
         m = c['growth_metrics']
@@ -100,5 +146,7 @@ def run_metrics(game):
                   'investment': m['investment'], 'tax': m['tax'], 'cash': m['cash'],
                   'score': c['fixed_evaluation']['score'],
                   'op_short': c['national_operation']['any_shortage_rounds'],
-                  'emergency': getattr(game, 'emergency', {}).get(n, 0)}
+                  'emergency': getattr(game, 'emergency', {}).get(n, 0),
+                  'econ_old': c['fixed_evaluation']['economic_growth'],
+                  'happy': c['happy'], **ex[n]}
     return out
