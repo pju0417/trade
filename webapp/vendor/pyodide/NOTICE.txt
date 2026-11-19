@@ -1,0 +1,4 @@
+Pyodide 0.27.7 runtime files (pyodide.mjs, pyodide.asm.js, pyodide.asm.wasm, python_stdlib.zip,
+pyodide-lock.json, package.json), copied unchanged from the npm package "pyodide@0.27.7".
+Pyodide is distributed under the Mozilla Public License 2.0 (https://mozilla.org/MPL/2.0/).
+Source: https://github.com/pyodide/pyodide  CPython standard library: PSF License.
