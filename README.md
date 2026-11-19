@@ -28,7 +28,7 @@
 
 ## 다음 할 일
 
-1. 산업 목표 제시 방식 정하기(사용자 결정). 진단 결과는 `docs/industrial_targets_diagnosis.md`: 4개국은 레벨 업 1번이면 만점, 테크니아만 3번·755G
+1. 산업 목표 A안(레벨 업 횟수) 실험: 2번(테크니아 3번)으로 사전 기준을 고정하고 검증. 진단과 C안 비교는 `docs/industrial_targets_diagnosis.md`
 2. 목표 달성도의 등급 기준 정하기
 
 ## 실행 방법
