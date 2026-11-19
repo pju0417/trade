@@ -1,0 +1,12 @@
+{
+ "games": 100,
+ "food_short_rounds_total": {
+  "Tropia": 0,
+  "Grainia": 0,
+  "Oilia": 0,
+  "Mechania": 0,
+  "Mineria": 0,
+  "Technia": 0
+ },
+ "pass": true
+}

@@ -28,9 +28,9 @@
 
 ## 다음 할 일
 
-1. 지금까지 정한 규칙을 한꺼번에 넣고 종합 검증하기. 학생 3명이 동시에 극단 행동을 하는 상황을 포함한다
-2. 학생용 규칙 요약(1쪽)과 교사용 운영 안내 만들기
-3. 후보로 남은 규칙(light 운영 일정, 긴급 조달 1.0배, 레벨 3 할증 없음, 점수 구간 등급) 확정하기
+1. 학생용 규칙 요약(1쪽)과 교사용 운영 안내 만들기. 현재 규칙 묶음은 `docs/final_validation.md` 첫 표에 있다
+2. 후보로 남은 규칙 확정하기(사용자 결정): light 운영 일정, 긴급 조달 1.0배, 레벨 3 할증 없음, 점수 구간 등급, 수출 세부 정의
+3. 실제 학생 3명 시범 수업으로 이해도·진행 시간 확인하기(시뮬레이션으로는 확인 불가)
 
 ## 실행 방법
 
@@ -50,7 +50,7 @@ python3 -X utf8 claude_review/compare_new.py claude_review/games_compact.json.gz
 python3 -X utf8 claude_review/analyze_mult.py claude_review
 ```
 
-`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`), `export_noswap.py`는 같은 물건 맞바꾸기 제외 실험이다. 산업 목표 실험은 `industrial_levelup.py`(A안), `main_industry.py`(1번), `l3_flat_cost.py`(3번), `main_k1.py`(추천안)다. 등급 비교는 `grades.py`, 운영 부족 감점 재채점은 `grades_ops_penalty.py`다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
+`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`), `export_noswap.py`는 같은 물건 맞바꾸기 제외 실험이다. 산업 목표 실험은 `industrial_levelup.py`(A안), `main_industry.py`(1번), `l3_flat_cost.py`(3번), `main_k1.py`(추천안)다. 등급 비교는 `grades.py`, 운영 부족 감점 재채점은 `grades_ops_penalty.py`, 종합 검증은 `final_validation.py`·`final_food_check.py`다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
 
 `new_sims.py`의 실험 이름: `repro`, `skip`, `class3`, `class3_cheap`, `fix`, `mult<배수>_normal|skip|idle`. 한 판에 약 0.35초 걸린다.
 
