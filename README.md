@@ -28,7 +28,7 @@
 
 ## 다음 할 일
 
-1. 산업 목표 다음 후보 정하기(사용자 결정). A안(레벨 업 2번, 테크니아 3번)은 기준 미통과(`docs/industrial_targets_diagnosis.md`, `docs/industrial_levelup_experiment.md`). 후보: 주력 산업 레벨 업만 인정 / C안(증가율) / 농업국 현금 문제 따로 다루기
+1. 산업 목표 다음 단계 정하기(사용자 결정). 1번(대표 산업 레벨 업만 인정)과 3번(레벨 3 비용 할증 없앰)을 시험·비교했다(`docs/industrial_option_comparison.md`). 동기 문제는 풀렸지만 트로피아·그레니아·메카니아 도달률이 낮다(50%·37%·27%)
 2. 목표 달성도의 등급 기준 정하기
 
 ## 실행 방법
@@ -49,7 +49,7 @@ python3 -X utf8 claude_review/compare_new.py claude_review/games_compact.json.gz
 python3 -X utf8 claude_review/analyze_mult.py claude_review
 ```
 
-`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`), `export_noswap.py`는 같은 물건 맞바꾸기 제외 실험이다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
+`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`), `export_noswap.py`는 같은 물건 맞바꾸기 제외 실험이다. 산업 목표 실험은 `industrial_levelup.py`(A안), `main_industry.py`(1번), `l3_flat_cost.py`(3번)다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
 
 `new_sims.py`의 실험 이름: `repro`, `skip`, `class3`, `class3_cheap`, `fix`, `mult<배수>_normal|skip|idle`. 한 판에 약 0.35초 걸린다.
 

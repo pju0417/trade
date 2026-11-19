@@ -1,0 +1,208 @@
+{
+ "countries": {
+  "Tropia": {
+   "reach": 0.5,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 1.5,
+   "blocked_attempts": 0.0,
+   "d_happy": -0.749999999999999,
+   "op_short": 0.16666666666666666,
+   "econ_attain": 0.9670000000000001,
+   "econ_attain_normal": 0.9423333333333335,
+   "score": 89.75811538431849,
+   "score_normal_same_rule": 84.75126964778026,
+   "better_than_normal": 25,
+   "cash_by_round": [
+    146.0,
+    28.8,
+    33.1,
+    43.4,
+    68.2,
+    59.1,
+    60.9,
+    114.2,
+    168.2
+   ]
+  },
+  "Grainia": {
+   "reach": 0.36666666666666664,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 1.3666666666666667,
+   "blocked_attempts": 0.0,
+   "d_happy": -0.9166666666666666,
+   "op_short": 0.16666666666666666,
+   "econ_attain": 0.9345833333333334,
+   "econ_attain_normal": 0.8918750000000001,
+   "score": 87.43430051316452,
+   "score_normal_same_rule": 80.41328010603469,
+   "better_than_normal": 27,
+   "cash_by_round": [
+    162.8,
+    41.2,
+    41.3,
+    46.8,
+    62.4,
+    59.6,
+    60.3,
+    99.4,
+    133.7
+   ]
+  },
+  "Oilia": {
+   "reach": 1.0,
+   "normal_ai_reach": 0.9666666666666667,
+   "mean_main_ups": 2.0,
+   "blocked_attempts": 0.0,
+   "d_happy": -0.04629629629629666,
+   "op_short": 0.0,
+   "econ_attain": 0.9885555555555555,
+   "econ_attain_normal": 0.9693333333333334,
+   "score": 94.97351756423723,
+   "score_normal_same_rule": 94.29350420603578,
+   "better_than_normal": 12,
+   "cash_by_round": [
+    154.1,
+    55.2,
+    89.9,
+    79.9,
+    59.6,
+    95.0,
+    112.4,
+    135.9,
+    179.1
+   ]
+  },
+  "Mechania": {
+   "reach": 0.26666666666666666,
+   "normal_ai_reach": 0.03333333333333333,
+   "mean_main_ups": 1.2666666666666666,
+   "blocked_attempts": 0.0,
+   "d_happy": -0.17592592592592618,
+   "op_short": 0.16666666666666666,
+   "econ_attain": 0.9430434782608695,
+   "econ_attain_normal": 0.9457971014492753,
+   "score": 86.03224816399579,
+   "score_normal_same_rule": 85.0322259363423,
+   "better_than_normal": 11,
+   "cash_by_round": [
+    192.8,
+    112.0,
+    96.1,
+    111.0,
+    83.6,
+    88.0,
+    92.9,
+    103.2,
+    105.8
+   ]
+  },
+  "Mineria": {
+   "reach": 1.0,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 2.0,
+   "blocked_attempts": 0.0,
+   "d_happy": -1.2962962962962967,
+   "op_short": 0.0,
+   "econ_attain": 0.9848275862068967,
+   "econ_attain_normal": 0.9597701149425287,
+   "score": 92.917071632957,
+   "score_normal_same_rule": 78.26111687890211,
+   "better_than_normal": 30,
+   "cash_by_round": [
+    160.5,
+    43.2,
+    78.9,
+    72.9,
+    65.7,
+    81.1,
+    104.9,
+    123.3,
+    139.0
+   ]
+  },
+  "Technia": {
+   "reach": 0.9666666666666667,
+   "normal_ai_reach": 0.9666666666666667,
+   "mean_main_ups": 1.9666666666666666,
+   "blocked_attempts": 2.066666666666667,
+   "d_happy": 0.0,
+   "op_short": 0.0,
+   "econ_attain": 0.8317127071823205,
+   "econ_attain_normal": 0.8314917127071824,
+   "score": 92.27141223188194,
+   "score_normal_same_rule": 92.34981366152125,
+   "better_than_normal": 1,
+   "cash_by_round": [
+    96.1,
+    333.2,
+    259.9,
+    224.3,
+    233.0,
+    191.3,
+    175.0,
+    157.6,
+    158.5
+   ]
+  }
+ },
+ "side_effects": {
+  "op_short_6country_per_game_old": 0.0,
+  "op_short_6country_per_game_new": 0.05,
+  "op_short_9country_per_game_new": 0.07,
+  "happy6_old": 95.24953703703704,
+  "happy6_new": 94.85092592592594,
+  "normal_ai": {
+   "Tropia": {
+    "mean_upgrades_old": 0.57,
+    "mean_upgrades_new": 0.69,
+    "main_reach_new": 0.01,
+    "econ_attain_old": 0.90405,
+    "econ_attain_new": 0.9244499999999999
+   },
+   "Grainia": {
+    "mean_upgrades_old": 0.32,
+    "mean_upgrades_new": 0.32,
+    "main_reach_new": 0.0,
+    "econ_attain_old": 0.8899374999999999,
+    "econ_attain_new": 0.9173125
+   },
+   "Oilia": {
+    "mean_upgrades_old": 1.37,
+    "mean_upgrades_new": 1.96,
+    "main_reach_new": 0.88,
+    "econ_attain_old": 0.9062333333333333,
+    "econ_attain_new": 0.9717666666666667
+   },
+   "Mechania": {
+    "mean_upgrades_old": 1.0,
+    "mean_upgrades_new": 1.01,
+    "main_reach_new": 0.02,
+    "econ_attain_old": 0.925304347826087,
+    "econ_attain_new": 0.9581304347826086
+   },
+   "Mineria": {
+    "mean_upgrades_old": 0.68,
+    "mean_upgrades_new": 0.95,
+    "main_reach_new": 0.0,
+    "econ_attain_old": 0.8922413793103449,
+    "econ_attain_new": 0.9603103448275861
+   },
+   "Technia": {
+    "mean_upgrades_old": 2.27,
+    "mean_upgrades_new": 2.66,
+    "main_reach_new": 0.96,
+    "econ_attain_old": 0.7998011049723757,
+    "econ_attain_new": 0.804
+   }
+  }
+ },
+ "criteria": {
+  "J1_reach_ge_0.8": false,
+  "J2_burden": true,
+  "J3_range_le_0.3": false,
+  "J4_export_not_lower_0.05": true,
+  "J5_side_effects": true
+ },
+ "games": 310,
+ "note": "J5 shortage check uses the six original countries (9-country totals were not stored for the old-cost runs)."
+}

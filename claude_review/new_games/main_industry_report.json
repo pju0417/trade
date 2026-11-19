@@ -1,0 +1,156 @@
+{
+ "K": 2,
+ "countries": {
+  "Tropia": {
+   "reach": 0.0,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 1.0,
+   "blocked_attempts": 0.0,
+   "d_happy": -0.9092592592592591,
+   "op_short": 0.16666666666666666,
+   "econ_attain": 0.9296666666666666,
+   "econ_attain_normal": 0.9023333333333333,
+   "score": 85.16446329909422,
+   "score_normal_same_rule": 83.05290410585465,
+   "better_than_normal": 16,
+   "cash_by_round": [
+    146.0,
+    28.8,
+    31.7,
+    46.4,
+    75.1,
+    70.0,
+    100.5,
+    156.2,
+    199.4
+   ]
+  },
+  "Grainia": {
+   "reach": 0.0,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 1.0,
+   "blocked_attempts": 0.0,
+   "d_happy": -0.9722222222222224,
+   "op_short": 0.13333333333333333,
+   "econ_attain": 0.9277083333333334,
+   "econ_attain_normal": 0.9020833333333333,
+   "score": 84.84355180047282,
+   "score_normal_same_rule": 80.91120330052385,
+   "better_than_normal": 18,
+   "cash_by_round": [
+    162.8,
+    42.2,
+    42.0,
+    49.0,
+    61.6,
+    66.7,
+    86.5,
+    125.6,
+    160.9
+   ]
+  },
+  "Oilia": {
+   "reach": 0.4666666666666667,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 1.4666666666666666,
+   "blocked_attempts": 0.0,
+   "d_happy": 0.17592592592592476,
+   "op_short": 0.0,
+   "econ_attain": 0.8835555555555555,
+   "econ_attain_normal": 0.8833333333333333,
+   "score": 89.15074200090574,
+   "score_normal_same_rule": 85.83602731067232,
+   "better_than_normal": 19,
+   "cash_by_round": [
+    154.1,
+    53.0,
+    87.1,
+    110.4,
+    106.5,
+    113.4,
+    88.0,
+    113.7,
+    147.0
+   ]
+  },
+  "Mechania": {
+   "reach": 0.03333333333333333,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 1.0333333333333334,
+   "blocked_attempts": 0.0,
+   "d_happy": -0.05555555555555571,
+   "op_short": 0.03333333333333333,
+   "econ_attain": 0.9359420289855074,
+   "econ_attain_normal": 0.931304347826087,
+   "score": 85.2678451436347,
+   "score_normal_same_rule": 85.3145545095394,
+   "better_than_normal": 5,
+   "cash_by_round": [
+    192.8,
+    110.9,
+    125.4,
+    103.8,
+    113.4,
+    120.7,
+    124.2,
+    132.4,
+    137.9
+   ]
+  },
+  "Mineria": {
+   "reach": 0.06666666666666667,
+   "normal_ai_reach": 0.0,
+   "mean_main_ups": 1.0666666666666667,
+   "blocked_attempts": 0.0,
+   "d_happy": 0.2500000000000005,
+   "op_short": 0.0,
+   "econ_attain": 0.9683908045977011,
+   "econ_attain_normal": 0.886551724137931,
+   "score": 86.5705202096269,
+   "score_normal_same_rule": 76.72877396905973,
+   "better_than_normal": 30,
+   "cash_by_round": [
+    160.5,
+    43.1,
+    89.2,
+    114.1,
+    87.4,
+    114.9,
+    123.4,
+    145.1,
+    163.5
+   ]
+  },
+  "Technia": {
+   "reach": 0.9333333333333333,
+   "normal_ai_reach": 0.9333333333333333,
+   "mean_main_ups": 1.9333333333333333,
+   "blocked_attempts": 1.9666666666666666,
+   "d_happy": 0.0,
+   "op_short": 0.0,
+   "econ_attain": 0.829171270718232,
+   "econ_attain_normal": 0.8332228360957642,
+   "score": 92.10220406984315,
+   "score_normal_same_rule": 92.21708153123997,
+   "better_than_normal": 0,
+   "cash_by_round": [
+    96.1,
+    356.2,
+    357.2,
+    343.9,
+    294.6,
+    212.6,
+    207.3,
+    187.7,
+    182.3
+   ]
+  }
+ },
+ "criteria": {
+  "I1_reach_ge_0.8": false,
+  "I2_burden": true,
+  "I3_range_le_0.3": false,
+  "I4_export_not_lower_0.05": true
+ },
+ "games": 180
+}
