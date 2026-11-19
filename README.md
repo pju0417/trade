@@ -10,6 +10,8 @@
 | --- | --- |
 | `CLAUDE.md` | 다른 PC에서 Claude와 작업할 때의 지침, 확정 결정, 코드 작업 규칙 |
 | `docs/RULES_v1.md` | **확정 규칙 v1** (2026-11-19). 학생용·교사용 자료의 기준 |
+| `docs/student_rules_summary.md` | 학생용 규칙 요약(1쪽) |
+| `docs/teacher_guide.md` | 교사용 운영 안내 |
 | `docs/final_simulation.md` | 확정 규칙 최종 시뮬레이션: 혼합 행동, 학생 3명 vs 6명 |
 | `docs/claude_review_report_v17.md` | Claude 교차 검증 보고서. 원본은 [Claude 문서](https://claude.ai/artifact/ExUwWNfED9nKjbTCEEYbSN) |
 | `handoff_v17/` | ChatGPT가 만든 v17 인수인계 묶음 그대로. 인수인계서, 검증 요청문, v13~v16 이력, 목표 보정 자료(`calibration_v15/`) |
@@ -30,9 +32,9 @@
 
 ## 다음 할 일
 
-1. 학생용 규칙 요약(1쪽)과 교사용 운영 안내 만들기(`docs/RULES_v1.md`, `docs/final_simulation.md`의 시사점 반영)
-2. 학생 3명 시범 수업으로 이해도·진행 시간 확인하기
-3. 시범 수업 뒤 수출 목표 숫자 다시 보기(지금은 잠정). 학생 7명 이상이면 추가 3개국 목표도 정하기
+1. 학생 3명 시범 수업으로 이해도·진행 시간 확인하기(`docs/student_rules_summary.md`, `docs/teacher_guide.md` 사용)
+2. 시범 수업 뒤 수출 목표 숫자 다시 보기(지금은 잠정). 학생 7명 이상이면 추가 3개국 목표도 정하기
+3. 학생용 화면(웹앱) 설계
 
 ## 실행 방법
 
