@@ -109,19 +109,19 @@ def targets(cal, key):
     return t, raw
 
 
-def report():
+def report(key='useful_export', name='export_report.json'):
     cal, val = load('cal'), load('valid')
-    T, raw = targets(cal, 'useful_export')
+    T, raw = targets(cal, key)
     T2, raw2 = targets(cal, 'revenue')
-    att = lambda m, n, key='useful_export', t=T: min(1.0, m[n][key] / t[n])
+    att = lambda m, n, k=key, t=T: min(1.0, m[n][k] / t[n])
     new_score = lambda m, n: m[n]['score'] - m[n]['econ_old'] + 20 * att(m, n)
     normal = [r for r in val if r['tag'] == 'valid']
     base = {r['seed']: r for r in val if r['tag'] == 'stress' and r['style'] == 'normal'}
     sel = lambda style, focal=None: [r for r in val if r['tag'] == 'stress' and r['style'] == style and r['focal'] == focal]
     mean = lambda a: sum(a) / len(a)
-    res = {'targets_useful_export': T, 'raw_p75_useful_export': raw,
+    res = {'measure': key, 'targets_useful_export': T, 'raw_p75_useful_export': raw,
            'targets_plain_revenue': T2, 'raw_p75_plain_revenue': raw2}
-    reach = {n: mean([r['m'][n]['useful_export'] >= T[n] for r in normal]) for n in L.NAMES}
+    reach = {n: mean([r['m'][n][key] >= T[n] for r in normal]) for n in L.NAMES}
     res['normal'] = {n: {'reach': reach[n], 'attain': mean([att(r['m'], n) for r in normal]),
                          'old_econ_attain': mean([r['m'][n]['econ_old'] / 20 for r in normal]),
                          'score_old': mean([r['m'][n]['score'] for r in normal]),
@@ -148,7 +148,7 @@ def report():
         res['wash'][style] = {n: {**paired(rows, n),
                                   'd_attain_plain_revenue': mean([att(r['m'], n, 'revenue', T2) - att(base[r['seed']]['m'], n, 'revenue', T2) for r in rows]),
                                   # unclipped size of the rise, as a fraction of each target
-                                  'd_unclipped_useful': mean([(r['m'][n]['useful_export'] - base[r['seed']]['m'][n]['useful_export']) / T[n] for r in rows]),
+                                  'd_unclipped_useful': mean([(r['m'][n][key] - base[r['seed']]['m'][n][key]) / T[n] for r in rows]),
                                   'd_unclipped_plain': mean([(r['m'][n]['revenue'] - base[r['seed']]['m'][n]['revenue']) / T2[n] for r in rows]),
                                   'wash_trades_per_game': mean([r['wash_count'] for r in rows])} for n in pairs}
     res['criteria'] = {
@@ -161,8 +161,9 @@ def report():
     }
     res['reach_range'] = max(reach.values()) - min(reach.values())
     res['games'] = {'cal': len(cal), 'valid': len(val)}
-    json.dump(res, open(os.path.join(OUT, 'export_report.json'), 'w'), ensure_ascii=False, indent=1)
+    json.dump(res, open(os.path.join(OUT, name), 'w'), ensure_ascii=False, indent=1)
     print(json.dumps(res, ensure_ascii=False, indent=1))
+    return res
 
 
 if __name__ == '__main__':

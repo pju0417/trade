@@ -24,10 +24,11 @@
 
 - 새 경제(light + 긴급 조달 1.0배)에서 자산 증가 방식으로 목표를 다시 뽑았다(`docs/recalibration_light_fee1.md`). 무행동 미네리아가 여전히 목표의 83%를 채웠다.
 - 그래서 경제 점수를 **수출 매출**로 재기로 했다(사용자 결정). 다른 나라가 실제로 쓴 물건만, 기준 가격까지만 인정하는 '쓰인 수출 가치'로 시험했다(`docs/export_revenue_experiment.md`). 무행동은 경제 점수 0, 혼자 1G 판매는 30/30판 손해, 나라 간 난도도 가장 고르다. 맞거래로 달성도가 0.09~0.11 오르는 허점이 남았다.
+- 같은 물건 맞바꾸기를 수출에서 빼는 규칙을 시험했다(`docs/export_noswap_experiment.md`). 같은 물건 맞거래는 막혔고 정상 플레이에는 영향이 없었다. 다른 물건을 비싸게 주고받는 경우(미네리아 +0.102)는 남았지만, 한쪽은 항상 손해다.
 
 ## 다음 할 일
 
-1. 맞거래 막기: "같은 나라와 같은 라운드에 같은 물건을 주고받으면 수출로 치지 않는다" 규칙을 1요인 실험으로 시험하기
+1. 남은 맞거래(다른 물건을 비싸게 주고받기)를 허용할지 정하기(사용자 결정). 막는다면 "상대 나라에 부족해서 산 물건만 수출로 인정" 규칙 실험
 2. 산업 목표의 나라 간 난도 차이 점검하기(메카니아 100% 달성, 그레니아 32%)
 3. 목표 달성도의 등급 기준 정하기
 
@@ -49,7 +50,7 @@ python3 -X utf8 claude_review/compare_new.py claude_review/games_compact.json.gz
 python3 -X utf8 claude_review/analyze_mult.py claude_review
 ```
 
-`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`)이다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
+`recalibrate_targets.py`는 목표 재산출(`run A|B|valid`, `report`)을 한다. `export_revenue.py`는 수출 매출 점수 실험(`run cal|valid`, `report`), `export_noswap.py`는 같은 물건 맞바꾸기 제외 실험이다. `sim_lib.py`는 공통 엔진 변형(Skip, Emergency)이다.
 
 `new_sims.py`의 실험 이름: `repro`, `skip`, `class3`, `class3_cheap`, `fix`, `mult<배수>_normal|skip|idle`. 한 판에 약 0.35초 걸린다.
 

@@ -98,9 +98,15 @@ class WashTrade(Emergency):
 def export_measures(game):
     """Per country: cash sales revenue, and 'useful export value' = for each unit it sold
     (cash or barter), min(unit price, base reference value) counted only if some other
-    country actually used the unit by game end. Barter units count at reference value."""
-    out = {n: {'revenue': c.revenue, 'useful_export': 0.0, 'useful_units': 0, 'barter_value': 0.0}
+    country actually used the unit by game end. Barter units count at reference value.
+    'useful_export_noswap' additionally drops units of a good sold to a partner in a round
+    in which that partner also sold the same good to this country (same-good swap rule)."""
+    out = {n: {'revenue': c.revenue, 'useful_export': 0.0, 'useful_units': 0, 'barter_value': 0.0,
+               'useful_export_noswap': 0.0, 'swap_excluded': 0.0}
            for n, c in game.cs.items()}
+    # (round, seller, buyer, good) of every leg, for the same-good swap rule
+    flows = {(t['round'], leg['seller'], leg['buyer'], game.units[uid].good)
+             for t in game.transactions for leg in t['legs'] for uid in leg['ids']}
     for t in game.transactions:
         for leg in t['legs']:
             s = leg['seller']
@@ -113,6 +119,11 @@ def export_measures(game):
                     out[s]['useful_export'] += v; out[s]['useful_units'] += 1
                     if per is None:
                         out[s]['barter_value'] += v
+                    # same-good swap rule: the partner sold me the same good in the same round
+                    if (t['round'], leg['buyer'], s, u.good) in flows:
+                        out[s]['swap_excluded'] += v
+                    else:
+                        out[s]['useful_export_noswap'] += v
     return out
 
 
