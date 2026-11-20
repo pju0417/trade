@@ -1,10 +1,10 @@
-// End-to-end in Node: Pyodide engine + HostController + 3 StudentClients over an in-memory hub.
+// End-to-end in Node: Pyodide engine + ClassHost (one room, teacher mode) + 3 StudentClients over an in-memory hub.
 // Simulated students play a whole game; checks PINs, phases, duplicate delivery, state sync,
 // and that resuming from the saved log reproduces the teacher view.
 import fs from 'fs';
 import assert from 'assert/strict';
 import { createEngine } from '../js/engine-core.js';
-import { HostController } from '../js/host.js';
+import { ClassHost, savedClasses } from '../js/host.js';
 import { StudentClient } from '../js/student-client.js';
 import { MemoryHub } from '../js/transport.js';
 const { loadPyodide } = await import(process.env.PYODIDE_MODULE || 'pyodide');
@@ -13,25 +13,30 @@ const bundle = JSON.parse(fs.readFileSync(new URL('../engine_bundle.json', impor
 const sync = await createEngine({ loadPyodide, bundle });
 const engine = Object.fromEntries(Object.entries(sync).map(([k, f]) => [k, async (...a) => f(...a)]));
 const mem = new Map();
-const storage = { get: (k) => mem.get(k) ?? null, set: (k, v) => mem.set(k, v), remove: (k) => mem.delete(k) };
+const storage = { get: (k) => mem.get(k) ?? null, set: (k, v) => mem.set(k, v), remove: (k) => mem.delete(k), keys: () => [...mem.keys()] };
 const tick = () => new Promise((r) => setTimeout(r, 5));
 
 const hub = new MemoryHub();
-let teacher = null;
-const host = new HostController({ engine, transport: hub.connect(), room: 'TEST1', storage, onChange: (t) => { teacher = t; } });
+const hostServer = hub.server(); hostServer.info = { id: 'L' };
+const cls = new ClassHost({ engine, server: hostServer, storage, onChange: () => {} });
 const STU = ['Tropia', 'Mechania', 'Mineria'];
-await host.newGame({ students: STU, seed: 777 });
+await cls.create({ students: STU, rooms: 1, seeds: [777], settings: { mode: 'teacher' }, cls: 'TEST1' });
+const host = [...cls.rooms.values()][0];
+const CODE = host.code;
+const room = () => hub.server().room(CODE);
+let teacher = host.view;
+const refresh = () => { teacher = host.view; };
 assert.equal(teacher.round, 1); assert.equal(teacher.phase, 'listing');
 
 // wrong PIN / wrong country / teacher-only actions are refused
-const intruder = new StudentClient({ transport: hub.connect(), country: 'Tropia', token: '0000' });
+const intruder = new StudentClient({ transport: room(), country: 'Tropia', token: '0000' });
 assert.equal((await intruder.connect()).ok, false);
-const ai = new StudentClient({ transport: hub.connect(), country: 'Grainia', token: host.tokens.Tropia });
+const ai = new StudentClient({ transport: room(), country: 'Grainia', token: host.tokens.Tropia });
 assert.equal((await ai.connect()).ok, false);
 
 const me = {};
 for (const n of STU) {
-  me[n] = new StudentClient({ transport: hub.connect(), country: n, token: host.tokens[n] });
+  me[n] = new StudentClient({ transport: room(), country: n, token: host.tokens[n] });
   const r = await me[n].connect();
   assert.equal(r.ok, true, r.msg);
 }
@@ -86,9 +91,9 @@ while (teacher.phase !== 'finished') {
     offered = true;
   }
   const before = teacher.round;
-  const r = await host.teacherAction({ type: 'advance' });
+  const r = await cls.advance(CODE);
   assert.equal(r.ok, true, r.msg);
-  await tick();
+  await tick(); refresh();
   for (const n of STU) {
     assert.equal(me[n].state.round, teacher.round);
     assert.equal(me[n].state.phase, teacher.phase);
@@ -101,9 +106,12 @@ for (const n of STU) assert.ok(me[n].state.results && me[n].state.results[n].tot
 const scores = Object.fromEntries(STU.map((n) => [n, [Number(teacher.results[n].total.toFixed(1)), teacher.results[n].grade]]));
 
 // resume from the saved log reproduces the same teacher view
-const saved = JSON.parse(storage.get('trade-game-host-TEST1'));
-const finalTeacher = JSON.stringify(teacher);
-const host2 = new HostController({ engine, transport: new MemoryHub().connect(), room: 'TEST1', storage: null, onChange: (t) => { teacher = t; } });
-await host2.resume(saved);
-assert.equal(JSON.stringify(teacher), finalTeacher);
+const saved = JSON.parse(storage.get('trade-room-' + CODE));
+const finalTeacher = JSON.stringify(host.view);
+await engine.drop(CODE);
+const srv2 = new MemoryHub().server(); srv2.info = { id: 'L' };
+const cls2 = new ClassHost({ engine, server: srv2, storage, onChange: () => {} });
+await cls2.restore(savedClasses(storage).find((m) => m.cls === 'TEST1'));
+assert.equal(JSON.stringify(cls2.room(CODE).view), finalTeacher);
 console.log('node host test ok:', JSON.stringify({ actions, log: saved.log.length, scores }));
+process.exit(0);

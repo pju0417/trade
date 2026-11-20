@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>무역 게임</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>무역 게임</title>
+<style>body{font-family:sans-serif;margin:1rem;max-width:800px}table{border-collapse:collapse}td,th{border:1px solid #999;padding:2px 8px}</style></head>
 <body>
 <h1>무역 게임</h1>
 <ul>
-<li><a href="host.html">선생님 화면 (게임 진행)</a></li>
-<li><a href="student.html">학생 화면 (접속)</a></li>
+<li><a href="host.html">선생님 화면 (수업 만들기·진행)</a></li>
+<li><a href="student.html">학생 화면 (방 코드로 들어가기)</a></li>
 </ul>
+<h2>서버 접속 현황</h2>
+<div id="servers">불러오는 중…</div>
+<script type="module" src="js/lobby.js"></script>
 </body>
 </html>

@@ -1,13 +1,15 @@
 // Functional student page (no visual design). Uses only StudentClient and the state it receives.
 import { StudentClient } from './student-client.js';
-import { makeTransport } from './transport.js';
-import { FIREBASE_CONFIG } from './config.js';
+import { openServer, parseRoomCode, serverList } from './transport.js';
 import { esc, $, render, num, fmt } from './dom.js';
 
 const drafts = {};
 let me = null;
 let S = null;
+let stateAt = 0;
 let lastMsg = '';
+let leavePresence = null;
+const MODE = { teacher: '선생님이 넘겨요', ready: '모두 준비하면 넘어가요', ready_timer: '모두 준비하거나 시간이 끝나면 넘어가요' };
 
 const params = new URLSearchParams(location.search);
 for (const k of ['room', 'country', 'pin']) if (params.get(k)) drafts['join-' + k] = params.get(k);
@@ -17,7 +19,7 @@ const COUNTRIES = { Tropia: '트로피아', Grainia: '그레니아', Oilia: '오
 function joinForm() {
   render($('#app'), `
     <h1>무역 게임 · 학생</h1>
-    <p><label>방 코드 <input data-k="join-room" autocomplete="off"></label></p>
+    <p><label>방 코드 <input data-k="join-room" autocomplete="off" placeholder="예: 1-K7QPM-2"></label></p>
     <p><label>나라 <select data-k="join-country">${Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></p>
     <p><label>접속 번호 <input data-k="join-pin" inputmode="numeric" autocomplete="off"></label></p>
     <p><button data-act="join">들어가기</button></p>
@@ -25,18 +27,21 @@ function joinForm() {
 }
 
 async function join() {
-  const room = (drafts['join-room'] || '').trim().toUpperCase();
+  const parsed = parseRoomCode(drafts['join-room']);
   const country = drafts['join-country'] || 'Tropia';
   const pin = (drafts['join-pin'] || '').trim();
-  if (!room || !pin) { lastMsg = '방 코드와 접속 번호를 입력해 주세요.'; return joinForm(); }
+  if (!parsed || !pin) { lastMsg = '방 코드(예: 1-K7QPM-2)와 접속 번호를 입력해 주세요.'; return joinForm(); }
+  if (!serverList().some((x) => x.id === parsed.server)) { lastMsg = '이 방 코드의 서버가 이 화면에 설정되어 있지 않아요. 선생님께 주소를 확인해 주세요.'; return joinForm(); }
   lastMsg = '연결 중…'; joinForm();
-  const transport = await makeTransport(room, FIREBASE_CONFIG);
+  const server = await openServer(parsed.server);
+  const transport = server.room(parsed.code);
   me = new StudentClient({ transport, country, token: pin });
-  me.onState((state) => { S = state; draw(); });
+  me.onState((state) => { S = state; stateAt = Date.now(); draw(); });
   const r = await me.connect();
   lastMsg = r.msg;
   if (!r.ok) { me = null; transport.close(); joinForm(); return; }
-  history.replaceState(null, '', `?room=${room}&country=${country}`);
+  leavePresence = server.presence.join({ role: 'student', room: parsed.code, country });
+  history.replaceState(null, '', `?room=${parsed.code}&country=${country}`);
   draw();
 }
 
@@ -58,8 +63,33 @@ function offerText(o) {
   return `${gname(o.from)}의 ${side(o.give)} ↔ ${gname(o.to)}의 ${side(o.get)}`;
 }
 
+const mmss = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, '0')}`;
+const left = (v) => (v === null || v === undefined ? null : (S.room.paused ? v : Math.max(0, v - (Date.now() - stateAt))));
+
+// progress bar: mode, time left, who is ready, my ready button. The structure is rebuilt only
+// when it changes; the clock numbers are updated in place every second (buttons stay clickable).
+let barHtml = '';
+function drawBar() {
+  const bar = $('#bar');
+  if (!S || !S.room || S.phase === 'finished') { bar.innerHTML = ''; barHtml = ''; return; }
+  const R = S.room;
+  const mine = R.ready.includes(S.country);
+  const shortages = S.phase !== 'invest' ? S.settlement.rows.filter((r) => r.short > 0) : [];
+  const warn = shortages.length ? `정산 때 ${shortages.map((r) => `${r.label} ${r.short}개`).join(', ')}가 모자라요.` : '';
+  const html = `<p>방 ${esc(R.code)} · ${esc(MODE[R.mode])}${R.paused ? ' · <b>잠시 멈춤</b>' : ''}
+    <span id="clock"></span> · 준비 ${R.ready.length}/${R.need.length} <b id="countdown"></b></p>
+    <p>${S.is_student ? `<button data-act="ready" data-on="${mine ? 0 : 1}">${mine ? '준비 취소' : '준비 완료'}</button>` : ''}
+    ${warn && !mine ? ` <b>${esc(warn)}</b>` : ''}</p>`;
+  if (html !== barHtml) { bar.innerHTML = html; barHtml = html; }
+  const dl = left(R.deadline_ms); const cd = left(R.countdown_ms);
+  $('#clock').textContent = dl !== null ? ` · 남은 시간 ${mmss(dl)}` : '';
+  $('#countdown').textContent = cd !== null ? ` · ${Math.ceil(cd / 1000)}초 뒤 다음 단계` : '';
+}
+setInterval(drawBar, 1000);
+
 function draw() {
   if (!S) return;
+  drawBar();
   const trading = S.phase === 'trading';
   const listing = S.phase === 'listing' || trading;
   const st = S.settlement.rows.map((r) => `<tr><td>${esc(r.label)}</td><td>${esc(r.purpose)}</td><td>${r.need}</td><td>${r.have}</td><td>${r.short ? `<b>${r.short}개 부족</b>` : '충분'}</td></tr>`).join('');
@@ -144,6 +174,7 @@ async function act(el) {
         : await me.offerBarter(to, side('give', 'banana'), side('get', 'wheat'));
   } else if (a === 'respond') r = await me.respond(num(el.dataset.id), el.dataset.acc === '1');
   else if (a === 'withdraw') r = await me.withdraw(num(el.dataset.id));
+  else if (a === 'ready') r = await me.ready(el.dataset.on === '1');
   else if (a === 'invest') r = await me.invest(el.dataset.good);
   else if (a === 'focus') r = await me.focus(d('focus') || S.next_focus);
   if (r) { lastMsg = r.msg; draw(); }
@@ -154,5 +185,9 @@ document.addEventListener('click', (e) => {
   if (el) { e.preventDefault(); el.disabled = true; act(el).finally(() => { el.disabled = false; }); }
 });
 
+const barEl = document.createElement('div');
+barEl.id = 'bar';
+$('#app').before(barEl);
+window.addEventListener('pagehide', () => { if (leavePresence) leavePresence(); });
 joinForm();
 if (drafts['join-room'] && drafts['join-pin']) join();

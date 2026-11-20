@@ -5,6 +5,8 @@ export const $ = (sel, root = document) => root.querySelector(sel);
 // Re-render a container without losing what the user is typing: input values are kept in
 // `drafts` (by data-k key) and focus/selection is restored after the HTML is replaced.
 export function render(el, html, drafts) {
+  if (el._html === html) return; // nothing changed: keep the DOM (buttons stay clickable)
+  el._html = html;
   const active = document.activeElement;
   const key = active && el.contains(active) ? active.dataset.k : null;
   const sel = key && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;

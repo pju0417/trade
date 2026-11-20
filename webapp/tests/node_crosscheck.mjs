@@ -15,15 +15,15 @@ let checked = 0;
 for (const g of games) {
   const t = Date.now();
   // mid-game: replay the prefix of the log
-  engine.replay(g.seed, g.students, g.log.slice(0, g.mid.log_len));
-  for (const n of g.students) if (stable(engine.view(n)) !== stable(g.mid.views[n])) throw new Error(`mid view ${g.seed} ${n}`);
-  if (stable(engine.teacher()) !== stable(g.mid.teacher)) throw new Error(`mid teacher ${g.seed}`);
+  engine.replay('X', g.seed, g.students, g.log.slice(0, g.mid.log_len));
+  for (const n of g.students) if (stable(engine.view('X', n)) !== stable(g.mid.views[n])) throw new Error(`mid view ${g.seed} ${n}`);
+  if (stable(engine.teacher('X')) !== stable(g.mid.teacher)) throw new Error(`mid teacher ${g.seed}`);
   // full game: new session and apply one action at a time (as the host does)
-  engine.newSession(g.seed, g.students);
-  for (const a of g.log) engine.apply(a);
-  for (const n of g.students) if (stable(engine.view(n)) !== stable(g.final.views[n])) throw new Error(`final view ${g.seed} ${n}`);
-  if (stable(engine.teacher()) !== stable(g.final.teacher)) throw new Error(`final teacher ${g.seed}`);
-  if (stable(engine.log()) !== stable(g.log)) throw new Error(`log ${g.seed}`);
+  engine.newSession('X', g.seed, g.students);
+  for (const a of g.log) engine.apply('X', a);
+  for (const n of g.students) if (stable(engine.view('X', n)) !== stable(g.final.views[n])) throw new Error(`final view ${g.seed} ${n}`);
+  if (stable(engine.teacher('X')) !== stable(g.final.teacher)) throw new Error(`final teacher ${g.seed}`);
+  if (stable(engine.log('X')) !== stable(g.log)) throw new Error(`log ${g.seed}`);
   checked++;
   console.log('seed', g.seed, 'students', g.students.length, 'actions', g.log.length, 'ms', Date.now() - t);
 }

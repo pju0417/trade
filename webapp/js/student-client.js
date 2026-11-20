@@ -1,6 +1,7 @@
 // Student-side API. A UI (any framework) only needs this object:
 //
-//   const me = new StudentClient({ transport, country: 'Tropia', token: '4821' })
+//   const server = await openServer(parseRoomCode(code).server)
+//   const me = new StudentClient({ transport: server.room(code), country: 'Tropia', token: '4821' })
 //   me.onState((state) => render(state))     // full state of my country, see webapp/API.md
 //   await me.connect()                       // -> {ok, msg}
 //   await me.list('banana', 3, 12)           // every action resolves to {ok, msg, ...}
@@ -51,6 +52,9 @@ export class StudentClient {
   offerBarter(to, give, get) { return this.send({ type: 'offer', kind: 'barter', to, give, get }); }
   respond(offerId, accept) { return this.send({ type: 'respond', offer: offerId, accept: !!accept }); }
   withdraw(offerId) { return this.send({ type: 'withdraw', offer: offerId }); }
+
+  // progress: "ready" for the next phase (shared by everyone playing this country)
+  ready(on = true) { return this.send({ type: 'ready', ready: !!on }); }
 
   // investment phase
   invest(good) { return this.send({ type: 'invest', good }); }

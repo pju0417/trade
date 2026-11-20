@@ -37,7 +37,7 @@
 
 1. 학생 3명 시범 수업으로 이해도·진행 시간 확인하기(`docs/student_rules_summary.md`, `docs/teacher_guide.md` 사용)
 2. 시범 수업 뒤 수출 목표 숫자 다시 보기(지금은 잠정). 학생 7명 이상이면 추가 3개국 목표도 정하기
-3. 웹앱: 기능 구현과 검증 완료(`webapp/README.md`). 남은 것은 디자인(GPT), Firebase 설정, 실제 기기 시험, 공업 나라 수출 목표 결정(`docs/webapp_human_play.md`)
+3. 웹앱: 기능 구현과 검증 완료(`webapp/README.md`). 여러 방·서버(Firebase 프로젝트)·진행 방식(교사/준비 완료/시간 제한) 지원. 남은 것은 디자인(GPT), Firebase 설정(`webapp/FIREBASE_SETUP.md`), 실제 기기 시험
 
 ## 실행 방법
 

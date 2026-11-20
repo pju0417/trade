@@ -1,11 +1,14 @@
 // Runs the validated Python engine (webapp/engine_bundle.json) inside Pyodide.
 // Works in a browser Web Worker and in Node (tests). No UI code here.
 //
+// One engine holds many independent games, one per room code (separate seed, market and AI).
+//
 //   const engine = await createEngine({ loadPyodide, bundle, indexURL })
-//   engine.newSession(seed, students)      -> {ok}
-//   engine.replay(seed, students, log)     -> {ok}
-//   engine.apply(action)                   -> {ok, msg, ...}
-//   engine.view(country) / engine.teacher() / engine.views([countries]) / engine.log()
+//   engine.newSession(room, seed, students)      -> {ok}
+//   engine.replay(room, seed, students, log)     -> {ok}
+//   engine.apply(room, action)                   -> {ok, msg, ...}
+//   engine.view(room, country) / engine.teacher(room) / engine.views(room, [countries])
+//   engine.log(room) / engine.drop(room) / engine.rooms()
 
 const BOOT = `
 import sys, types, json
@@ -21,33 +24,39 @@ for _d in reversed(ENTRY_PATHS):
     sys.path.insert(0, '/trade/' + _d)
 import importlib
 C = importlib.import_module(ENTRY_MODULE)
-_S = None
+_SESS = {}
 
 def _call(fn, arg):
-    global _S
     a = json.loads(arg)
+    if fn == 'rooms':
+        return json.dumps(sorted(_SESS))
+    room = a['room']
     if fn == 'new':
-        _S = C.Session(a['seed'], a['students'])
+        _SESS[room] = C.Session(a['seed'], a['students'])
         return json.dumps({'ok': True})
     if fn == 'replay':
-        _S = C.Session.replay(a['seed'], a['students'], a['log'])
+        _SESS[room] = C.Session.replay(a['seed'], a['students'], a['log'])
         return json.dumps({'ok': True})
-    if _S is None:
-        return json.dumps({'ok': False, 'msg': 'no session'})
+    if fn == 'drop':
+        _SESS.pop(room, None)
+        return json.dumps({'ok': True})
+    S = _SESS.get(room)
+    if S is None:
+        return json.dumps({'ok': False, 'msg': 'no session for room ' + str(room)})
     if fn == 'apply':
-        return json.dumps(_S.apply(a), ensure_ascii=False)
+        return json.dumps(S.apply(a['action']), ensure_ascii=False)
     if fn == 'view':
-        return json.dumps(_S.view(a), ensure_ascii=False)
+        return json.dumps(S.view(a['country']), ensure_ascii=False)
     if fn == 'teacher':
-        return json.dumps(_S.teacher_view(), ensure_ascii=False)
+        return json.dumps(S.teacher_view(), ensure_ascii=False)
     if fn == 'views':
-        return json.dumps({'teacher': _S.teacher_view(),
-                           'students': {n: _S.view(n) for n in a}}, ensure_ascii=False)
+        return json.dumps({'teacher': S.teacher_view(),
+                           'students': {n: S.view(n) for n in a['countries']}}, ensure_ascii=False)
     if fn == 'log':
-        return json.dumps(_S.log, ensure_ascii=False)
+        return json.dumps(S.log, ensure_ascii=False)
     if fn == 'meta':
-        return json.dumps({'seed': _S.seed, 'initial_students': _S.initial_students,
-                           'students': sorted(_S.g.students), 'round': _S.g.r, 'phase': _S.phase})
+        return json.dumps({'seed': S.seed, 'initial_students': S.initial_students,
+                           'students': sorted(S.g.students), 'round': S.g.r, 'phase': S.phase})
     raise ValueError('unknown call ' + fn)
 `;
 
@@ -68,14 +77,16 @@ export async function createEngine({ loadPyodide, bundle, indexURL }) {
   const fn = py.globals.get('_call');
   const call = (name, arg) => JSON.parse(fn(name, JSON.stringify(arg === undefined ? null : arg)));
   return {
-    newSession: (seed, students) => call('new', { seed, students }),
-    replay: (seed, students, log) => call('replay', { seed, students, log }),
-    apply: (action) => call('apply', action),
-    view: (country) => call('view', country),
-    teacher: () => call('teacher'),
-    views: (countries) => call('views', countries),
-    log: () => call('log'),
-    meta: () => call('meta'),
+    newSession: (room, seed, students) => call('new', { room, seed, students }),
+    replay: (room, seed, students, log) => call('replay', { room, seed, students, log }),
+    apply: (room, action) => call('apply', { room, action }),
+    view: (room, country) => call('view', { room, country }),
+    teacher: (room) => call('teacher', { room }),
+    views: (room, countries) => call('views', { room, countries }),
+    log: (room) => call('log', { room }),
+    meta: (room) => call('meta', { room }),
+    drop: (room) => call('drop', { room }),
+    rooms: () => call('rooms', {}),
     pythonVersion: () => py.runPython('import sys; sys.version'),
   };
 }

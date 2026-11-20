@@ -51,6 +51,7 @@
 - 웹앱은 원본 엔진을 Pyodide에서 그대로 돌린다. 규칙·계산은 `webapp/py/classroom.py`(하위 클래스)에서만 바꾸고 원본은 건드리지 않는다.
 - 학생 0명 세션은 `sim_lib.make_game(seed, fee=1.0, l3_flat=True)`와 결과가 같아야 한다(`webapp/tests/test_equivalence.py`). 사람용 추가 규칙은 학생이 있을 때만 작동해야 한다.
 - `classroom.py`나 엔진 묶음 대상 파일을 바꾸면 `python3 webapp/build_bundle.py`로 `engine_bundle.json`을 다시 만들고 `webapp/README.md`의 검증을 다시 돌린다.
+- 서버 1개 = Firebase 프로젝트 1개(무료 동시 접속 100). `webapp/js/config.js`의 `SERVERS` 순서가 방 코드의 서버 번호이므로 순서를 바꾸지 않는다. 교사 화면 하나가 여러 방(독립 게임)을 엔진 하나로 돌린다.
 - 디자인은 GPT가 맡는다. 화면 코드(`*.html`, `js/*-ui.js`)와 엔진·통신 코드(`py/`, `js/engine-*`, `host.js`, `student-client.js`, `transport.js`)를 섞지 않는다. 화면이 쓰는 계약은 `webapp/API.md`다.
 
 ## 저장소에 없는 대형 파일

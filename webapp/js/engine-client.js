@@ -25,12 +25,14 @@ export class EngineClient {
   }
 
   init() { return this.call('init'); }
-  newSession(seed, students) { return this.call('newSession', seed, students); }
-  replay(seed, students, log) { return this.call('replay', seed, students, log); }
-  apply(action) { return this.call('apply', action); }
-  view(country) { return this.call('view', country); }
-  teacher() { return this.call('teacher'); }
-  views(countries) { return this.call('views', countries); }
-  log() { return this.call('log'); }
-  meta() { return this.call('meta'); }
+  newSession(room, seed, students) { return this.call('newSession', room, seed, students); }
+  replay(room, seed, students, log) { return this.call('replay', room, seed, students, log); }
+  apply(room, action) { return this.call('apply', room, action); }
+  view(room, country) { return this.call('view', room, country); }
+  teacher(room) { return this.call('teacher', room); }
+  views(room, countries) { return this.call('views', room, countries); }
+  log(room) { return this.call('log', room); }
+  meta(room) { return this.call('meta', room); }
+  drop(room) { return this.call('drop', room); }
+  rooms() { return this.call('rooms'); }
 }

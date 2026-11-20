@@ -1,8 +1,12 @@
 """Browser end-to-end test (Playwright + Chrome, local test mode = BroadcastChannel between tabs).
 
-Serves the repository over HTTP, opens host.html (engine in a Web Worker with the vendored
-Pyodide), starts a game for Tropia/Oilia/Mineria, opens three student tabs with their PINs and
-plays a full game through the pages' own buttons. Saves screenshots to the given folder.
+Serves the repository over HTTP. Teacher page (engine in a Web Worker, vendored Pyodide) creates a
+class of 2 rooms (Tropia/Oilia/Mineria as students, mode "ready", round 1 teacher-led).
+Room 1: three student tabs; room 2: one tab. Through the pages' own buttons:
+  R1 listing, refused input, per-room advance, market buy, student-to-student offer, investment,
+  "all rooms" advance, R2 auto-advance when all three are ready (countdown), pause (nothing moves),
+  switch to "ready or timer" with 3-second phases -> both rooms finish by themselves,
+  lobby head count, host reload + resume reproduces the results. Screenshots go to OUTDIR.
 Usage: python3 browser_e2e.py OUTDIR [CHROME_PATH]
 """
 import functools
@@ -11,6 +15,7 @@ import os
 import re
 import sys
 import threading
+import time
 
 from playwright.sync_api import sync_playwright
 
@@ -29,6 +34,21 @@ srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Quiet,
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 BASE = f'http://127.0.0.1:{srv.server_address[1]}/webapp/'
 errors = []
+KO = {'트로피아': 'Tropia', '오일리아': 'Oilia', '미네리아': 'Mineria'}
+
+
+def h1(pg):
+    return pg.inner_text('h1')
+
+
+def wait_h1(pg, text, timeout=60000):
+    pg.wait_for_function(f"document.querySelector('h1') && document.querySelector('h1').innerText.includes({text!r})", timeout=timeout)
+
+
+def wait_msg_change(pg, before, timeout=20000):
+    pg.wait_for_function(f"document.querySelector('#msg').innerText !== {before!r}", timeout=timeout)
+    return pg.inner_text('#msg')
+
 
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path=CHROME, headless=True)
@@ -37,90 +57,117 @@ with sync_playwright() as p:
     host.on('pageerror', lambda e: errors.append(('host', str(e))))
     host.goto(BASE + 'host.html')
     host.wait_for_selector('text=엔진 준비됨', timeout=120000)
-    room = host.input_value('[data-k="room"]')
+    host.fill('[data-k="rooms"]', '2')
+    host.select_option('[data-k="mode"]', 'ready')
     host.click('[data-act="new"]')
-    host.wait_for_selector('text=학생 접속 정보', timeout=60000)
-    rows = host.locator('table').nth(0 if 'results' not in host.content() else 1)
-    pins = dict(re.findall(r'<td>(트로피아|오일리아|미네리아)</td><td><b>(\d{4})</b>', host.content()))
-    assert len(pins) == 3, pins
-    code = {'트로피아': 'Tropia', '오일리아': 'Oilia', '미네리아': 'Mineria'}
-    stu = {}
-    for ko, pin in pins.items():
+    host.wait_for_selector('text=접속 정보 (학생에게 알려 주세요)', timeout=60000)
+    html = host.content()
+    rooms = re.findall(r'방 코드 <b>(L-[A-Z0-9]+-\d+)</b></h3><table>(.*?)</table>', html, re.S)
+    assert len(rooms) == 2, html[html.find('접속 정보 ('):html.find('접속 정보 (')+600]
+    pins = [dict(re.findall(r'<td>(트로피아|오일리아|미네리아)</td><td><b>(\d{4})</b>', t)) for _, t in rooms]
+    code1, code2 = rooms[0][0], rooms[1][0]
+
+    def student(code, ko, pin):
         pg = ctx.new_page()
         pg.on('pageerror', lambda e, ko=ko: errors.append((ko, str(e))))
-        pg.goto(BASE + f'student.html?room={room}&country={code[ko]}&pin={pin}')
+        pg.goto(BASE + f'student.html?room={code}&country={KO[ko]}&pin={pin}')
         pg.wait_for_selector('text=이번 라운드 정산', timeout=30000)
-        stu[ko] = pg
-    host.screenshot(path=os.path.join(OUT, 'host_r1.png'), full_page=True)
-    stu['트로피아'].screenshot(path=os.path.join(OUT, 'student_r1.png'), full_page=True)
+        return pg
 
-    def msg(pg):
-        return pg.inner_text('#msg')
+    s1 = {ko: student(code1, ko, pins[0][ko]) for ko in ('트로피아', '오일리아', '미네리아')}
+    s2 = student(code2, '트로피아', pins[1]['트로피아'])
+    t, o, m = s1['트로피아'], s1['오일리아'], s1['미네리아']
+    assert '선생님이 넘겨요' in t.inner_text('#bar'), t.inner_text('#bar')
 
-    def advance(expect):
-        host.click('[data-act="advance"]')
-        host.wait_for_selector(f'h1:has-text("{expect}")', timeout=60000)
-
-    # Round 1 listing: Tropia lists 2 bananas at 8G through the form
-    t = stu['트로피아']
+    # R1 listing in room 1
     t.fill('[data-k="lq-banana-1"]', '2'); t.fill('[data-k="lp-banana-1"]', '8')
-    t.click('[data-act="list"][data-good="banana"]')
-    t.wait_for_function("document.querySelector('#msg').innerText.includes('내놓았어요')", timeout=20000)
-    # bad input is refused with a message
+    b = t.inner_text('#msg'); t.click('[data-act="list"][data-good="banana"]')
+    assert '내놓았어요' in wait_msg_change(t, b)
     t.fill('[data-k="lq-wheat-1"]', '99'); t.fill('[data-k="lp-wheat-1"]', '5')
-    t.click('[data-act="list"][data-good="wheat"]')
-    t.wait_for_function("document.querySelector('#msg').innerText.includes('개뿐')", timeout=20000)
-    advance('거래')
-    for pg in stu.values():
-        pg.wait_for_selector('h1:has-text("거래")', timeout=20000)
-    # Mineria buys the first market listing it can afford
-    m = stu['미네리아']
-    before = msg(m)
-    m.click('[data-act="buy"] >> nth=0')
-    m.wait_for_function(f"document.querySelector('#msg').innerText !== {before!r}", timeout=20000)
-    buy_msg = msg(m)
-    # Oilia offers wheat to Tropia (student to student), Tropia accepts
-    o = stu['오일리아']
-    o.select_option('[data-k="of-to"]', 'Tropia')
-    o.select_option('[data-k="of-kind"]', 'sell')
+    b = t.inner_text('#msg'); t.click('[data-act="list"][data-good="wheat"]')
+    assert '개뿐' in wait_msg_change(t, b)
+    # everyone ready in round 1 (teacher-led): nothing moves
+    for pg in s1.values():
+        pg.click('[data-act="ready"]')
+    time.sleep(7)
+    assert '판매 등록' in h1(t), h1(t)
+    host.screenshot(path=os.path.join(OUT, 'host_r1.png'), full_page=True)
+    # teacher advances room 1 only
+    host.click(f'[data-act="adv"][data-code="{code1}"]')
+    wait_h1(t, '거래')
+    assert '판매 등록' in h1(s2), 'room 2 did not move'
+    b = m.inner_text('#msg'); m.click('[data-act="buy"] >> nth=0')
+    buy_msg = wait_msg_change(m, b)
+    o.select_option('[data-k="of-to"]', 'Tropia'); o.select_option('[data-k="of-kind"]', 'sell')
     o.select_option('[data-k="of-give-good"]', 'banana')
     o.fill('[data-k="of-give-qty"]', '1'); o.fill('[data-k="of-cash"]', '7')
-    o.click('[data-act="offer"]')
-    o.wait_for_function("document.querySelector('#msg').innerText.includes('제안')", timeout=20000)
+    b = o.inner_text('#msg'); o.click('[data-act="offer"]')
+    assert '제안' in wait_msg_change(o, b)
     t.wait_for_selector('[data-act="respond"][data-acc="1"]', timeout=20000)
-    t.click('[data-act="respond"][data-acc="1"]')
-    t.wait_for_function("document.querySelector('#msg').innerText.includes('받아들였어요')", timeout=20000)
-    stu['트로피아'].screenshot(path=os.path.join(OUT, 'student_trading.png'), full_page=True)
-    advance('투자')
-    # Tropia invests in bananas if the page offers the button
-    t.wait_for_selector('h1:has-text("투자")', timeout=20000)
+    b = t.inner_text('#msg'); t.click('[data-act="respond"][data-acc="1"]')
+    assert '받아들였어요' in wait_msg_change(t, b)
+    t.screenshot(path=os.path.join(OUT, 'student_trading.png'), full_page=True)
+    # all rooms advance: room 1 -> invest, room 2 -> trading
+    host.click('[data-act="advall"]')
+    wait_h1(t, '투자'); wait_h1(s2, '거래')
     invested = False
     if t.locator('[data-act="invest"][data-good="banana"]').count():
-        t.click('[data-act="invest"][data-good="banana"]')
-        t.wait_for_function("document.querySelector('#msg').innerText.includes('레벨')", timeout=20000)
-        invested = True
-    # play the rest by advancing only
-    for _ in range(40):
-        if host.locator('[data-act="advance"]').count() == 0:
-            break
-        label = host.inner_text('h1')
-        host.click('[data-act="advance"]')
-        host.wait_for_function(f"document.querySelector('h1').innerText !== {label!r}", timeout=60000)
+        b = t.inner_text('#msg'); t.click('[data-act="invest"][data-good="banana"]')
+        invested = '레벨' in wait_msg_change(t, b)
+    host.click('[data-act="advall"]')
+    wait_h1(t, '2라운드 · 판매 등록'); wait_h1(s2, '투자')
+    # R2: mode "ready" -> all three ready -> countdown -> trading
+    assert '모두 준비하면' in t.inner_text('#bar')
+    for pg in s1.values():
+        pg.click('[data-act="ready"]')
+    t.wait_for_function("document.querySelector('#bar').innerText.includes('초 뒤 다음 단계')", timeout=20000)
+    wait_h1(t, '2라운드 · 거래', timeout=30000)
+    assert '투자' in h1(s2), 'room 2 still waits for its teacher'
+    # pause: switch to timer mode with 3-second phases, pause, nothing moves for 8 s
+    host.click('[data-act="pause"]')
+    host.select_option('[data-k="d_mode"]', 'ready_timer')
+    for k in ('d_tl', 'd_tt', 'd_ti'):
+        host.fill(f'[data-k="{k}"]', '3')
+    host.click('[data-act="settings"]')
+    host.wait_for_selector('text=진행 방식을 바꿨어요', timeout=20000)
+    before = (h1(t), h1(s2))
+    time.sleep(8)
+    assert (h1(t), h1(s2)) == before, 'paused rooms must not move'
+    assert '잠시 멈춤' in t.inner_text('#bar')
+    host.click('[data-act="resume-all"]')
+    # room 2 is still in round 1, which stays teacher-led: the teacher moves it on once
+    host.click(f'[data-act="adv"][data-code="{code2}"]')
+    wait_h1(s2, '2라운드', timeout=30000)
+    # both rooms now run by the 3-second timer until the end
+    try:
+        host.wait_for_function("(document.body.innerText.match(/9R 끝/g) || []).length === 2", timeout=300000)
+    except Exception:
+        print('HOST:', host.inner_text('body')[:1500]); print('STUDENT:', t.inner_text('#bar'), h1(t)); raise
     host.wait_for_selector('text=결과 (나라별 목표 달성도)', timeout=60000)
-    for pg in stu.values():
-        pg.wait_for_selector('h2:has-text("결과")', timeout=30000)
+    for pg in list(s1.values()) + [s2]:
+        pg.wait_for_selector('h2:has-text("결과")', timeout=60000)
     host.screenshot(path=os.path.join(OUT, 'host_final.png'), full_page=True)
-    stu['미네리아'].screenshot(path=os.path.join(OUT, 'student_final.png'), full_page=True)
-    grades = re.findall(r'<td>(트로피아|오일리아|미네리아)</td><td>학생</td><td>([\d.]+)</td><td>([ABCD])</td>', host.content())
-    # reload the host page and resume from the saved log
+    m.screenshot(path=os.path.join(OUT, 'student_final.png'), full_page=True)
+    res = re.findall(r'<td>(L-[A-Z0-9]+-\d+)</td><td>(트로피아|오일리아|미네리아)</td>\s*<td>([\d.]+)</td><td>([ABCD])</td>', host.content())
+    assert len(res) == 6, res
+    # lobby head count (host + 4 student tabs announce themselves)
+    lobby = ctx.new_page()
+    lobby.goto(BASE + 'index.html')
+    lobby.wait_for_function("document.querySelector('#servers').innerText.includes('명 /')", timeout=20000)
+    time.sleep(4)
+    lobby.reload()
+    lobby.wait_for_function("/([5-9]|\\d\\d)명 \\//.test(document.querySelector('#servers').innerText)", timeout=20000)
+    lobby_text = lobby.inner_text('#servers')
+    # reload the teacher page and resume the class from its saved logs
     host.reload()
     host.wait_for_selector('text=엔진 준비됨', timeout=120000)
-    host.click(f'[data-act="resume"][data-room="{room}"]')
-    host.wait_for_selector('text=결과 (나라별 목표 달성도)', timeout=60000)
-    grades2 = re.findall(r'<td>(트로피아|오일리아|미네리아)</td><td>학생</td><td>([\d.]+)</td><td>([ABCD])</td>', host.content())
+    host.click('[data-act="resume"] >> nth=0')
+    host.wait_for_function("(document.body.innerText.match(/9R 끝/g) || []).length === 2", timeout=120000)
+    res2 = re.findall(r'<td>(L-[A-Z0-9]+-\d+)</td><td>(트로피아|오일리아|미네리아)</td>\s*<td>([\d.]+)</td><td>([ABCD])</td>', host.content())
     browser.close()
 
 srv.shutdown()
 assert not errors, errors
-assert grades and grades == grades2, (grades, grades2)
-print('browser e2e ok: room', room, '| market buy:', buy_msg, '| invested:', invested, '| results:', grades)
+assert res and sorted(res) == sorted(res2), (res, res2)
+print('browser e2e ok:', code1, code2, '| buy:', buy_msg, '| invested:', invested,
+      '| lobby:', lobby_text.replace('\n', ' ').replace('\t', ' '), '| results:', res)
