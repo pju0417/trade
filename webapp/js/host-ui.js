@@ -1,4 +1,4 @@
-// Functional teacher page (no visual design): one class = several rooms on one server.
+// Teacher setup and classroom dashboard.
 import { EngineClient } from './engine-client.js';
 import { ClassHost, ORIGINAL, DEFAULT_SETTINGS, browserStorage, savedClasses } from './host.js';
 import { openServer, serverList, countOnline, LOCAL_FLAG } from './transport.js';
@@ -37,28 +37,35 @@ function setup() {
   });
   const saved = savedClasses(browserStorage);
   render($('#app'), `
-    <h1>무역 게임 · 선생님</h1>
-    <p>${esc(status)}</p>
-    ${isLocal ? '<p><b>로컬 시험 모드</b> — 같은 브라우저의 다른 탭에서만 학생 화면이 연결돼요. 실제 수업은 js/config.js에 서버(Firebase)를 넣어야 해요(FIREBASE_SETUP.md).</p>' : ''}
+    <header class="cover host-cover">
+      <a class="back" href="index.html${LOCAL_FLAG ? '?local=1' : ''}">← 첫 화면</a>
+      <p class="eyebrow">무역 게임 · 선생님</p><h1>수업 준비</h1>
+      <p role="status">${esc(status)}</p>
+    </header>
+    <section class="panel">
+    ${isLocal ? '<p><b>로컬 시험 모드</b> — 같은 브라우저의 다른 탭에서 학생 화면을 열어 주세요.</p>' : ''}
     <h2>서버</h2>
-    <table><tr><th></th><th>서버</th><th>지금 접속</th><th>정원</th></tr>
-    ${servers.map((s) => `<tr><td><input type="radio" name="srv" value="${s.id}" ${drafts.server === s.id ? 'checked' : ''}></td><td>${esc(s.name)}</td>
-      <td>${counts[s.id] ?? '…'}명</td><td>${s.capacity}명</td></tr>`).join('')}</table>
+    <div class="card-grid">${servers.map((s) => `<label class="choice good-card"><input type="radio" name="srv" value="${s.id}" ${drafts.server === s.id ? 'checked' : ''}>
+      <span><strong>${esc(s.name)}</strong><small>지금 접속 ${typeof counts[s.id] === 'number' ? counts[s.id] + '명' : '확인 중 또는 알 수 없음'} · 정원 ${s.capacity}명</small></span></label>`).join('')}</div>
     <p><button data-act="counts">접속 인원 새로 보기</button></p>
-    <h2>새 수업</h2>
+    </section><section class="panel"><h2>새 수업</h2>
     <p><label>방 개수 <input data-k="rooms" type="number" min="1" max="20" size="3"></label>
        (한 방 = 한 게임. 학생이 많으면 방을 여러 개 만들고, 한 나라를 모둠이 함께 맡을 수 있어요)</p>
-    <p>방마다 학생이 맡을 나라: ${ORIGINAL.map((n, i) => `<label><input type="checkbox" class="stu" value="${n}" ${i % 2 === 0 ? 'checked' : ''}> ${KO[n]}</label>`).join(' ')}</p>
+    <fieldset><legend>방마다 학생이 맡을 나라</legend><div class="choices">${ORIGINAL.map((n, i) => `<label class="choice"><input type="checkbox" class="stu" data-k="stu-${n}" value="${n}" ${i % 2 === 0 ? 'checked' : ''}> ${KO[n]}</label>`).join('')}</div></fieldset>
     <p><label>예상 학생 수(접속 기기 수) <input data-k="expected" type="number" min="1" size="4" placeholder="자동"></label></p>
-    <p><label>진행 방식 <select data-k="mode">${Object.entries(MODE).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
-       <label><select data-k="first"><option value="yes">1라운드는 선생님이 넘김</option><option value="no">1라운드도 같은 방식</option></select></label></p>
-    <p>단계 시간(초): 판매 등록 <input data-k="t_listing" type="number" min="0" size="4"> 거래 <input data-k="t_trading" type="number" min="0" size="4">
-       투자 <input data-k="t_invest" type="number" min="0" size="4"> · 모두 준비 후 기다림 <input data-k="countdown" type="number" min="0" max="30" size="3">초</p>
+    <div class="fields"><label>진행 방식 <select data-k="mode">${Object.entries(MODE).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+       <label>첫 라운드 <select data-k="first"><option value="yes">1라운드는 선생님이 넘김</option><option value="no">1라운드도 같은 방식</option></select></label></div>
+    <fieldset><legend>단계 시간 (초)</legend><div class="fields">
+      <label>판매 등록 <input data-k="t_listing" type="number" min="0"></label>
+      <label>거래 <input data-k="t_trading" type="number" min="0"></label>
+      <label>투자 <input data-k="t_invest" type="number" min="0"></label>
+      <label>모두 준비 후 기다림 <input data-k="countdown" type="number" min="0" max="30"></label>
+    </div></fieldset>
     <p><button data-act="new" ${engine ? '' : 'disabled'}>수업 만들기</button></p>
-    ${saved.length ? `<h2>이어하기</h2><ul>${saved.map((m) => `<li>수업 ${esc(m.cls)} · 서버 ${esc(m.server)} · 방 ${m.rooms.length}개 · ${esc(m.saved)}
+    </section>${saved.length ? `<section class="panel"><h2>이어하기</h2><ul class="saved-list">${saved.map((m) => `<li>수업 ${esc(m.cls)} · 서버 ${esc(m.server)} · 방 ${m.rooms.length}개 · ${esc(m.saved)}
       <button data-act="resume" data-cls="${esc(m.cls)}" ${engine ? '' : 'disabled'}>이어하기</button>
-      <button data-act="forget" data-cls="${esc(m.cls)}">기록 삭제</button></li>`).join('')}</ul>` : ''}
-    <p id="msg">${esc(lastMsg)}</p>`, drafts);
+      <button data-act="forget" data-cls="${esc(m.cls)}">기록 삭제</button></li>`).join('')}</ul></section>` : ''}
+    <p id="msg" role="status">${esc(lastMsg)}</p>`, drafts);
   for (const r of document.querySelectorAll('input[name="srv"]')) r.onchange = () => { drafts.server = r.value; };
 }
 
@@ -79,37 +86,46 @@ function dashboard() {
   const srv = servers.find((s) => s.id === S.server) || servers[0];
   const rows = S.rooms.map((r, i) => {
     const v = r.view; const info = r.info;
-    const cd = leftMs(info, 'countdown_ms');
-    return `<tr><td>${i + 1}번 방<br><small>${esc(r.code)}</small></td><td>${v.round}R ${PHASE[v.phase]}</td><td>${esc(MODE[info.mode])}</td>
-      <td>${info.ready.length}/${info.need.length}${cd !== null ? ` · ${Math.ceil(cd / 1000)}초 뒤 넘어감` : ''}</td>
-      <td class="clock" data-room="${esc(r.code)}">${mmss(leftMs(info, 'deadline_ms'))}</td>
-      <td>${r.online.length}명</td><td>${v.pending_offers}</td>
-      <td>${v.phase === 'finished' ? '' : `<button data-act="adv" data-code="${esc(r.code)}">이 방 다음 단계</button>`}
-      <button data-act="sel" data-code="${esc(r.code)}">자세히</button></td></tr>`;
+    return `<article class="room-card">
+      <header><h3>${i + 1}번 방</h3><span class="tag">${esc(r.code)}</span></header>
+      <p class="room-phase">${v.round}R ${PHASE[v.phase]}</p>
+      <p>${esc(MODE[info.mode])}</p>
+      <dl class="metrics"><div><dt>남은 시간</dt><dd class="clock" data-room="${esc(r.code)}" data-time="deadline_ms"></dd></div>
+      <div><dt>준비한 나라</dt><dd>${info.ready.length}/${info.need.length}</dd></div>
+      <div><dt>접속</dt><dd>${r.online.length}대</dd></div><div><dt>기다리는 제안</dt><dd>${v.pending_offers}개</dd></div></dl>
+      <p class="clock next-clock" data-room="${esc(r.code)}" data-time="countdown_ms"></p>
+      <div class="actions">${v.phase === 'finished' ? '' : `<button data-act="adv" data-code="${esc(r.code)}">이 방 다음 단계</button>`}
+      <button data-act="sel" data-code="${esc(r.code)}" aria-expanded="${selected === r.code}">자세히</button></div>
+    </article>`;
   }).join('');
   const room = S.rooms.find((r) => r.code === selected);
   render($('#app'), `
-    <h1>수업 ${esc(S.cls)} · ${esc(srv.name)} · 접속 ${S.server_online}/${srv.capacity}명 ${S.paused ? ' · <b>일시정지</b>' : ''}</h1>
-    <p><button data-act="advall">모든 방 다음 단계</button>
-       <button data-act="${S.paused ? 'resume-all' : 'pause'}">${S.paused ? '다시 시작' : '모든 방 일시정지'}</button>
-       <button data-act="pins">접속 정보 전체 보기</button>
-       <button data-act="finish">수업 끝내기</button> <button data-act="leave">처음 화면으로</button></p>
-    <p>진행 방식 <select data-k="d_mode">${Object.entries(MODE).map(([k, t]) => `<option value="${k}" ${k === S.settings.mode ? 'selected' : ''}>${t}</option>`).join('')}</select>
-       <select data-k="d_first"><option value="yes" ${S.settings.firstRoundTeacher ? 'selected' : ''}>1라운드는 선생님이 넘김</option><option value="no" ${S.settings.firstRoundTeacher ? '' : 'selected'}>1라운드도 같은 방식</option></select>
-       시간(초) 판매 <input data-k="d_tl" type="number" size="4" value="${S.settings.timer.listing}"> 거래 <input data-k="d_tt" type="number" size="4" value="${S.settings.timer.trading}">
-       투자 <input data-k="d_ti" type="number" size="4" value="${S.settings.timer.invest}"> <button data-act="settings">적용</button>
-       <small>(바꾸면 지금 단계의 시간은 처음부터 다시 셉니다)</small></p>
-    <p id="msg">${esc(lastMsg)}</p>
-    <table><tr><th>방</th><th>단계</th><th>진행 방식</th><th>준비</th><th>남은 시간</th><th>접속</th><th>기다리는 제안</th><th></th></tr>${rows}</table>
+    <header class="cover host-cover"><p class="eyebrow">${esc(srv.name)} · 접속 ${S.server_online}/${srv.capacity}명</p>
+      <h1>수업 ${esc(S.cls)} ${S.paused ? '<span class="tag attention">일시정지</span>' : ''}</h1>
+      <div class="actions primary-actions"><button data-act="advall">모든 방 다음 단계</button>
+       <button data-act="${S.paused ? 'resume-all' : 'pause'}">${S.paused ? '다시 시작' : '모든 방 일시정지'}</button></div>
+      <div class="actions secondary-actions"><button data-act="pins" aria-expanded="${Boolean(drafts.showPins)}">접속 정보 전체 보기</button>
+       <button data-act="finish">수업 끝내기</button><button data-act="leave">처음 화면으로</button></div>
+    </header>
+    <p id="msg" role="status">${esc(lastMsg)}</p>
+    <section class="panel"><h2>방 현황</h2><div class="room-grid">${rows}</div></section>
+    <section class="panel"><h2>진행 설정</h2><div class="fields">
+     <label>진행 방식 <select data-k="d_mode">${Object.entries(MODE).map(([k, t]) => `<option value="${k}" ${k === S.settings.mode ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+     <label>첫 라운드 <select data-k="d_first"><option value="yes" ${S.settings.firstRoundTeacher ? 'selected' : ''}>1라운드는 선생님이 넘김</option><option value="no" ${S.settings.firstRoundTeacher ? '' : 'selected'}>1라운드도 같은 방식</option></select></label>
+     <label>판매 (초) <input data-k="d_tl" type="number" value="${S.settings.timer.listing}"></label>
+     <label>거래 (초) <input data-k="d_tt" type="number" value="${S.settings.timer.trading}"></label>
+     <label>투자 (초) <input data-k="d_ti" type="number" value="${S.settings.timer.invest}"></label>
+     <button data-act="settings">적용</button></div><p><small>설정을 바꾸면 지금 단계의 시간을 처음부터 다시 셉니다.</small></p></section>
     ${drafts.showPins ? pinsHtml() : ''}
     ${room ? roomHtml(room) : ''}
     ${S.rooms.some((r) => r.view.results) ? resultsHtml() : ''}`, drafts);
+  updateClocks();
 }
 
 function pinsHtml() {
-  return `<h2>접속 정보 (학생에게 알려 주세요)</h2>
-    ${S.rooms.map((r, i) => `<h3>${i + 1}번 방 · 방 코드 <b>${esc(r.code)}</b></h3><table><tr><th>나라</th><th>접속 번호</th></tr>
-    ${Object.entries(r.tokens).map(([n, p]) => `<tr><td>${KO[n]}</td><td><b>${p}</b></td></tr>`).join('')}</table>`).join('')}`;
+  return `<section class="panel pins"><h2>접속 정보 (학생에게 알려 주세요)</h2><button data-act="print-pins">방별 접속 정보 인쇄</button>
+    ${S.rooms.map((r, i) => `<article class="pin-sheet"><h3>${i + 1}번 방 · 방 코드 <b>${esc(r.code)}</b></h3><table><tr><th>나라</th><th>접속 번호</th></tr>
+    ${Object.entries(r.tokens).map(([n, p]) => `<tr><td>${KO[n]}</td><td><b>${p}</b></td></tr>`).join('')}</table></article>`).join('')}</section>`;
 }
 
 function roomHtml(r) {
@@ -126,16 +142,16 @@ function roomHtml(r) {
     <td>${Object.entries(n.levels).map(([g, lv]) => `${t.goods[g]} ${lv}`).join(', ')}</td><td>${t.goods[n.focus]}</td>
     <td>${fmt(n.happy, 0)}</td><td>${n.listed}</td><td>${n.progress ? `${fmt(n.progress.export_value, 0)}/${n.progress.export_target}` : '-'}</td>
     <td>${n.progress ? n.progress.operating_short_days : '-'}</td></tr>`).join('');
-  return `<h2>방 ${esc(r.code)} · 시드 ${t.seed} · 기록된 행동 ${t.log_length}개</h2>
-    <table><tr><th>나라</th><th>접속 번호</th><th>운영</th><th>접속</th><th>준비</th><th></th><th></th></tr>${pins}</table>
-    <table><tr><th>나라</th><th>돈</th><th>산업 레벨</th><th>주력</th><th>만족도</th><th>판매 중</th><th>쓰인 수출/목표</th><th>운영 부족</th></tr>${nations}</table>
-    <p><button data-act="export" data-code="${esc(r.code)}">이 방 행동 기록 내려받기</button></p>`;
+  return `<section class="panel room-detail"><h2>방 ${esc(r.code)} · 시드 ${t.seed} · 기록된 행동 ${t.log_length}개</h2>
+    <div class="table-scroll"><table><tr><th>나라</th><th>접속 번호</th><th>운영</th><th>접속</th><th>준비</th><th></th><th></th></tr>${pins}</table></div>
+    <div class="table-scroll"><table><tr><th>나라</th><th>돈</th><th>산업 레벨</th><th>주력</th><th>만족도</th><th>판매 중</th><th>쓰인 수출/목표</th><th>운영 부족</th></tr>${nations}</table></div>
+    <p><button data-act="export" data-code="${esc(r.code)}">이 방 행동 기록 내려받기</button></p></section>`;
 }
 
 function resultsHtml() {
-  return `<h2>결과 (나라별 목표 달성도)</h2><table><tr><th>방</th><th>나라</th><th>점수</th><th>등급</th><th>수출</th><th>산업</th><th>생활</th><th>무역</th><th>활용</th><th>현금</th></tr>
+  return `<section class="panel"><h2>결과 (나라별 목표 달성도)</h2><div class="table-scroll"><table class="host-results"><tr><th>방</th><th>나라</th><th>점수</th><th>등급</th><th>수출</th><th>산업</th><th>생활</th><th>무역</th><th>활용</th><th>현금</th></tr>
     ${S.rooms.filter((r) => r.view.results).map((r) => Object.values(r.view.results).filter((x) => x.student).map((x) => `<tr><td>${esc(r.code)}</td><td>${esc(x.label)}</td>
-      <td>${fmt(x.total)}</td><td>${x.grade}</td>${['export', 'industry', 'living', 'trade', 'utilization', 'cash'].map((k) => `<td>${fmt(x.parts[k])}</td>`).join('')}</tr>`).join('')).join('')}</table>`;
+      <td>${fmt(x.total)}</td><td>${x.grade}</td>${['export', 'industry', 'living', 'trade', 'utilization', 'cash'].map((k) => `<td>${fmt(x.parts[k])}</td>`).join('')}</tr>`).join('')).join('')}</table></div></section>`;
 }
 
 function onSummary(s) { S = s; summaryAt = Date.now(); dashboard(); }
@@ -200,6 +216,7 @@ async function act(el) {
       timer: { listing: num(drafts.d_tl ?? S.settings.timer.listing), trading: num(drafts.d_tt ?? S.settings.timer.trading), invest: num(drafts.d_ti ?? S.settings.timer.invest) } });
     lastMsg = '진행 방식을 바꿨어요.';
   } else if (a === 'sel') { selected = selected === el.dataset.code ? null : el.dataset.code; }
+  else if (a === 'print-pins') { window.print(); return; }
   else if (a === 'pins') { drafts.showPins = !drafts.showPins; }
   else if (a === 'ctl') { const r = await cls.teacherAction(el.dataset.code, { type: 'set_controller', country: el.dataset.country, mode: el.dataset.mode }); lastMsg = r.msg; }
   else if (a === 'export') {
@@ -219,14 +236,19 @@ document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (el) { e.preventDefault(); el.disabled = true; act(el).catch((err) => { lastMsg = err.message; cls ? dashboard() : setup(); }).finally(() => { el.disabled = false; }); }
 });
-// live clocks without re-rendering the whole page
-setInterval(() => {
+function updateClocks() {
   if (!S) return;
-  for (const td of document.querySelectorAll('.clock')) {
-    const r = S.rooms.find((x) => x.code === td.dataset.room);
-    if (r) td.textContent = mmss(leftMs(r.info, 'deadline_ms'));
+  for (const clock of document.querySelectorAll('.clock')) {
+    const room = S.rooms.find((r) => r.code === clock.dataset.room);
+    if (!room) continue;
+    const left = leftMs(room.info, clock.dataset.time);
+    const value = clock.dataset.time === 'countdown_ms'
+      ? (left === null ? '' : `${Math.ceil(left / 1000)}초 뒤 다음 단계`)
+      : (room.view.phase === 'finished' ? '–' : mmss(left));
+    if (clock.textContent !== value) clock.textContent = value;
   }
-}, 1000);
+}
+setInterval(updateClocks, 1000);
 window.addEventListener('beforeunload', (e) => { if (cls) { e.preventDefault(); e.returnValue = ''; } });
 
 setup();

@@ -1,4 +1,4 @@
-// Tiny helpers for the functional (undesigned) pages.
+// Rendering helpers shared by the three screens.
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -12,14 +12,16 @@ export function render(el, html, drafts) {
   const sel = key && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
   el.innerHTML = html;
   for (const input of el.querySelectorAll('[data-k]')) {
-    if (drafts[input.dataset.k] !== undefined) input.value = drafts[input.dataset.k];
-    input.addEventListener('input', () => { drafts[input.dataset.k] = input.value; });
-    input.addEventListener('change', () => { drafts[input.dataset.k] = input.value; });
+    const property = input.type === 'checkbox' ? 'checked' : 'value';
+    if (drafts[input.dataset.k] !== undefined) input[property] = drafts[input.dataset.k];
+    const remember = () => { drafts[input.dataset.k] = input[property]; };
+    input.addEventListener('input', remember);
+    input.addEventListener('change', remember);
   }
   if (key) {
     const again = el.querySelector(`[data-k="${CSS.escape(key)}"]`);
     if (again) {
-      again.focus();
+      again.focus({ preventScroll: true });
       if (sel && again.setSelectionRange) try { again.setSelectionRange(sel[0], sel[1]); } catch (e) { /* number inputs */ }
     }
   }

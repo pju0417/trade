@@ -1,15 +1,28 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>무역 게임</title>
-<style>body{font-family:sans-serif;margin:1rem;max-width:800px}table{border-collapse:collapse}td,th{border:1px solid #999;padding:2px 8px}</style></head>
-<body>
-<h1>무역 게임</h1>
-<ul>
-<li><a href="host.html">선생님 화면 (수업 만들기·진행)</a></li>
-<li><a href="student.html">학생 화면 (방 코드로 들어가기)</a></li>
-</ul>
-<h2>서버 접속 현황</h2>
-<div id="servers">불러오는 중…</div>
-<script type="module" src="js/lobby.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>무역 게임</title>
+  <link rel="stylesheet" href="trade.css">
+</head>
+<body class="lobby-page">
+  <main class="shell lobby">
+    <header class="cover">
+      <p class="eyebrow">초등학교 6학년 사회</p>
+      <h1>무역 게임</h1>
+      <p>한 나라를 맡아 필요한 물건을 사고, 남는 물건을 팔아 보세요.</p>
+      <div class="cover-goods" aria-hidden="true"><span>🌾</span><span>📦</span><span>⚙️</span></div>
+    </header>
+    <nav class="entry-grid" aria-label="게임 입구">
+      <a class="entry entry-host" href="host.html"><span aria-hidden="true">▤</span><strong>선생님 화면</strong><small>수업 만들기 · 방 진행하기</small></a>
+      <a class="entry entry-student" href="student.html"><span aria-hidden="true">↗</span><strong>학생 화면</strong><small>방 코드로 게임에 들어가기</small></a>
+    </nav>
+    <section class="panel">
+      <h2>서버 접속 현황</h2>
+      <div id="servers">불러오는 중…</div>
+    </section>
+  </main>
+  <script type="module" src="js/lobby.js"></script>
 </body>
 </html>

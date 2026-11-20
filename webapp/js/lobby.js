@@ -1,17 +1,24 @@
-// First page: links and each server's current head count (read without a lasting connection).
-import { serverList, countOnline } from './transport.js';
-import { esc } from './dom.js';
+import { serverList, countOnline, LOCAL_FLAG } from './transport.js';
+import { $, esc, render } from './dom.js';
+
+if (LOCAL_FLAG) for (const link of document.querySelectorAll('.entry')) link.search = '?local=1';
 
 const servers = serverList();
+let reading = false;
 async function draw() {
-  const rows = [];
-  for (const s of servers) {
-    let n = '?';
-    try { n = await countOnline(s); } catch (e) { /* unreachable server */ }
-    const full = typeof n === 'number' && n >= s.capacity;
-    rows.push(`<tr><td>${esc(s.name)}</td><td>${n}명 / ${s.capacity}명</td><td>${full ? '<b>가득 참</b>' : '여유 있음'}</td></tr>`);
-  }
-  document.querySelector('#servers').innerHTML = `<table><tr><th>서버</th><th>지금 접속</th><th></th></tr>${rows.join('')}</table>`;
+  if (reading) return;
+  reading = true;
+  try {
+    const rows = await Promise.all(servers.map(async (s) => {
+      let count;
+      try { count = await countOnline(s); } catch { /* Show an unknown count. */ }
+      const known = typeof count === 'number';
+      const full = known && count >= s.capacity;
+      return `<li><strong>${esc(s.name)}</strong><span>${known ? count : '?'}명 / ${s.capacity}명</span>
+        <span class="tag ${full ? 'attention' : ''}">${!known ? '접속 확인 안 됨' : full ? '가득 참' : '여유 있음'}</span></li>`;
+    }));
+    render($('#servers'), `<ul class="server-list">${rows.join('')}</ul>`, {});
+  } finally { reading = false; }
 }
 draw();
 setInterval(draw, 15000);
