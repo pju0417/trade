@@ -41,9 +41,13 @@ export function parseRoomCode(code) {
 }
 export const roomCode = (server, cls, n) => `${server}-${cls}-${n}`;
 
+// The local test server ("L", tabs of one browser) is offered when no server is configured or
+// when the page address has ?local=1 (trying the game alone, automated tests).
+export const LOCAL_FLAG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('local');
+const LOCAL = { id: 'L', name: '로컬 시험(같은 브라우저)', capacity: 90, local: true };
 export function serverList() {
-  if (!SERVERS || !SERVERS.length) return [{ id: 'L', name: '로컬 시험(같은 브라우저)', capacity: 90, local: true }];
-  return SERVERS.map((s, i) => ({ id: String(i + 1), name: s.name || `${i + 1}서버`, capacity: s.capacity || 90, firebase: s.firebase }));
+  const list = (SERVERS || []).map((s, i) => ({ id: String(i + 1), name: s.name || `${i + 1}서버`, capacity: s.capacity || 90, firebase: s.firebase }));
+  return list.length && !LOCAL_FLAG ? list : [...list, LOCAL];
 }
 
 // ---------------------------------------------------------------- message-based rooms (local, memory)

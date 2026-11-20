@@ -64,7 +64,8 @@
 # 저장소 루트에서
 python3 -m http.server 8000
 # 교사: http://localhost:8000/webapp/host.html
-# 학생: http://localhost:8000/webapp/student.html  (로컬 모드는 같은 브라우저의 다른 탭)
+# 학생: http://localhost:8000/webapp/student.html
+# 혼자 시험해 볼 때: 주소 끝에 ?local=1 → '로컬 시험' 서버가 목록에 나옴(같은 브라우저의 탭끼리 연결)
 ```
 
 `file://`로 열면 Web Worker가 동작하지 않는다. 반드시 웹 서버(로컬 서버나 GitHub Pages)로 연다.

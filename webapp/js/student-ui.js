@@ -1,6 +1,6 @@
 // Functional student page (no visual design). Uses only StudentClient and the state it receives.
 import { StudentClient } from './student-client.js';
-import { openServer, parseRoomCode, serverList } from './transport.js';
+import { openServer, parseRoomCode, serverList, LOCAL_FLAG } from './transport.js';
 import { esc, $, render, num, fmt } from './dom.js';
 
 const drafts = {};
@@ -41,7 +41,7 @@ async function join() {
   lastMsg = r.msg;
   if (!r.ok) { me = null; transport.close(); joinForm(); return; }
   leavePresence = server.presence.join({ role: 'student', room: parsed.code, country });
-  history.replaceState(null, '', `?room=${parsed.code}&country=${country}`);
+  history.replaceState(null, '', `?room=${parsed.code}&country=${country}${LOCAL_FLAG ? '&local=1' : ''}`);
   draw();
 }
 

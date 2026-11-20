@@ -55,7 +55,7 @@ with sync_playwright() as p:
     ctx = browser.new_context(viewport={'width': 1200, 'height': 900})
     host = ctx.new_page()
     host.on('pageerror', lambda e: errors.append(('host', str(e))))
-    host.goto(BASE + 'host.html')
+    host.goto(BASE + 'host.html?local=1')
     host.wait_for_selector('text=엔진 준비됨', timeout=120000)
     host.fill('[data-k="rooms"]', '2')
     host.select_option('[data-k="mode"]', 'ready')
@@ -70,7 +70,7 @@ with sync_playwright() as p:
     def student(code, ko, pin):
         pg = ctx.new_page()
         pg.on('pageerror', lambda e, ko=ko: errors.append((ko, str(e))))
-        pg.goto(BASE + f'student.html?room={code}&country={KO[ko]}&pin={pin}')
+        pg.goto(BASE + f'student.html?room={code}&country={KO[ko]}&pin={pin}&local=1')
         pg.wait_for_selector('text=이번 라운드 정산', timeout=30000)
         return pg
 
@@ -152,7 +152,7 @@ with sync_playwright() as p:
     assert len(res) == 6, res
     # lobby head count (host + 4 student tabs announce themselves)
     lobby = ctx.new_page()
-    lobby.goto(BASE + 'index.html')
+    lobby.goto(BASE + 'index.html?local=1')
     lobby.wait_for_function("document.querySelector('#servers').innerText.includes('명 /')", timeout=20000)
     time.sleep(4)
     lobby.reload()

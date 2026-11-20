@@ -1,7 +1,7 @@
 // Functional teacher page (no visual design): one class = several rooms on one server.
 import { EngineClient } from './engine-client.js';
 import { ClassHost, ORIGINAL, DEFAULT_SETTINGS, browserStorage, savedClasses } from './host.js';
-import { openServer, serverList, countOnline } from './transport.js';
+import { openServer, serverList, countOnline, LOCAL_FLAG } from './transport.js';
 import { esc, $, render, fmt, num } from './dom.js';
 
 const KO = { Tropia: '트로피아', Grainia: '그레니아', Oilia: '오일리아', Mechania: '메카니아', Mineria: '미네리아', Technia: '테크니아' };
@@ -18,7 +18,7 @@ let lastMsg = '';
 let counts = {}; // server id -> online count (or error text)
 
 const servers = serverList();
-const isLocal = servers[0].local;
+const isLocal = servers.every((s) => s.local);
 
 async function refreshCounts() {
   for (const s of servers) {
@@ -33,7 +33,7 @@ function setup() {
   if (drafts.rooms === undefined) Object.assign(drafts, {
     rooms: '1', mode: DEFAULT_SETTINGS.mode, first: 'yes', countdown: String(DEFAULT_SETTINGS.countdownSec),
     t_listing: String(DEFAULT_SETTINGS.timer.listing), t_trading: String(DEFAULT_SETTINGS.timer.trading), t_invest: String(DEFAULT_SETTINGS.timer.invest),
-    server: servers[0].id, expected: '',
+    server: (servers.find((s) => s.local && LOCAL_FLAG) || servers[0]).id, expected: '',
   });
   const saved = savedClasses(browserStorage);
   render($('#app'), `
@@ -64,7 +64,7 @@ function setup() {
 
 function studentLink(code, country) {
   const u = new URL('student.html', location.href);
-  u.search = `?room=${encodeURIComponent(code)}&country=${country}`;
+  u.search = `?room=${encodeURIComponent(code)}&country=${country}${code.startsWith('L-') ? '&local=1' : ''}`;
   return u.href;
 }
 
