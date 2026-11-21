@@ -207,22 +207,22 @@ function draw() {
   }).join('');
   const p = S.progress;
   const result = Object.values(S.results || {}).find((r) => r.label === S.label);
-  const results = result ? `<section class="panel result">
+  const results = result ? `<section id="outcome" class="panel result">
     <h2>결과 · 우리 나라 목표 달성도</h2>
     <div class="score"><strong>${fmt(result.total)}<small>점</small></strong><span>${esc(result.grade)} 등급</span></div>
     <dl class="card-grid score-grid">${Object.entries(PARTS).map(([k, title]) => `<div><dt>${title}</dt><dd>${fmt(result.parts[k])}점</dd></div>`).join('')}</dl>
   </section>` : '';
-  const progress = `<section class="panel"><h2>진행 상황</h2><p><strong>다른 나라에서 쓰인 우리 물건</strong> · ${fmt(p.export_value, 0)} / 목표 ${p.export_target}G</p>
+  const progress = `<section id="progress" class="panel"><h2>진행 상황</h2><p><strong>다른 나라에서 쓰인 우리 물건</strong> · ${fmt(p.export_value, 0)} / 목표 ${p.export_target}G</p>
     ${p.export_target > 0 ? `<progress aria-label="수출 목표 달성도" value="${Math.min(p.export_value, p.export_target)}" max="${p.export_target}"></progress>` : ''}
     <dl class="metrics progress-metrics"><div><dt>대표 산업을 키웠나요?</dt><dd>${p.main_levelled ? '키웠어요' : '아직이에요'}</dd></div>
     <div><dt>평균 만족도</dt><dd>${fmt(p.avg_happy)}</dd></div><div><dt>운영 자원 부족</dt><dd>${p.operating_short_days}일</dd></div>
     <div><dt>급히 산 자원 비용</dt><dd>${p.emergency_paid}G</dd></div></dl></section>`;
-  const warehouse = `<section class="panel"><h2>창고</h2><div class="card-grid">${stock || '<p>창고에 물건이 없어요.</p>'}</div>
+  const warehouse = `<section id="warehouse" class="panel"><h2>창고</h2><div class="card-grid">${stock || '<p>창고에 물건이 없어요.</p>'}</div>
     <h3>내 판매 목록</h3>${mine ? `<div class="table-scroll"><table><thead><tr><th>물건</th><th>수량</th><th>가격</th><th>관리</th></tr></thead><tbody>${mine}</tbody></table></div>`
       : '<p>시장에 내놓은 물건이 없어요.</p>'}</section>`;
-  const marketPanel = `<section class="panel"><h2>시장</h2><p>${trading ? '같은 물건은 개당 가격이 싼 것부터 보여요.' : '지금은 가격을 살펴보세요. 물건은 거래 단계에서 살 수 있어요.'}</p>
+  const marketPanel = `<section id="market" class="panel"><h2>시장</h2><p>${trading ? '같은 물건은 개당 가격이 싼 것부터 보여요.' : '지금은 가격을 살펴보세요. 물건은 거래 단계에서 살 수 있어요.'}</p>
     <div class="card-grid market-grid">${market || '<p>시장에 나온 물건이 없어요.</p>'}</div></section>`;
-  const direct = `<section class="panel"><h2>직접 거래</h2>
+  const direct = `<section id="offers" class="panel"><h2>직접 거래</h2>
     <ul class="offer-list">${offers || '<li>아직 주고받은 제안이 없어요.</li>'}</ul>
     <div class="offer-form">
       <div class="fields"><label>제안할 나라 <select data-k="of-to">${others.map((n) => `<option value="${n}">${esc(S.names[n])}${S.students.includes(n) ? ' (학생)' : ''}</option>`).join('')}</select></label>
@@ -232,18 +232,35 @@ function draw() {
       <div class="fields"><label class="offer-cash">물건값 전체(G) <input data-k="of-cash" type="number" min="1"></label>
       <button data-act="offer">제안하기</button></div>
     </div></section>`;
-  const investment = `<section class="panel"><h2>투자</h2>
+  const investment = `<section id="industry" class="panel"><h2>투자</h2>
     <p>대표 산업 ${esc(label(S.main))} · 이번 주력 ${esc(label(S.focus))}</p>
     <div class="card-grid">${inv || '<p>지금 투자할 수 있는 산업이 없어요.</p>'}</div>
     <div class="fields"><label>다음 라운드 주력 산업 <select data-k="focus">${Object.keys(S.levels).map((g) => `<option value="${g}" ${g === S.next_focus ? 'selected' : ''}>${esc(label(g))}</option>`).join('')}</select></label>
     <button data-act="focus">정하기</button></div></section>`;
 
+  const destinations = {
+    listing: [['warehouse', '📦', '창고'], ['market', '⚓', '시장']],
+    trading: [['market', '⚓', '시장'], ['offers', '🤝', '직접 거래'], ['warehouse', '📦', '창고']],
+    invest: [['industry', '⚙️', '산업'], ['warehouse', '📦', '창고']],
+    finished: [['outcome', '🏅', '결과']],
+  };
+  const places = [...destinations[S.phase], ['progress', '📜', '목표'], ['settlement', '🌾', '정산']];
+  const phaseNames = { listing: '판매 등록', trading: '거래', invest: '투자' };
+  const phaseTrack = `<ol class="phase-track" aria-label="라운드 진행 순서">${Object.entries(phaseNames).map(([key, name]) =>
+    `<li${key === S.phase ? ' aria-current="step"' : ''}>${name}</li>`).join('')}</ol>`;
+  const mapNav = `<nav class="map-nav" aria-label="나라 운영 메뉴">${places.map(([id, mark, title]) =>
+    `<a href="#${id}"><span aria-hidden="true">${mark}</span>${title}</a>`).join('')}</nav>`;
+
   $('#status').hidden = false;
   render($('#identity'), `<h1>${esc(S.label)} · ${S.round}라운드 · ${esc(S.phase_label)}</h1>
-    <span class="cash">돈 <strong>${S.cash}G</strong></span>`, drafts);
+    <span class="cash">국고 <strong>${S.cash}G</strong></span>`, drafts);
   drawBar();
   render($('#app'), `
-    ${TASK[S.phase] ? `<div class="task"><strong>지금 할 일</strong> <span>${S.is_student ? TASK[S.phase] : '지금은 AI가 우리 나라를 운영해요.'}</span></div>` : ''}
+    <div class="command-map">
+      ${TASK[S.phase] ? phaseTrack : ''}
+      ${mapNav}
+      ${TASK[S.phase] ? `<div class="task"><strong>지금 할 일</strong> <span>${S.is_student ? TASK[S.phase] : '지금은 AI가 우리 나라를 운영해요.'}</span></div>` : ''}
+    </div>
     <p id="msg" role="status">${esc(lastMsg)}</p>
     ${results}
     ${S.phase === 'invest' ? investment : ''}
@@ -251,7 +268,7 @@ function draw() {
     ${S.phase !== 'finished' ? warehouse : ''}
     ${S.phase === 'listing' ? marketPanel : ''}
     ${progress}
-    <section class="panel"><h2>이번 라운드 정산</h2>
+    <section id="settlement" class="panel"><h2>이번 라운드 정산</h2>
       <p>판매 중인 물건은 정산에 쓸 수 없어요.</p>
       <div class="table-scroll"><table><thead><tr><th>물건</th><th>쓰임</th><th>필요</th><th>창고</th><th>상태</th></tr></thead><tbody>${st}</tbody></table></div>
       <p>연료는 ${S.operating_schedule.fuel.join('·')}라운드, 광물은 ${S.operating_schedule.ore.join('·')}라운드에 써요.</p>

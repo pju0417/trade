@@ -100,11 +100,6 @@ legend { padding-inline: .35rem; font-weight: 750; }
 .lobby { max-width: 64rem; padding-top: clamp(2rem, 7vw, 6rem); }
 .lobby .cover { padding-bottom: clamp(2rem, 6vw, 4.5rem); }
 .lobby h1 { font-size: clamp(2.6rem, 8vw, 5.5rem); }
-.cover-goods { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; }
-.cover-goods span {
-  display: grid; place-items: center; width: 3.5rem; height: 3.5rem;
-  border-radius: 1rem; background: #ffffff20; font-size: 1.8rem;
-}
 .entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-block: 1rem; }
 .entry {
   display: grid; gap: .4rem; border: 1px solid var(--line); border-radius: var(--radius);
@@ -238,3 +233,102 @@ td button { margin: .15rem; }
   .pin-sheet h3 { font-size: 24pt; }
   .pin-sheet table { width: 100%; max-width: none; font-size: 18pt; }
 }
+
+/* Trade atlas palette and navigation */
+:root {
+  --ink: #242e30;
+  --muted: #4d5a58;
+  --navy: #142b34;
+  --teal: #245a54;
+  --mint: #e0ece2;
+  --canvas: #eee8d9;
+  --line: #d6c7aa;
+  --paper: #fffaf0;
+  --gold: #f1cd78;
+  --radius: .8rem;
+}
+body {
+  background-color: var(--canvas);
+  background-image: radial-gradient(ellipse at 10% 0%, #fff8e5, transparent 65%),
+    repeating-linear-gradient(0deg, transparent 0 27px, #8b734d12 28px 29px),
+    repeating-linear-gradient(90deg, transparent 0 27px, #8b734d12 28px 29px);
+}
+h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
+.panel { box-shadow: 0 3px 0 #80653918; }
+.panel > h2 { border-bottom: 1px solid var(--line); padding-bottom: .45rem; }
+.cover, .status {
+  border: 1px solid #b39356;
+  box-shadow: inset 0 0 0 3px #142b34, inset 0 0 0 4px #b3935690, 0 6px 20px #1e2c3327;
+}
+.cover::before {
+  background: radial-gradient(ellipse at 100% 0%, #2a625e, transparent 68%),
+    repeating-linear-gradient(120deg, transparent 0 38px, #e4bc7324 39px 40px);
+}
+.lobby .cover {
+  min-height: clamp(19rem, 44vw, 29rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+.lobby .cover::before {
+  background: linear-gradient(90deg, #0b232cf2 0%, #122a32b5 45%, #142b341a 100%),
+    linear-gradient(0deg, #102831a1, transparent 50%),
+    url("art/trade-harbor.webp") center 55% / cover, #2f625d;
+}
+.cover .eyebrow { color: #ffe0a3; }
+.cover-route { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem; margin-top: 1.15rem; }
+.cover-route span { padding: .22rem .65rem; border: 1px solid #e7c9858f; border-radius: .3rem; background: #142b34b3; }
+.cover-route span + span::before { content: "·"; margin-right: .5rem; color: var(--gold); }
+.entry { border-left: .3rem solid #b08b49; box-shadow: 0 3px 0 #80653920; }
+.entry-student { background: #e4eee3; border-left-color: #38766b; }
+.entry > span { font-size: 1.85rem; }
+.status { border-width: 0 0 2px; box-shadow: 0 4px 12px #142b3435; }
+#identity h1 { font-family: inherit; }
+.cash { border: 1px solid #b79146; }
+.phase-track {
+  list-style: none; display: flex; gap: .25rem; padding: .35rem; margin: 0 0 .6rem;
+  border: 1px solid var(--line); background: #f8efda; border-radius: .55rem;
+}
+.phase-track li { flex: 1; padding: .35rem .2rem; text-align: center; font-weight: 700; color: var(--muted); }
+.phase-track li[aria-current="step"] { background: var(--navy); color: #ffe0a3; border-radius: .35rem; }
+.map-nav { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .65rem; }
+.map-nav a {
+  display: inline-flex; align-items: center; gap: .35rem; min-height: 44px;
+  padding: .35rem .68rem; border: 1px solid #bcb18e; border-radius: .4rem;
+  background: var(--paper); text-decoration: none; font-weight: 750;
+}
+.map-nav a:hover { background: var(--mint); }
+.student-page section[id] { scroll-margin-top: 10rem; }
+.good-card { background: #fbf6e8; }
+.good-icon { background: #e9dcbb; border: 1px solid #d7c59e; }
+.room-card { background: #f9f2df; border-top: .22rem solid #a17c43; }
+.result { background: #fffaed; border: 2px solid #b9924d; }
+.score-grid > div { background: #f4e7ca; }
+@media (max-width: 34rem) {
+  .student-page section[id] { scroll-margin-top: 12rem; }
+  .lobby .cover::before {
+    background-image: linear-gradient(0deg, #102831f0 0%, #122a327a 70%), url("art/trade-harbor.webp");
+    background-position: 58% center;
+  }
+}
+@media print {
+  body:has(.pins) { background: white; }
+  .pins { box-shadow: none; }
+}
+
+.command-map {
+  padding: .7rem;
+  border: 1px solid #9d895e;
+  border-radius: .65rem;
+  background: linear-gradient(90deg, #142b34f5, #142b349c),
+    url("art/trade-harbor.webp") right 49% / cover, var(--navy);
+}
+.command-map .phase-track {
+  color: white;
+  border-color: #d7bc7d84;
+  background: #132b35b3;
+}
+.command-map .phase-track li { color: #f4ead3; }
+.command-map .phase-track li[aria-current="step"] { background: var(--gold); color: var(--ink); }
+.command-map .map-nav:last-child { margin-bottom: 0; }
+.command-map .task { background: #f5e7c4; color: var(--ink); border-color: #be9552; }
