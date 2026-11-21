@@ -190,6 +190,7 @@ function worldMap() {
     <div class="world-layout">
       <div class="route-view">
         <div class="world-map" role="group" aria-label="세계지도에서 나라 고르기">
+          <span class="ocean-surface" aria-hidden="true"></span>
           <span class="map-compass" aria-hidden="true">북<span>✦</span></span>
           <span class="map-route" aria-hidden="true" hidden></span>
           <div class="delivery-layer" aria-hidden="true"></div>
@@ -217,7 +218,67 @@ function routeCoordinates(start, end) {
 }
 
 const cargoName = (leg) => `${leg.label}${genTxt(leg.good, leg.gen)} ${leg.qty}개`;
-const TRIP_MS = 3600;
+const TRIP_MS = 5200;
+
+// The hand-painted map has a road junction, harbor and offshore way point per continent.
+const CONTINENT_ROUTES = {
+  west: { junction: [18, 46], harbor: [34, 56], offshore: [42, 61] },
+  east: { junction: [68, 42], harbor: [61, 46], offshore: [58, 52] },
+  south: { junction: [47, 80], harbor: [55, 70], offshore: [54, 65] },
+};
+
+function shipmentStages(leg) {
+  const start = MAP_POSITIONS[leg.seller];
+  const end = MAP_POSITIONS[leg.buyer];
+  const origin = CONTINENT_ROUTES[start[2]];
+  const destination = CONTINENT_ROUTES[end[2]];
+  if (origin === destination) {
+    return [{ type: 'truck', points: [start, origin.junction, end], from: 0, to: 1 }];
+  }
+  return [
+    { type: 'truck', points: [start, origin.junction, origin.harbor], from: 0, to: .23 },
+    { type: 'ship', points: [origin.harbor, origin.offshore, destination.offshore, destination.harbor], from: .23, to: .77 },
+    { type: 'truck', points: [destination.harbor, destination.junction, end], from: .77, to: 1 },
+  ];
+}
+
+function animateShipment(vehicle, stage, elapsed) {
+  const { points, from, to } = stage;
+  const distances = [0];
+  for (let i = 1; i < points.length; i++) {
+    const [a, b] = [points[i - 1], points[i]];
+    distances.push(distances[i - 1] + Math.hypot(b[0] - a[0], (b[1] - a[1]) * 2 / 3));
+  }
+  const offsets = distances.map((distance) => distance / distances.at(-1));
+  const timing = { duration: (to - from) * TRIP_MS, delay: from * TRIP_MS - elapsed, fill: 'forwards' };
+  vehicle.animate(points.map(([x, y], i) => ({
+    offset: offsets[i], left: `${x}%`, top: `${y}%`, visibility: i === points.length - 1 ? 'hidden' : 'visible',
+  })), timing);
+  const sprite = vehicle.querySelector('img');
+  sprite.animate(points.map(([x], i) => {
+    const next = points[i + 1];
+    const facingLeft = next ? next[0] < x : x < points[i - 1][0];
+    return { offset: offsets[i], transform: `scaleX(${facingLeft ? -1 : 1})`, easing: 'steps(1, end)' };
+  }), { ...timing, fill: 'both' });
+}
+
+function drawShipments(layer, legs, elapsed) {
+  const active = [];
+  layer.innerHTML = legs.map((leg, i) => shipmentStages(leg).map((stage) => {
+    const path = stage.points.slice(1).map((point, j) =>
+      `<span class="map-route delivery-line delivery-line-${i} delivery-${stage.type}-line" style="${routeCoordinates(stage.points[j], point)}"></span>`).join('');
+    if (elapsed >= stage.to * TRIP_MS) return path;
+    active.push(stage);
+    return `${path}<span class="delivery-vehicle delivery-vehicle-${i} delivery-${stage.type}"
+      data-seller="${esc(leg.seller)}" data-buyer="${esc(leg.buyer)}" data-vehicle="${stage.type}">
+      <span class="vehicle-cargo">${esc(cargoName(leg))}</span>
+      <img src="art/cargo-${stage.type}.webp" alt="" draggable="false">
+    </span>`;
+  }).join('')).join('');
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    layer.querySelectorAll('.delivery-vehicle').forEach((vehicle, i) => animateShipment(vehicle, active[i], elapsed));
+  }
+}
 
 function drawMapRoute(country) {
   const preview = $('.map-route');
@@ -232,23 +293,13 @@ function drawMapRoute(country) {
   if (layer.dataset.routeKey !== routeKey) {
     layer.dataset.routeKey = routeKey;
     const elapsed = departedAt ? performance.now() - departedAt : TRIP_MS;
-    layer.innerHTML = legs.map((leg, i) => {
-      const start = MAP_POSITIONS[leg.seller];
-      const end = MAP_POSITIONS[leg.buyer];
-      const coords = routeCoordinates(start, end);
-      const vehicle = start[2] !== end[2] ? '🚢' : '✈️';
-      return `<span class="map-route delivery-line delivery-line-${i}" style="${coords}"></span>
-        ${elapsed < TRIP_MS ? `<span class="delivery-vehicle delivery-vehicle-${i}"
-          data-seller="${esc(leg.seller)}" data-buyer="${esc(leg.buyer)}"
-          style="${coords};--trip-delay:-${elapsed}ms;--trip-duration:${TRIP_MS}ms">
-          ${vehicle} <span>${esc(cargoName(leg))}</span></span>` : ''}`;
-    }).join('');
+    drawShipments(layer, legs, elapsed);
   }
 
   const cargo = $('#route-cargo');
   render(cargo, `<h3>교역로의 물건</h3>
     ${legs.length ? `<ul class="cargo-legs">${legs.map((leg) => `<li>${icon(leg.good)}<div>
-      <strong>${esc(cargoName(leg))}</strong><small>${esc(gname(leg.seller))} → ${esc(gname(leg.buyer))}</small></div>
+      <strong>${esc(cargoName(leg))}</strong><small>${esc(gname(leg.seller))} → ${esc(gname(leg.buyer))} · ${MAP_POSITIONS[leg.seller][2] === MAP_POSITIONS[leg.buyer][2] ? '화물차' : '화물차와 배'}</small></div>
     </li>`).join('')}</ul>
     <button type="button" data-act="replay-route" data-index="${displayedTrade}">운송 다시 보기</button>`
     : '<p>거래가 성사되면 이곳에 보낸 물건과 교역로가 표시돼요.</p>'}

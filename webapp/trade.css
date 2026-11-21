@@ -458,39 +458,59 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
 .delivery-line {
   border-top: 3px solid #ffe29c;
   filter: drop-shadow(0 1px 2px #172624);
-  transform: rotate(var(--route-angle)) translateY(-2px);
 }
-.delivery-line-1 {
-  border-color: #b7ebee;
-}
+.delivery-truck-line { border-top-style: dashed; }
+.delivery-line-1 { border-color: #b7ebee; }
 .delivery-vehicle {
   position: absolute;
-  left: var(--route-x);
-  top: var(--route-y);
   z-index: 3;
-  transform: translate(-50%, calc(-100% - .22rem));
-  display: flex;
-  align-items: center;
-  gap: .25rem;
+  visibility: hidden;
+  display: grid;
+  justify-items: center;
+  transform: translate(-50%, -74%);
+  pointer-events: none;
+}
+.delivery-vehicle img {
+  display: block;
+  width: clamp(1.8rem, 9.5cqw, 4.55rem);
+  height: auto;
+  filter: drop-shadow(0 3px 2px #13292fb0);
+}
+.delivery-truck img { width: clamp(1.5rem, 7.8cqw, 3.75rem); }
+.vehicle-cargo {
+  padding: .08rem .32rem;
   border: 1px solid #b5883f;
-  border-radius: .45rem;
-  padding: .15rem .4rem;
+  border-radius: .35rem;
   background: #fff1c8;
   color: #182f35;
   box-shadow: 0 2px 6px #18232cab;
-  font-size: clamp(.67rem, 2.4cqw, .9rem);
+  font-size: clamp(.63rem, 2.4cqw, .9rem);
   white-space: nowrap;
-  animation: delivery-trip var(--trip-duration) linear var(--trip-delay) both;
 }
-.delivery-vehicle-1 {
-  background: #daf4f3;
-  border-color: #5c9299;
-  transform: translate(-50%, .22rem);
+.delivery-vehicle-1 { transform: translate(-50%, -25%); }
+.delivery-vehicle-1 .vehicle-cargo { background: #daf4f3; border-color: #5c9299; }
+.ocean-surface {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: clip;
+  mask: url("art/ocean-mask.webp") center / 100% 100% no-repeat;
 }
-@keyframes delivery-trip {
-  0%, 8% { opacity: 0; }
-  13%, 83% { opacity: 1; }
-  100% { left: var(--end-x); top: var(--end-y); opacity: 0; visibility: hidden; }
+.ocean-surface::before, .ocean-surface::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: repeating-radial-gradient(ellipse at 38% 18%, #bbfff022 0 1px, transparent 2px 12px);
+  animation: ocean-swell 9s ease-in-out infinite alternate;
+}
+.ocean-surface::after {
+  background: repeating-radial-gradient(ellipse at 72% 85%, #8ce7dd1c 0 1px, transparent 2px 15px);
+  animation-duration: 12s;
+  animation-direction: alternate-reverse;
+}
+@keyframes ocean-swell {
+  from { transform: translate3d(-2%, -1.1%, 0); opacity: .28; }
+  to { transform: translate3d(2%, 1.1%, 0); opacity: .72; }
 }
 .route-cargo {
   display: grid;
@@ -508,5 +528,5 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
 .cargo-legs li { display: flex; align-items: center; gap: .4rem; }
 .cargo-legs small { display: block; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) {
-  .delivery-vehicle, [data-act="replay-route"] { display: none; }
+  .delivery-vehicle, [data-act="replay-route"], .ocean-surface { display: none; }
 }
