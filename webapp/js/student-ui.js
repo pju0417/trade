@@ -12,6 +12,8 @@ let leavePresence = null;
 let joining = false;
 let mapCountry = null;
 let mapMessage = '';
+let displayedTrade = null;
+let departedAt = 0;
 const MODE = { teacher: '선생님이 넘겨요', ready: '모두 준비하면 넘어가요', ready_timer: '모두 준비하거나 시간이 끝나면 넘어가요' };
 
 const params = new URLSearchParams(location.search);
@@ -49,6 +51,16 @@ async function join() {
     me = new StudentClient({ transport, country, token: pin });
     me.onState((state) => {
       if (S?.round !== state.round || S?.phase !== state.phase) mapMessage = '';
+      const previousTrades = S?.round === state.round ? S.transactions_this_round.length : 0;
+      const latest = state.transactions_this_round.length - 1;
+      if (latest >= previousTrades) {
+        displayedTrade = latest;
+        // Joining partway through a round shows the latest route without replaying it.
+        departedAt = S ? performance.now() : 0;
+      } else if (S?.round !== state.round || displayedTrade > latest) {
+        displayedTrade = null;
+        departedAt = 0;
+      }
       S = state;
       stateAt = Date.now();
       draw();
@@ -163,11 +175,11 @@ document.addEventListener('change', (e) => {
 // same map works with a touch screen, a mouse, and a keyboard.
 const MAP_POSITIONS = {
   // Western continent
-  Mineria: [13, 14], Grainia: [19, 39], Tropia: [12, 65], Oilia: [34, 50],
+  Mineria: [13, 14, 'west'], Grainia: [19, 39, 'west'], Tropia: [12, 65, 'west'], Oilia: [34, 50, 'west'],
   // Eastern continent
-  Technia: [66, 23], Mechania: [89, 34], Novia: [72, 54],
+  Technia: [66, 23, 'east'], Mechania: [89, 34, 'east'], Novia: [72, 54, 'east'],
   // Southern continent
-  Agrea: [36, 81], Ferria: [56, 86],
+  Agrea: [36, 81, 'south'], Ferria: [56, 86, 'south'],
 };
 
 function worldMap() {
@@ -176,39 +188,94 @@ function worldMap() {
     <h2>세계 무역 지도</h2>
     <p>별이 붙은 곳이 우리 나라예요. 다른 나라를 누르면 거래 상대와 판매 물건을 볼 수 있어요.</p>
     <div class="world-layout">
-      <div class="world-map" role="group" aria-label="세계지도에서 나라 고르기">
-        <span class="map-compass" aria-hidden="true">북<span>✦</span></span>
-        <span class="map-route" aria-hidden="true" hidden></span>
-        ${markers.map(([country, [x, y]]) => `
-          <button type="button" class="country-marker ${country === S.country ? 'our-country' : ''}"
-            style="--map-x:${x}%;--map-y:${y}%" data-act="map-select" data-country="${country}"
-            aria-controls="world-country" aria-pressed="false">
-            ${country === S.country ? '<span aria-hidden="true">★</span><span class="sr-only">우리 나라 </span>' : ''}
-            ${esc(gname(country))}
-          </button>`).join('')}
+      <div class="route-view">
+        <div class="world-map" role="group" aria-label="세계지도에서 나라 고르기">
+          <span class="map-compass" aria-hidden="true">북<span>✦</span></span>
+          <span class="map-route" aria-hidden="true" hidden></span>
+          <div class="delivery-layer" aria-hidden="true"></div>
+          ${markers.map(([country, [x, y]]) => `
+            <button type="button" class="country-marker ${country === S.country ? 'our-country' : ''}"
+              style="--map-x:${x}%;--map-y:${y}%" data-act="map-select" data-country="${country}"
+              aria-controls="world-country" aria-pressed="false">
+              ${country === S.country ? '<span aria-hidden="true">★</span><span class="sr-only">우리 나라 </span>' : ''}
+              ${esc(gname(country))}
+            </button>`).join('')}
+        </div>
+        <section id="route-cargo" class="route-cargo" aria-label="교역로와 운송 물건"></section>
       </div>
       <div id="world-country" class="world-country" role="region" aria-label="선택한 나라"></div>
     </div>
   </section>`;
 }
 
-function drawMapRoute(country) {
-  const route = $('.map-route');
-  const start = MAP_POSITIONS[S.country];
-  const end = MAP_POSITIONS[country];
-  if (!route) return;
-  route.hidden = country === S.country || !start || !end;
-  if (route.hidden) return;
-
-  // The map is 3:2. Measure both axes against its width to draw a line through
-  // the country markers at every viewport size.
+function routeCoordinates(start, end) {
+  // Measure height against width using the map's 3:2 aspect ratio.
   const dx = end[0] - start[0];
   const dy = (end[1] - start[1]) * 2 / 3;
-  route.style.setProperty('--route-x', `${start[0]}%`);
-  route.style.setProperty('--route-y', `${start[1]}%`);
-  route.style.setProperty('--route-length', `${Math.hypot(dx, dy)}%`);
-  route.style.setProperty('--route-angle', `${Math.atan2(dy, dx)}rad`);
+  return `--route-x:${start[0]}%;--route-y:${start[1]}%;--end-x:${end[0]}%;--end-y:${end[1]}%;` +
+    `--route-length:${Math.hypot(dx, dy)}%;--route-angle:${Math.atan2(dy, dx)}rad`;
 }
+
+const cargoName = (leg) => `${leg.label}${genTxt(leg.good, leg.gen)} ${leg.qty}개`;
+const TRIP_MS = 3600;
+
+function drawMapRoute(country) {
+  const preview = $('.map-route');
+  if (!preview) return;
+  const trade = S.transactions_this_round[displayedTrade];
+  const legs = trade?.legs.filter((leg) => MAP_POSITIONS[leg.seller] && MAP_POSITIONS[leg.buyer]) || [];
+  preview.hidden = Boolean(legs.length) || country === S.country || !MAP_POSITIONS[country];
+  if (!preview.hidden) preview.style.cssText = routeCoordinates(MAP_POSITIONS[S.country], MAP_POSITIONS[country]);
+
+  const layer = $('.delivery-layer');
+  const routeKey = JSON.stringify([legs, departedAt]);
+  if (layer.dataset.routeKey !== routeKey) {
+    layer.dataset.routeKey = routeKey;
+    const elapsed = departedAt ? performance.now() - departedAt : TRIP_MS;
+    layer.innerHTML = legs.map((leg, i) => {
+      const start = MAP_POSITIONS[leg.seller];
+      const end = MAP_POSITIONS[leg.buyer];
+      const coords = routeCoordinates(start, end);
+      const vehicle = start[2] !== end[2] ? '🚢' : '✈️';
+      return `<span class="map-route delivery-line delivery-line-${i}" style="${coords}"></span>
+        ${elapsed < TRIP_MS ? `<span class="delivery-vehicle delivery-vehicle-${i}"
+          data-seller="${esc(leg.seller)}" data-buyer="${esc(leg.buyer)}"
+          style="${coords};--trip-delay:-${elapsed}ms;--trip-duration:${TRIP_MS}ms">
+          ${vehicle} <span>${esc(cargoName(leg))}</span></span>` : ''}`;
+    }).join('');
+  }
+
+  const cargo = $('#route-cargo');
+  render(cargo, `<h3>교역로의 물건</h3>
+    ${legs.length ? `<ul class="cargo-legs">${legs.map((leg) => `<li>${icon(leg.good)}<div>
+      <strong>${esc(cargoName(leg))}</strong><small>${esc(gname(leg.seller))} → ${esc(gname(leg.buyer))}</small></div>
+    </li>`).join('')}</ul>
+    <button type="button" data-act="replay-route" data-index="${displayedTrade}">운송 다시 보기</button>`
+    : '<p>거래가 성사되면 이곳에 보낸 물건과 교역로가 표시돼요.</p>'}
+    ${S.transactions_this_round.length > 1 ? `<label>이번 라운드 교역로
+      <select id="trade-route-choice" data-k="route-history"><option value="">교역로 고르기</option>
+      ${S.transactions_this_round.map((t, i) => `<option value="${i}">${i + 1}. ${esc(t.legs.map(cargoName).join(' ↔ '))} · ${esc(gname(t.legs[0].seller))} → ${esc(gname(t.legs[0].buyer))}</option>`).join('')}
+      </select></label>` : ''}`, drafts);
+  const choice = $('#trade-route-choice');
+  if (choice) choice.value = displayedTrade ?? '';
+}
+
+function playRoute(index) {
+  if (!S.transactions_this_round[index]) return;
+  displayedTrade = index;
+  departedAt = performance.now();
+  drawMapRoute(mapCountry || S.country);
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target.id !== 'trade-route-choice') return;
+  if (e.target.value) playRoute(num(e.target.value));
+  else {
+    displayedTrade = null;
+    departedAt = 0;
+    drawMapRoute(mapCountry || S.country);
+  }
+});
 
 function drawWorldCountry() {
   const panel = $('#world-country');
@@ -353,7 +420,7 @@ function draw() {
     `<a href="#${id}"><span aria-hidden="true">${mark}</span>${title}</a>`).join('')}</nav>`;
 
   const active = document.activeElement;
-  const mapInput = active.closest('#world-country') && active.dataset.k;
+  const mapInput = active.closest('#world') && active.dataset.k;
   const mapMarker = active.matches('.country-marker') && active.dataset.country;
   $('#status').hidden = false;
   render($('#identity'), `<h1>${esc(S.label)} · ${S.round}라운드 · ${esc(S.phase_label)}</h1>
@@ -381,7 +448,7 @@ function draw() {
     <section class="panel"><h2>이번 라운드 거래</h2><ul>${S.transactions_this_round.map((t) => `<li>${esc(txText(t))}</li>`).join('') || '<li>아직 거래가 없어요.</li>'}</ul></section>`, drafts);
   drawWorldCountry();
   if (!active.isConnected) {
-    if (mapInput) $(`#world-country [data-k="${CSS.escape(mapInput)}"]`)?.focus({ preventScroll: true });
+    if (mapInput) $(`#world [data-k="${CSS.escape(mapInput)}"]`)?.focus({ preventScroll: true });
     if (mapMarker) $(`.country-marker[data-country="${CSS.escape(mapMarker)}"]`)?.focus({ preventScroll: true });
   }
   syncOfferForm();
@@ -392,6 +459,7 @@ async function act(el) {
   if (a === 'join') return join();
   if (!me) return;
   let r;
+  const beforeTrade = { round: S?.round, count: S?.transactions_this_round.length };
   const d = (k) => drafts[k];
   if (a === 'list') {
     const k = `${el.dataset.good}-${el.dataset.gen}`;
@@ -424,16 +492,37 @@ async function act(el) {
   else if (a === 'ready') r = await me.ready(el.dataset.on === '1');
   else if (a === 'invest') r = await me.invest(el.dataset.good);
   else if (a === 'focus') r = await me.focus(d('focus') || S.next_focus);
-  if (r) { lastMsg = r.msg; draw(); }
+  if (r) {
+    lastMsg = r.msg;
+    draw();
+    const confirmed = r.ok && (a === 'buy' || a === 'map-buy' ||
+      (a === 'offer' && r.accepted) || (a === 'respond' && el.dataset.acc === '1'));
+    const map = $('.world-map');
+    if (confirmed && map && S.round === beforeTrade.round && S.transactions_this_round.length > beforeTrade.count) {
+      const rect = map.getBoundingClientRect();
+      if (rect.bottom <= $('#status').getBoundingClientRect().bottom || rect.top >= innerHeight) {
+        $('#world').scrollIntoView({ block: 'start' });
+        playRoute(S.transactions_this_round.length - 1);
+      }
+    }
+  }
 }
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
   e.preventDefault();
+  if (el.dataset.act === 'replay-route') {
+    playRoute(num(el.dataset.index));
+    return;
+  }
   if (el.dataset.act === 'map-select') {
     mapCountry = el.dataset.country;
     mapMessage = '';
+    const latestOnRoute = S.transactions_this_round.findLastIndex((t) =>
+      t.legs.some((leg) => mapCountry !== S.country && (leg.seller === mapCountry || leg.buyer === mapCountry)));
+    displayedTrade = latestOnRoute === -1 ? null : latestOnRoute;
+    departedAt = 0;
     drawWorldCountry();
     return;
   }

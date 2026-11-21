@@ -451,3 +451,62 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
   .country-marker { padding-inline: .22rem; }
   .offer-form { scroll-margin-top: 13rem; }
 }
+
+/* Cargo moves along a completed trade route. The route and manifest remain after arrival. */
+.route-view { min-width: 0; }
+.delivery-layer { position: absolute; inset: 0; overflow: clip; pointer-events: none; }
+.delivery-line {
+  border-top: 3px solid #ffe29c;
+  filter: drop-shadow(0 1px 2px #172624);
+  transform: rotate(var(--route-angle)) translateY(-2px);
+}
+.delivery-line-1 {
+  border-color: #b7ebee;
+}
+.delivery-vehicle {
+  position: absolute;
+  left: var(--route-x);
+  top: var(--route-y);
+  z-index: 3;
+  transform: translate(-50%, calc(-100% - .22rem));
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  border: 1px solid #b5883f;
+  border-radius: .45rem;
+  padding: .15rem .4rem;
+  background: #fff1c8;
+  color: #182f35;
+  box-shadow: 0 2px 6px #18232cab;
+  font-size: clamp(.67rem, 2.4cqw, .9rem);
+  white-space: nowrap;
+  animation: delivery-trip var(--trip-duration) linear var(--trip-delay) both;
+}
+.delivery-vehicle-1 {
+  background: #daf4f3;
+  border-color: #5c9299;
+  transform: translate(-50%, .22rem);
+}
+@keyframes delivery-trip {
+  0%, 8% { opacity: 0; }
+  13%, 83% { opacity: 1; }
+  100% { left: var(--end-x); top: var(--end-y); opacity: 0; visibility: hidden; }
+}
+.route-cargo {
+  display: grid;
+  justify-items: start;
+  gap: .5rem;
+  padding: .7rem .8rem;
+  margin-top: .65rem;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  background: #fbf4e2;
+}
+.route-cargo label { display: grid; min-width: 0; max-width: 100%; gap: .25rem; }
+.route-cargo select { width: 100%; }
+.cargo-legs { padding: 0; margin: 0; list-style: none; display: flex; flex-wrap: wrap; gap: .4rem .8rem; }
+.cargo-legs li { display: flex; align-items: center; gap: .4rem; }
+.cargo-legs small { display: block; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) {
+  .delivery-vehicle, [data-act="replay-route"] { display: none; }
+}
