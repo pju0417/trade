@@ -162,18 +162,23 @@ document.addEventListener('change', (e) => {
 // Positions are in percent of the map artwork. A country is a real button so the
 // same map works with a touch screen, a mouse, and a keyboard.
 const MAP_POSITIONS = {
-  Grainia: [19, 18], Ferria: [50, 18], Technia: [81, 18],
-  Mineria: [18, 50], Novia: [50, 50], Mechania: [82, 50],
-  Tropia: [19, 82], Agrea: [50, 82], Oilia: [81, 82],
+  // Western continent
+  Mineria: [13, 14], Grainia: [19, 39], Tropia: [12, 65], Oilia: [34, 50],
+  // Eastern continent
+  Technia: [66, 23], Mechania: [89, 34], Novia: [72, 54],
+  // Southern continent
+  Agrea: [36, 81], Ferria: [56, 86],
 };
 
 function worldMap() {
   const markers = Object.entries(MAP_POSITIONS).filter(([country]) => S.countries.includes(country));
   return `<section id="world" class="panel world-panel">
     <h2>세계 무역 지도</h2>
-    <p>나라를 눌러 시장에 내놓은 물건을 살펴보세요.</p>
+    <p>별이 붙은 곳이 우리 나라예요. 다른 나라를 누르면 거래 상대와 판매 물건을 볼 수 있어요.</p>
     <div class="world-layout">
-      <div class="world-map" role="group" aria-label="지도에서 나라 고르기">
+      <div class="world-map" role="group" aria-label="세계지도에서 나라 고르기">
+        <span class="map-compass" aria-hidden="true">북<span>✦</span></span>
+        <span class="map-route" aria-hidden="true" hidden></span>
         ${markers.map(([country, [x, y]]) => `
           <button type="button" class="country-marker ${country === S.country ? 'our-country' : ''}"
             style="--map-x:${x}%;--map-y:${y}%" data-act="map-select" data-country="${country}"
@@ -187,11 +192,30 @@ function worldMap() {
   </section>`;
 }
 
+function drawMapRoute(country) {
+  const route = $('.map-route');
+  const start = MAP_POSITIONS[S.country];
+  const end = MAP_POSITIONS[country];
+  if (!route) return;
+  route.hidden = country === S.country || !start || !end;
+  if (route.hidden) return;
+
+  // The map is 3:2. Measure both axes against its width to draw a line through
+  // the country markers at every viewport size.
+  const dx = end[0] - start[0];
+  const dy = (end[1] - start[1]) * 2 / 3;
+  route.style.setProperty('--route-x', `${start[0]}%`);
+  route.style.setProperty('--route-y', `${start[1]}%`);
+  route.style.setProperty('--route-length', `${Math.hypot(dx, dy)}%`);
+  route.style.setProperty('--route-angle', `${Math.atan2(dy, dx)}rad`);
+}
+
 function drawWorldCountry() {
   const panel = $('#world-country');
   if (!panel) return;
   const country = mapCountry || S.country;
   const ours = country === S.country;
+  drawMapRoute(country);
   const canTrade = S.phase === 'trading' && S.is_student && !ours;
   const selling = S.market.filter((order) => order.seller === country).sort((a, b) => a.price - b.price);
   for (const marker of document.querySelectorAll('.country-marker')) {
