@@ -332,3 +332,98 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
 .command-map .phase-track li[aria-current="step"] { background: var(--gold); color: var(--ink); }
 .command-map .map-nav:last-child { margin-bottom: 0; }
 .command-map .task { background: #f5e7c4; color: var(--ink); border-color: #be9552; }
+
+/* World map and the public market of the selected country. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.world-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(16rem, 1fr);
+  align-items: start;
+  gap: .85rem;
+}
+.world-map {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  min-height: 14rem;
+  border: 2px solid #9f824a;
+  border-radius: .7rem;
+  background: #234853 url("art/world-map.webp") center / 100% 100%;
+  box-shadow: inset 0 0 0 3px #ebd59b75;
+}
+.country-marker {
+  position: absolute;
+  left: var(--map-x);
+  top: var(--map-y);
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  min-height: 44px;
+  max-width: 30%;
+  padding: .35rem .65rem;
+  background: #132d36;
+  color: #fff6df;
+  border: 1px solid #e5cb89;
+  border-radius: .5rem;
+  box-shadow: 0 3px 10px #1226329c;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.country-marker:hover, .country-marker[aria-pressed="true"] {
+  background: #ffdf92;
+  color: #252b2c;
+}
+.country-marker[aria-pressed="true"] {
+  z-index: 2;
+  outline: 2px solid #f9e6b7;
+  outline-offset: 2px;
+}
+.country-marker:focus-visible { outline: 3px solid #7ddcfc; outline-offset: 3px; }
+.country-marker.our-country { border-width: 2px; border-color: #ffdc75; }
+.our-country span[aria-hidden] { color: var(--gold); }
+.our-country[aria-pressed="true"] span[aria-hidden], .our-country:hover span[aria-hidden] { color: #6d4715; }
+.world-country {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  padding: .75rem;
+  background: #fbf4e2;
+}
+.world-country > * + * { margin-top: .55rem; }
+.world-country-heading { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.world-country-heading h3 { font-size: 1.35rem; }
+.world-country h4 { margin: .65rem 0 .35rem; }
+.map-orders { list-style: none; margin: 0; padding: 0; }
+.map-orders li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .4rem .55rem;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-block: .55rem;
+}
+.map-order-title { display: flex; align-items: center; gap: .4rem; }
+.map-order-title small, .map-order-price small { display: block; color: var(--muted); }
+.map-orders .buy-actions { flex: 1 1 100%; }
+.map-orders [data-act="map-buy"] { background: var(--teal); color: white; }
+.map-orders [data-act="map-buy"]:hover { background: #17433e; }
+.map-message:empty { display: none; }
+.map-message:not(:empty) { padding: .45rem .55rem; border-radius: .4rem; background: var(--mint); font-weight: 700; }
+.map-warehouse { display: inline-flex; min-height: 44px; align-items: center; }
+.map-hint { color: var(--muted); }
+.offer-form { scroll-margin-top: 11rem; }
+@media (max-width: 54rem) {
+  .world-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 34rem) {
+  .country-marker { font-size: .77rem; padding-inline: .28rem; }
+  .offer-form { scroll-margin-top: 13rem; }
+}

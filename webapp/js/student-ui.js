@@ -10,6 +10,8 @@ let stateAt = 0;
 let lastMsg = '';
 let leavePresence = null;
 let joining = false;
+let mapCountry = null;
+let mapMessage = '';
 const MODE = { teacher: '선생님이 넘겨요', ready: '모두 준비하면 넘어가요', ready_timer: '모두 준비하거나 시간이 끝나면 넘어가요' };
 
 const params = new URLSearchParams(location.search);
@@ -45,7 +47,12 @@ async function join() {
     const server = await openServer(parsed.server);
     transport = server.room(parsed.code);
     me = new StudentClient({ transport, country, token: pin });
-    me.onState((state) => { S = state; stateAt = Date.now(); draw(); });
+    me.onState((state) => {
+      if (S?.round !== state.round || S?.phase !== state.phase) mapMessage = '';
+      S = state;
+      stateAt = Date.now();
+      draw();
+    });
     const r = await me.connect();
     lastMsg = r.msg;
     if (!r.ok) { me = null; transport.close(); return; }
@@ -152,6 +159,76 @@ document.addEventListener('change', (e) => {
   if (e.target.closest('.offer-form')) syncOfferForm();
 });
 
+// Positions are in percent of the map artwork. A country is a real button so the
+// same map works with a touch screen, a mouse, and a keyboard.
+const MAP_POSITIONS = {
+  Grainia: [19, 18], Ferria: [50, 18], Technia: [81, 18],
+  Mineria: [18, 50], Novia: [50, 50], Mechania: [82, 50],
+  Tropia: [19, 82], Agrea: [50, 82], Oilia: [81, 82],
+};
+
+function worldMap() {
+  const markers = Object.entries(MAP_POSITIONS).filter(([country]) => S.countries.includes(country));
+  return `<section id="world" class="panel world-panel">
+    <h2>세계 무역 지도</h2>
+    <p>나라를 눌러 시장에 내놓은 물건을 살펴보세요.</p>
+    <div class="world-layout">
+      <div class="world-map" role="group" aria-label="지도에서 나라 고르기">
+        ${markers.map(([country, [x, y]]) => `
+          <button type="button" class="country-marker ${country === S.country ? 'our-country' : ''}"
+            style="--map-x:${x}%;--map-y:${y}%" data-act="map-select" data-country="${country}"
+            aria-controls="world-country" aria-pressed="false">
+            ${country === S.country ? '<span aria-hidden="true">★</span><span class="sr-only">우리 나라 </span>' : ''}
+            ${esc(gname(country))}
+          </button>`).join('')}
+      </div>
+      <div id="world-country" class="world-country" role="region" aria-label="선택한 나라"></div>
+    </div>
+  </section>`;
+}
+
+function drawWorldCountry() {
+  const panel = $('#world-country');
+  if (!panel) return;
+  const country = mapCountry || S.country;
+  const ours = country === S.country;
+  const canTrade = S.phase === 'trading' && S.is_student && !ours;
+  const selling = S.market.filter((order) => order.seller === country).sort((a, b) => a.price - b.price);
+  for (const marker of document.querySelectorAll('.country-marker')) {
+    const pressed = String(marker.dataset.country === country);
+    if (marker.getAttribute('aria-pressed') !== pressed) marker.setAttribute('aria-pressed', pressed);
+  }
+  const orders = selling.map((o) => `<li>
+    <div class="map-order-title">${icon(o.good)}<div><strong>${esc(o.label)}${genTxt(o.good, o.gen)}</strong><small>${o.qty}개 판매 중</small></div></div>
+    <p class="map-order-price">개당 <strong>${o.price}G</strong><small>기준 ${o.reference}G</small></p>
+    ${canTrade ? `<div class="buy-actions">
+      <input data-k="map-qty-${o.oid}" aria-label="${esc(o.label)}${genTxt(o.good, o.gen)} 구매 수량" type="number" min="1" max="${o.qty}" value="1">
+      <button data-act="map-buy" data-oid="${o.oid}">사기</button>
+    </div>` : ''}
+  </li>`).join('');
+  render(panel, `
+    <div class="world-country-heading"><h3>${esc(gname(country))}</h3>
+      <span class="tag">${ours ? '우리 나라' : S.students.includes(country) ? '학생 운영' : 'AI 운영'}</span></div>
+    <p class="map-message" role="status">${esc(mapMessage)}</p>
+    <h4>시장에 내놓은 물건</h4>
+    ${orders ? `<ul class="map-orders">${orders}</ul>` : '<p>지금 시장에 내놓은 물건이 없어요.</p>'}
+    ${ours ? '<a class="map-warehouse" href="#warehouse">우리 창고 보기 ↓</a>'
+      : canTrade ? `<button data-act="map-offer" data-country="${country}">직접 거래 제안하기</button>`
+        : S.is_student ? '<p class="map-hint">물건을 사거나 제안하려면 거래 단계까지 기다려 주세요.</p>'
+          : '<p class="map-hint">지금은 AI가 우리 나라를 운영해요.</p>'}
+  `, drafts);
+}
+
+function offerFromMap(country) {
+  if (S.phase !== 'trading' || !S.is_student || country === S.country || !S.countries.includes(country)) return;
+  const select = $('[data-k="of-to"]');
+  if (!select) return;
+  drafts['of-to'] = country;
+  select.value = country;
+  $('.offer-form').scrollIntoView({ block: 'start' });
+  select.focus({ preventScroll: true });
+}
+
 function draw() {
   if (!S) return;
   drawBar();
@@ -244,13 +321,16 @@ function draw() {
     invest: [['industry', '⚙️', '산업'], ['warehouse', '📦', '창고']],
     finished: [['outcome', '🏅', '결과']],
   };
-  const places = [...destinations[S.phase], ['progress', '📜', '목표'], ['settlement', '🌾', '정산']];
+  const places = [...(TASK[S.phase] ? [['world', '🧭', '세계 지도']] : []), ...destinations[S.phase], ['progress', '📜', '목표'], ['settlement', '🌾', '정산']];
   const phaseNames = { listing: '판매 등록', trading: '거래', invest: '투자' };
   const phaseTrack = `<ol class="phase-track" aria-label="라운드 진행 순서">${Object.entries(phaseNames).map(([key, name]) =>
     `<li${key === S.phase ? ' aria-current="step"' : ''}>${name}</li>`).join('')}</ol>`;
   const mapNav = `<nav class="map-nav" aria-label="나라 운영 메뉴">${places.map(([id, mark, title]) =>
     `<a href="#${id}"><span aria-hidden="true">${mark}</span>${title}</a>`).join('')}</nav>`;
 
+  const active = document.activeElement;
+  const mapInput = active.closest('#world-country') && active.dataset.k;
+  const mapMarker = active.matches('.country-marker') && active.dataset.country;
   $('#status').hidden = false;
   render($('#identity'), `<h1>${esc(S.label)} · ${S.round}라운드 · ${esc(S.phase_label)}</h1>
     <span class="cash">국고 <strong>${S.cash}G</strong></span>`, drafts);
@@ -263,6 +343,7 @@ function draw() {
     </div>
     <p id="msg" role="status">${esc(lastMsg)}</p>
     ${results}
+    ${TASK[S.phase] ? worldMap() : ''}
     ${S.phase === 'invest' ? investment : ''}
     ${trading ? direct + marketPanel : ''}
     ${S.phase !== 'finished' ? warehouse : ''}
@@ -274,6 +355,11 @@ function draw() {
       <p>연료는 ${S.operating_schedule.fuel.join('·')}라운드, 광물은 ${S.operating_schedule.ore.join('·')}라운드에 써요.</p>
     </section>
     <section class="panel"><h2>이번 라운드 거래</h2><ul>${S.transactions_this_round.map((t) => `<li>${esc(txText(t))}</li>`).join('') || '<li>아직 거래가 없어요.</li>'}</ul></section>`, drafts);
+  drawWorldCountry();
+  if (!active.isConnected) {
+    if (mapInput) $(`#world-country [data-k="${CSS.escape(mapInput)}"]`)?.focus({ preventScroll: true });
+    if (mapMarker) $(`.country-marker[data-country="${CSS.escape(mapMarker)}"]`)?.focus({ preventScroll: true });
+  }
   syncOfferForm();
 }
 
@@ -289,7 +375,14 @@ async function act(el) {
     if (r.ok) { delete drafts['lq-' + k]; delete drafts['lp-' + k]; }
   } else if (a === 'reprice') r = await me.reprice(num(el.dataset.oid), num(d('rp-' + el.dataset.oid)));
   else if (a === 'cancel') r = await me.cancel(num(el.dataset.oid));
-  else if (a === 'buy') r = await me.buy(num(el.dataset.oid), num(d('bq-' + el.dataset.oid) || 1));
+  else if (a === 'buy' || a === 'map-buy') {
+    const fromMap = a === 'map-buy';
+    const oid = num(el.dataset.oid);
+    const country = mapCountry || S.country;
+    const key = `${fromMap ? 'map-qty' : 'bq'}-${oid}`;
+    r = await me.buy(oid, num(d(key) || 1));
+    if (fromMap && country === (mapCountry || S.country)) mapMessage = r.msg;
+  }
   else if (a === 'offer') {
     const kind = d('of-kind') || 'sell';
     const side = (p, g) => {
@@ -312,7 +405,20 @@ async function act(el) {
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
-  if (el) { e.preventDefault(); el.disabled = true; act(el).catch((err) => { lastMsg = err.message; S ? draw() : joinForm(); }).finally(() => { el.disabled = false; }); }
+  if (!el) return;
+  e.preventDefault();
+  if (el.dataset.act === 'map-select') {
+    mapCountry = el.dataset.country;
+    mapMessage = '';
+    drawWorldCountry();
+    return;
+  }
+  if (el.dataset.act === 'map-offer') {
+    offerFromMap(el.dataset.country);
+    return;
+  }
+  el.disabled = true;
+  act(el).catch((err) => { lastMsg = err.message; S ? draw() : joinForm(); }).finally(() => { el.disabled = false; });
 });
 
 window.addEventListener('pagehide', () => { if (leavePresence) leavePresence(); });
