@@ -3,6 +3,7 @@ import { EngineClient } from './engine-client.js';
 import { ClassHost, ORIGINAL, DEFAULT_SETTINGS, browserStorage, savedClasses } from './host.js';
 import { openServer, serverList, countOnline, LOCAL_FLAG } from './transport.js';
 import { esc, $, render, fmt, num } from './dom.js';
+import { updateWorldMap } from './world-map.js';
 
 const KO = { Tropia: '트로피아', Grainia: '그레니아', Oilia: '오일리아', Mechania: '메카니아', Mineria: '미네리아', Technia: '테크니아' };
 const PHASE = { listing: '판매 등록', trading: '거래', invest: '투자', finished: '끝' };
@@ -120,6 +121,7 @@ function dashboard() {
     ${room ? roomHtml(room) : ''}
     ${S.rooms.some((r) => r.view.results) ? resultsHtml() : ''}`, drafts);
   updateClocks();
+  if (room) updateWorldMap($('#room-world-map'), { ...room.view, room: room.info });
 }
 
 function pinsHtml() {
@@ -136,15 +138,17 @@ function roomHtml(r) {
     return `<tr><td>${KO[n]}</td><td><b>${p}</b></td><td>${isStu ? '학생' : 'AI'}</td><td>${on ? `접속 ${on}대` : '-'}</td>
       <td>${r.info.ready.includes(n) ? '준비 완료' : ''}</td>
       <td><button data-act="ctl" data-code="${esc(r.code)}" data-country="${n}" data-mode="${isStu ? 'ai' : 'student'}">${isStu ? 'AI에게 맡기기' : '학생에게 돌려주기'}</button></td>
-      <td><a href="${esc(studentLink(r.code, n))}" target="_blank">학생 화면 열기</a> · <a href="harbor.html?country=${encodeURIComponent(n)}" target="_blank">항구 외형 미리보기</a></td></tr>`;
+      <td><a href="${esc(studentLink(r.code, n))}" target="_blank">학생 화면 열기</a></td></tr>`;
   }).join('');
   const nations = t.nations.map((n) => `<tr><td>${esc(n.label)}${n.student ? ' (학생)' : ''}</td><td>${n.cash}G</td>
     <td>${Object.entries(n.levels).map(([g, lv]) => `${t.goods[g]} ${lv}`).join(', ')}</td><td>${t.goods[n.focus]}</td>
     <td>${fmt(n.happy, 0)}</td><td>${n.listed}</td><td>${n.progress ? `${fmt(n.progress.export_value, 0)}/${n.progress.export_target}` : '-'}</td>
     <td>${n.progress ? n.progress.operating_short_days : '-'}</td></tr>`).join('');
   return `<section class="panel room-detail"><h2>방 ${esc(r.code)} · 시드 ${t.seed} · 기록된 행동 ${t.log_length}개</h2>
+    <div id="room-world-map" data-persist="world-map-${esc(r.code)}" class="teacher-world-map"></div>
     <div class="table-scroll"><table><tr><th>나라</th><th>접속 번호</th><th>운영</th><th>접속</th><th>준비</th><th></th><th></th></tr>${pins}</table></div>
     <div class="table-scroll"><table><tr><th>나라</th><th>돈</th><th>산업 레벨</th><th>주력</th><th>만족도</th><th>판매 중</th><th>쓰인 수출/목표</th><th>운영 부족</th></tr>${nations}</table></div>
+    <h3>이 방의 시장</h3><div class="table-scroll"><table><thead><tr><th>파는 나라</th><th>물건</th><th>세대</th><th>수량</th><th>개당 가격</th></tr></thead><tbody>${t.market.map(o => `<tr><td>${esc(o.seller_label)}</td><td>${esc(o.label)}</td><td>${o.gen}</td><td>${o.qty}</td><td>${o.price}G</td></tr>`).join('')}</tbody></table></div>
     <p><button data-act="export" data-code="${esc(r.code)}">이 방 행동 기록 내려받기</button></p></section>`;
 }
 

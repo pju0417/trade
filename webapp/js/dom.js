@@ -10,7 +10,12 @@ export function render(el, html, drafts) {
   const active = document.activeElement;
   const key = active && el.contains(active) ? active.dataset.k : null;
   const sel = key && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
+  const persistent = new Map([...el.querySelectorAll('[data-persist]')].map(node => [node.dataset.persist, node]));
   el.innerHTML = html;
+  for (const slot of el.querySelectorAll('[data-persist]')) {
+    const existing = persistent.get(slot.dataset.persist);
+    if (existing) slot.replaceWith(existing);
+  }
   for (const input of el.querySelectorAll('[data-k]')) {
     const property = input.type === 'checkbox' ? 'checked' : 'value';
     if (drafts[input.dataset.k] !== undefined) input[property] = drafts[input.dataset.k];

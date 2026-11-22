@@ -2,7 +2,10 @@
 import { StudentClient } from './student-client.js';
 import { openServer, parseRoomCode, serverList, LOCAL_FLAG } from './transport.js';
 import { esc, $, render, num, fmt } from './dom.js';
-import { updateHarborState } from './harbor-embed.js';
+import { updateWorldMap, applyMapBackground } from './world-map.js';
+import { goodIcon } from './good-icons.js';
+
+applyMapBackground($('#entry-map'));
 
 const drafts = {};
 let me = null;
@@ -19,6 +22,8 @@ for (const k of ['room', 'country', 'pin']) if (params.get(k)) drafts['join-' + 
 const COUNTRIES = { Tropia: '트로피아', Grainia: '그레니아', Oilia: '오일리아', Mechania: '메카니아', Mineria: '미네리아', Technia: '테크니아' };
 
 function joinForm() {
+  document.body.classList.remove('in-game');
+  $('#student-atlas').hidden = true;
   render($('#app'), `
     <section class="panel join-panel">
     <a class="back" href="index.html${LOCAL_FLAG ? '?local=1' : ''}">← 첫 화면</a>
@@ -46,7 +51,7 @@ async function join() {
     const server = await openServer(parsed.server);
     transport = server.room(parsed.code);
     me = new StudentClient({ transport, country, token: pin });
-    me.onState((state) => { S = state; stateAt = Date.now(); updateHarborState(state); draw(); });
+    me.onState((state) => { S = state; stateAt = Date.now(); draw(); });
     const r = await me.connect();
     lastMsg = r.msg;
     if (!r.ok) { me = null; transport.close(); return; }
@@ -117,8 +122,7 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 
-const ICON = { wheat: '🌾', banana: '🍌', fuel: '⛽', ore: '🪨', machine: '⚙️', electronics: '📱' };
-const icon = (good) => `<span class="good-icon" aria-hidden="true">${ICON[good] || ''}</span>`;
+const icon = goodIcon;
 const TASK = {
   listing: '창고를 보고 남는 물건을 시장에 내놓으세요.',
   trading: '필요한 물건을 사거나 다른 나라에 직접 거래를 제안하세요.',
@@ -155,6 +159,9 @@ document.addEventListener('change', (e) => {
 
 function draw() {
   if (!S) return;
+  document.body.classList.add('in-game');
+  $('#student-atlas').hidden = false;
+  updateWorldMap($('#student-world-map'), S, { onPropose: proposeTo });
   drawBar();
   const trading = S.phase === 'trading';
   const listing = S.phase === 'listing' || trading;
@@ -223,8 +230,8 @@ function draw() {
       : '<p>시장에 내놓은 물건이 없어요.</p>'}</section>`;
   const marketPanel = `<section class="panel"><h2>시장</h2><p>${trading ? '같은 물건은 개당 가격이 싼 것부터 보여요.' : '지금은 가격을 살펴보세요. 물건은 거래 단계에서 살 수 있어요.'}</p>
     <div class="card-grid market-grid">${market || '<p>시장에 나온 물건이 없어요.</p>'}</div></section>`;
+  const inbox = S.offers.length ? `<section class="panel offer-inbox"><h2>${S.offers.some(incoming) ? '나에게 온 제안' : '주고받은 제안'}</h2><ul class="offer-list">${offers}</ul></section>` : '';
   const direct = `<section class="panel"><h2>직접 거래</h2>
-    <ul class="offer-list">${offers || '<li>아직 주고받은 제안이 없어요.</li>'}</ul>
     <div class="offer-form">
       <div class="fields"><label>제안할 나라 <select data-k="of-to">${others.map((n) => `<option value="${n}">${esc(S.names[n])}${S.students.includes(n) ? ' (학생)' : ''}</option>`).join('')}</select></label>
       <label>거래 방법 <select data-k="of-kind"><option value="sell">팔기</option><option value="buy">사기</option><option value="barter">물물교환</option></select></label></div>
@@ -248,7 +255,7 @@ function draw() {
     <p id="msg" role="status">${esc(lastMsg)}</p>
     ${results}
     ${S.phase === 'invest' ? investment : ''}
-    ${trading ? direct + marketPanel : ''}
+    ${trading ? inbox + marketPanel + direct : ''}
     ${S.phase !== 'finished' ? warehouse : ''}
     ${S.phase === 'listing' ? marketPanel : ''}
     ${progress}
@@ -259,6 +266,16 @@ function draw() {
     </section>
     <section class="panel"><h2>이번 라운드 거래</h2><ul>${S.transactions_this_round.map((t) => `<li>${esc(txText(t))}</li>`).join('') || '<li>아직 거래가 없어요.</li>'}</ul></section>`, drafts);
   syncOfferForm();
+}
+
+function proposeTo(country) {
+  if (!S || S.phase !== 'trading' || country === S.country) return;
+  drafts['of-to'] = country;
+  const form = $('.offer-form');
+  const recipient = $('[data-k="of-to"]', form);
+  if (recipient) recipient.value = country;
+  form?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' });
+  recipient?.focus({ preventScroll: true });
 }
 
 async function act(el) {
