@@ -186,15 +186,15 @@ function worldMap() {
   const markers = Object.entries(MAP_POSITIONS).filter(([country]) => S.countries.includes(country));
   return `<section id="world" class="panel world-panel">
     <h2>세계 무역 지도</h2>
-    <p class="atlas-help">다른 나라를 누르면 판매 물건과 교역로가 열려요.</p>
+    <p class="atlas-help">지도를 끌어 이동하고, 기울여 산과 항구를 살펴보세요. 나라를 누르면 시장이 열려요.</p>
     <p class="atlas-flat-help">나라를 누르면 판매 물건과 교역로를 볼 수 있어요.</p>
     <div class="world-layout">
       <div class="route-view">
-        <div class="atlas-frame showing-harbor" data-atlas-country="${esc(S.country)}">
+        <div class="atlas-frame" data-atlas-country="${esc(S.country)}">
           <div class="harbor-view">
             <div class="harbor-window" tabindex="0" role="group" aria-label="항구에서 갈 곳 고르기">
               <div class="harbor-picture">
-                <img src="art/harbor-panorama.webp" alt="벽돌 창고 앞에 배가 정박해 있고, 시장 광장 너머로 밀밭과 풍차가 보여요." draggable="false" fetchpriority="high">
+                <img src="art/harbor-panorama.webp" alt="벽돌 창고 앞에 배가 정박해 있고, 시장 광장 너머로 밀밭과 풍차가 보여요." draggable="false" loading="lazy">
                 <div class="harbor-water" aria-hidden="true"></div>
                 <div class="harbor-deliveries" aria-hidden="true"></div>
                 <img class="harbor-steamer" src="art/harbor-steamer.webp" alt="" draggable="false">
@@ -236,6 +236,7 @@ function worldMap() {
             <button type="button" data-camera="out" aria-label="지도 축소" title="지도 축소">−</button>
             <button type="button" data-camera="left" aria-label="왼쪽으로 돌리기" title="왼쪽으로 돌리기">↶</button>
             <button type="button" data-camera="right" aria-label="오른쪽으로 돌리기" title="오른쪽으로 돌리기">↷</button>
+            <button type="button" data-camera="tilt" aria-label="지도 기울이기">기울이기</button>
             <button type="button" data-camera="reset" aria-label="세계 전체 보기" title="세계 전체 보기">세계 전체</button>
             <button type="button" data-camera="town">마을 보기</button>
             <button type="button" data-camera="port">항구 보기</button>
@@ -879,11 +880,8 @@ const ATLAS_FRAGMENT = `#version 300 es
     return .64 + .36 * texture(shadows, uv);
   }
   uniform sampler2D materials;
-  uniform sampler2D regionalPainting;
-  uniform sampler2D continentalRelief;
   uniform sampler2D groundDetail;
   uniform sampler2D vehicleSprite;
-  uniform float zoom;
   in vec2 uv;
   uniform int layer;
   uniform float time;
@@ -907,36 +905,23 @@ const ATLAS_FRAGMENT = `#version 300 es
       pixel = vec4(albedo * light(p), 1.);
       return;
     }
-    // The painting follows world coordinates through rotation, zoom and every terrain triangle.
-    vec2 mapUV = p.xz / vec2(18., 12.) + .5;
-    float margin = min(min(mapUV.x, mapUV.y), min(1.-mapUV.x, 1.-mapUV.y));
-    vec2 waveUV = .00034 * vec2(sin(p.z*12.+time), cos(p.x*13.-time*.7));
-    vec2 sampleUV = mapUV + (rgb.r < 0. ? waveUV : vec2(0.));
-    vec3 paint = texture(continentalRelief, sampleUV).rgb;
-    // Regional artwork contains individual roofs and ships. Reveal it only after zooming in.
-    float regional = smoothstep(${CONTINENTAL_ZOOM}, 3.4, zoom);
-    if (regional > 0.) paint = mix(paint, texture(regionalPainting, sampleUV).rgb, regional);
-    // A town-sized view must not stretch painted houses and islands under the 3D streets.
-    float ink = smoothstep(-.005,.016,margin) * (1.-smoothstep(3.2,5.,zoom));
     float grain = noise(p.xz * 4.) * .7 + noise(p.xz * 23.) * .3;
     if (layer == 1 && rgb.r > 0.) {
-      vec3 n = normalize(vec3(-rgb.g, 1., -rgb.b));
-      float sunlight = abs(dot(n, normalize(vec3(-.46, 1., -.37))));
-      vec3 grass = mix(vec3(.32,.46,.21), vec3(.69,.72,.37), grain);
-      vec3 rock = mix(vec3(.42,.45,.40), vec3(.76,.73,.59), grain);
-      vec3 ground = mix(grass, rock, smoothstep(.28,.68,p.y) * (1. - abs(n.y)*.56));
-      ground = mix(ground, vec3(.88,.89,.79), smoothstep(.73,.94,p.y));
-      float inland = smoothstep(.008,.14,rgb.r);
-      ground = mix(vec3(.84,.75,.51), ground, inland);
-      if (ink < 1.) {
-        // Ground-space UVs and mipmaps keep blades and pebbles sharp while panning or rotating.
-        vec3 meadow = texture(groundDetail, p.xz * 1.7).rgb;
-        float grit = dot(meadow, vec3(.30,.59,.11));
-        vec3 sand = vec3(.84,.76,.56) * (.65 + grit);
-        vec3 turf = mix(ground * (.78 + .48*grit), meadow * (.87 + .26*grain), .76*(1.-smoothstep(.28,.70,p.y)));
-        ground = mix(sand, turf, inland);
-      }
-      pixel = vec4(mix(ground * (.73 + sunlight*.36) * light(p), paint * (.95 + .065*sunlight), ink), 1.);
+      vec3 normal = normalize(vec3(-rgb.g, 1., -rgb.b));
+      float sun = max(0., dot(normal, normalize(vec3(.70, 1., .50))));
+      float stone = smoothstep(.32,.91,p.y + (1.-normal.y)*.62 + grain*.08);
+      float moisture = clamp(uv.x + (grain-.5)*.20, 0., 1.);
+      vec3 vegetation = mix(vec3(.68,.62,.32), vec3(.19,.37,.20), moisture);
+      vec3 meadow = texture(groundDetail, p.xz * 1.7).rgb;
+      float grit = dot(meadow, vec3(.30,.59,.11));
+      vec3 land = vegetation * (.69 + grit*.73 + grain*.14);
+      vec3 rock = mix(vec3(.40,.38,.33),vec3(.66,.63,.55),grain) * (.84+grit*.34);
+      land = mix(land, rock, stone);
+      float snow = smoothstep(1.03,1.40,p.y+grain*.16-(1.-normal.y)*.38);
+      land = mix(land,vec3(.91,.93,.90),snow);
+      vec3 sand = vec3(.83,.74,.53)*(.67+grit*.80);
+      land = mix(sand, land, smoothstep(.015,.16,rgb.r));
+      pixel = vec4(land * (.69 + .43*sun) * light(p),1.);
     } else {
       float depth = layer == 1 ? -rgb.r : 1.;
       vec3 sea = mix(vec3(.21,.65,.59),vec3(.055,.32,.43), smoothstep(0.,.65,depth));
@@ -945,7 +930,7 @@ const ATLAS_FRAGMENT = `#version 300 es
       float shore = depth + (grain-.5)*.014;
       float surf = (1. - smoothstep(.003,.046,shore)) * (.65+.35*swell);
       vec3 coast = mix(sea, vec3(.87,.91,.77), surf*.51);
-      pixel = vec4(mix(coast, paint, ink) + vec3(.04,.07,.06)*smoothstep(.49,.93,wave)*grain,1.);
+      pixel = vec4(coast + vec3(.04,.07,.06)*smoothstep(.49,.93,wave)*grain,1.);
     }
   }`;
 
@@ -981,7 +966,43 @@ function imagePixels(image) {
   return ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 }
 
-function atlasTerrain(art, mask) {
+// Ridge spines are in map coordinates; their distances and fine folds are measured in world units.
+const MOUNTAIN_CHAINS = [
+  [[6,14],[12,10],[18,14],[24,10]], [[5,28],[11,36],[8,44],[13,51]],
+  [[58,20],[66,13],[73,11],[81,15],[91,18]], [[61,48],[69,40],[76,33],[83,29]],
+  [[34,81],[42,77],[50,82],[57,79]],
+].map((chain) => chain.map(mapXZ));
+
+function terrainNoise(x, z) {
+  const sample = (a,b) => {
+    const n = Math.sin(a*127.1+b*311.7)*43758.5453;
+    return n-Math.floor(n);
+  };
+  const a = Math.floor(x), b = Math.floor(z);
+  const u = x-a, v = z-b;
+  const sx = u*u*(3-2*u), sz = v*v*(3-2*v);
+  const lower = sample(a,b)*(1-sx)+sample(a+1,b)*sx;
+  const upper = sample(a,b+1)*(1-sx)+sample(a+1,b+1)*sx;
+  return lower*(1-sz)+upper*sz;
+}
+
+function ridgeHeight(x, z) {
+  const px = x + (terrainNoise(x*1.6,z*1.6)-.5)*.38;
+  const pz = z + (terrainNoise(x*1.6+13,z*1.6)-.5)*.38;
+  let closest = Infinity;
+  for (const chain of MOUNTAIN_CHAINS) {
+    for (let i=1; i<chain.length; i++) {
+      const [ax,az] = chain[i-1], [bx,bz] = chain[i];
+      const dx=bx-ax, dz=bz-az;
+      const t=within(((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz),0,1);
+      closest = Math.min(closest, Math.hypot(px-ax-t*dx,pz-az-t*dz));
+    }
+  }
+  const fold = 1-Math.abs(2*terrainNoise(x*3,z*3)-1);
+  return Math.exp(-closest*2.5) * (.70 + .76*terrainNoise(x*2+5,z*2) + .36*fold);
+}
+
+function atlasTerrain(mask) {
   // Measure distance on both sides of the shoreline so shallow water slopes into the beach.
   function shoreDistance(water) {
     const distance = new Uint8Array(mask.length / 4);
@@ -1001,11 +1022,10 @@ function atlasTerrain(art, mask) {
   const coast = shoreDistance(false), offshore = shoreDistance(true);
   const elevation = Float32Array.from(coast, (distance, i) => {
     if (!distance) return -Math.min(.85, (offshore[i] - .5) * TERRAIN_CELL * .72);
-    const [r, g, b] = art.subarray(i * 4, i * 4 + 3);
-    const snow = Math.max(0, (Math.min(r, g, b) - 80) / 145);
-    const ridges = Math.sin(i % TERRAIN_WIDTH * TERRAIN_CELL * 3.76) * Math.sin(Math.floor(i / TERRAIN_WIDTH) * TERRAIN_CELL * 2.96);
-    const inland = Math.min(1, distance * TERRAIN_CELL / 1.25);
-    return .05 + inland * (.13 + snow ** 1.65 * .93 + ridges * .06);
+    const x = (i % TERRAIN_WIDTH / (TERRAIN_WIDTH-1) - .5) * MAP_WIDTH;
+    const z = (Math.floor(i / TERRAIN_WIDTH) / (TERRAIN_DEPTH-1) - .5) * MAP_DEPTH;
+    const inland = Math.min(1, distance * TERRAIN_CELL / .58);
+    return .035 + inland * (.09 + .15*terrainNoise(x,z) + ridgeHeight(x,z));
   });
   // Taper the outermost terrain cells into the surrounding sea.
   for (let i = 0; i < elevation.length; i++) {
@@ -1074,8 +1094,11 @@ function atlasTerrain(art, mask) {
       const east = Math.max(-.045, elevation[v * TERRAIN_WIDTH + Math.min(TERRAIN_WIDTH - 1, u + 1)]);
       const north = Math.max(-.045, elevation[Math.max(0, v - 1) * TERRAIN_WIDTH + u]);
       const south = Math.max(-.045, elevation[Math.min(TERRAIN_DEPTH - 1, v + 1) * TERRAIN_WIDTH + u]);
-      vertices.push((u / (TERRAIN_WIDTH - 1) - .5) * MAP_WIDTH, Math.max(-.045, elevation[i]),
-        (v / (TERRAIN_DEPTH - 1) - .5) * MAP_DEPTH, elevation[i], (east-west)/(2*TERRAIN_CELL), (south-north)/(2*TERRAIN_CELL), -1, -1);
+      const x = (u / (TERRAIN_WIDTH-1) - .5) * MAP_WIDTH;
+      const z = (v / (TERRAIN_DEPTH-1) - .5) * MAP_DEPTH;
+      const moisture = terrainNoise(x*.68,z*.68)*.66 + terrainNoise(x*2.3,z*2.3)*.34;
+      vertices.push(x, Math.max(-.045,elevation[i]), z, elevation[i], (east-west)/(2*TERRAIN_CELL),
+        (south-north)/(2*TERRAIN_CELL), moisture, 0);
       if (u && v) indices.push(i, i - 1, i - TERRAIN_WIDTH, i - 1, i - TERRAIN_WIDTH - 1, i - TERRAIN_WIDTH);
     }
   }
@@ -1593,9 +1616,8 @@ class TradeAtlas {
     if (!this.gl) throw new Error('WebGL is unavailable');
     const info = this.gl.getExtension('WEBGL_debug_renderer_info');
     this.software = Boolean(info && /swiftshader|llvmpipe|software/i.test(this.gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
-    const dock = dockLayout(MAP_POSITIONS[S.country][2]);
-    const [x, z] = dock.point(-.10, .03);
-    this.camera = { x, z, zoom: 8, yaw: 2.32 - dock.yaw };
+    this.camera = { x: 0, z: 0, zoom: 1, yaw: 0 };
+    this.tilt = 0;
     this.scenic = true;
     this.visible = true;
     this.motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -1605,16 +1627,16 @@ class TradeAtlas {
   }
 
   async init() {
-    const [art, relief, ocean, materials, detail, ...vehicles] = await Promise.all([
-      atlasImage('art/world-map.webp'), atlasImage('art/world-relief.webp'), atlasImage('art/ocean-mask.webp'),
+    const [ocean, materials, detail, ...vehicles] = await Promise.all([
+      atlasImage('art/ocean-mask.webp'),
       atlasImage('art/harbor-materials.webp'), atlasImage('art/ground-detail.webp'), ...Object.values(VEHICLE_ART).map(({ file }) => atlasImage('art/' + file)),
     ]);
     if (this.disposed) return;
     const gl = this.gl;
     this.program = atlasProgram(gl);
     gl.useProgram(this.program);
-    this.uniform = Object.fromEntries(['camera', 'time', 'layer', 'zoom', 'vehicleSprite'].map((key) => [key, gl.getUniformLocation(this.program, key)]));
-    const terrain = atlasTerrain(imagePixels(art), imagePixels(ocean));
+    this.uniform = Object.fromEntries(['camera', 'time', 'layer', 'vehicleSprite'].map((key) => [key, gl.getUniformLocation(this.program, key)]));
+    const terrain = atlasTerrain(imagePixels(ocean));
     this.elevation = terrain.elevation;
     this.terrain = this.buffer(terrain.vertices, terrain.indices);
     const water = [];
@@ -1622,7 +1644,7 @@ class TradeAtlas {
     this.water = this.buffer(water);
     this.props = this.buffer(this.scenery());
     this.bakeSunlight();
-    const textures = [[1, materials, 'materials'], [2, art, 'regionalPainting'], [6, relief, 'continentalRelief'], [7, detail, 'groundDetail']];
+    const textures = [[1, materials, 'materials'], [7, detail, 'groundDetail']];
     this.vehicleRatios = {};
     Object.entries(VEHICLE_ART).forEach(([type, asset], index) => {
       const image = vehicles[index];
@@ -1751,9 +1773,10 @@ class TradeAtlas {
     const row = within(v * (TERRAIN_DEPTH - 1), 0, TERRAIN_DEPTH - 1.001);
     const i = Math.floor(row) * TERRAIN_WIDTH + Math.floor(col);
     const dx = col % 1, dz = row % 1;
-    const a = this.elevation[i] * (1 - dx) + this.elevation[i + 1] * dx;
-    const b = this.elevation[i + TERRAIN_WIDTH] * (1 - dx) + this.elevation[i + TERRAIN_WIDTH + 1] * dx;
-    return a * (1 - dz) + b * dz;
+    // Use the same diagonal as the indexed mesh when grounding buildings, roads and the camera.
+    const nw = this.elevation[i], ne = this.elevation[i+1];
+    const sw = this.elevation[i+TERRAIN_WIDTH], se = this.elevation[i+TERRAIN_WIDTH+1];
+    return dx + dz <= 1 ? nw + dx*(ne-nw) + dz*(sw-nw) : se + (1-dx)*(sw-se) + (1-dz)*(ne-se);
   }
 
   scenery() {
@@ -1994,7 +2017,6 @@ class TradeAtlas {
       if (buffer.indexed) gl.drawElements(gl.TRIANGLES, buffer.count, gl.UNSIGNED_SHORT, 0);
       else gl.drawArrays(gl.TRIANGLES, 0, buffer.count);
     };
-    gl.uniform1f(this.uniform.zoom, this.camera.zoom);
     draw(this.water, 0);
     draw(this.terrain, 1);
     const continental = this.camera.zoom <= CONTINENTAL_ZOOM;
@@ -2047,7 +2069,7 @@ class TradeAtlas {
       gl.disable(gl.BLEND);
     }
     const detailCountry = this.following && lead ? (elapsed < .53 ? lead.seller : lead.buyer) : this.selectedCountry;
-    const labelKey = JSON.stringify([width, height, this.camera, detailCountry]);
+    const labelKey = JSON.stringify([width, height, this.camera, this.tilt, detailCountry]);
     if (this.labelKey === labelKey) return;
     this.labelKey = labelKey;
     const near = this.camera.zoom > 3.6;
@@ -2086,8 +2108,8 @@ class TradeAtlas {
   }
 
   pitch(width, zoom) {
-    const overhead = width < 500 ? 1.39 : 1.30;
-    return overhead + (.67 - overhead) * within((zoom - 1.7) / 3.5, 0, 1);
+    const overhead = width < 500 ? 1.19 : 1.04;
+    return within(overhead + (.67 - overhead) * within((zoom - 1.7) / 3.5, 0, 1) + this.tilt, .38, 1.48);
   }
 
   updateRouteStatus(now, activeStage) {
@@ -2178,7 +2200,11 @@ class TradeAtlas {
       }
     }
     const camera = this.camera;
-    if (action === 'reset') Object.assign(camera, { x: 0, z: 0, zoom: 1, yaw: 0 });
+    if (action === 'reset') {
+      this.tilt = 0;
+      Object.assign(camera, { x: 0, z: 0, zoom: 1, yaw: 0 });
+    }
+    if (action === 'tilt') this.tilt = this.tilt === 0 ? -.41 : this.tilt < 0 ? .32 : 0;
     if (action === 'left' || action === 'right') camera.yaw += action === 'right' ? .23 : -.23;
     if (typeof action === 'number') this.zoomAround(action, point);
     this.render();
@@ -2248,10 +2274,6 @@ class TradeAtlas {
     }
     this.viewport.parentElement.querySelectorAll('[data-camera]').forEach((button) => button.addEventListener('click', () => {
       const action = button.dataset.camera;
-      if (action === 'port') {
-        $('.harbor-return', this.viewport.parentElement).click();
-        return;
-      }
       this.changeCamera(action === 'in' ? 1.3 : action === 'out' ? 1 / 1.3 : action);
     }));
   }
