@@ -53,8 +53,11 @@ class WorldMap {
   constructor(element, options = {}) {
     this.element = element; this.options = options; this.id = `atlas-${++sequence}`;
     this.countryNodes = new Map(); this.routeNodes = new Map(); this.selected = null;
+    this.showRoutes = true; this.mode = '2d'; this.want3D = true;
     element.classList.add('world-map');
     element.innerHTML = `<header class="atlas-heading"><div><p class="eyebrow">아홉 나라, 이어지는 바닷길</p><h2>세계 무역 지도</h2></div><span class="atlas-round"></span></header>
+      <div class="atlas-tools"><div class="atlas-view-modes" role="group" aria-label="지도 표시 방식"><button type="button" data-map-mode="3d" aria-pressed="false">3D 지도</button><button type="button" data-map-mode="2d" aria-pressed="true">2D 지도</button></div><div class="atlas-camera" role="group" aria-label="3D 시점 조절"><button type="button" data-camera="in" aria-label="지도 확대">＋</button><button type="button" data-camera="out" aria-label="지도 축소">−</button><button type="button" data-camera="reset">전체 보기</button></div><span class="atlas-model-status" role="status">3D 지도를 준비해요</span></div>
+      <p class="atlas-gesture">드래그로 회전 · 휠 또는 두 손가락으로 확대 · 나라를 누르면 거래 정보</p>
       <div class="map-surface"><img class="map-background" alt="아홉 나라의 섬과 바다를 그린 세계 지도"><svg class="trade-routes" aria-hidden="true"></svg><div class="map-labels"></div><span class="ocean-name">함께 잇는 바다</span><p class="map-loading" role="status">지도를 불러오는 중…</p></div>
       <div class="map-legend"><span><i class="legend-line market"></i>시장</span><span><i class="legend-line direct"></i>직접 거래</span><span><i class="legend-line barter"></i>물물교환</span><span class="route-total"></span><button class="route-toggle" type="button" aria-pressed="true">무역로 숨기기</button></div>
       <div class="country-inspector" aria-live="polite"></div><details class="route-log"><summary>이번 라운드 무역로 설명</summary><ul></ul></details>`;
@@ -64,8 +67,54 @@ class WorldMap {
       const show = e.currentTarget.getAttribute('aria-pressed') !== 'true';
       e.currentTarget.setAttribute('aria-pressed', String(show)); e.currentTarget.textContent = show ? '무역로 숨기기' : '무역로 보기';
       this.routes.classList.toggle('routes-hidden', !show);
+      this.showRoutes = show; this.update(this.state);
     };
-    getLayout().then(layout => { this.layout = layout; this.build(); if (this.state) this.update(this.state); }).catch(err => { text(element.querySelector('.map-loading'), err.message); });
+    for (const button of element.querySelectorAll('[data-map-mode]')) button.onclick = () => {
+      this.want3D = button.dataset.mapMode === '3d';
+      if (this.want3D) this.start3D(); else this.setMode('2d');
+    };
+    for (const button of element.querySelectorAll('[data-camera]')) button.onclick = () => {
+      if (button.dataset.camera === 'reset') this.three?.reset(); else this.three?.zoom(button.dataset.camera === 'in' ? 1.2 : 1 / 1.2);
+    };
+    getLayout().then(layout => { this.layout = layout; this.build(); if (this.state) this.update(this.state); if (this.want3D) this.start3D(); }).catch(err => { text(element.querySelector('.map-loading'), err.message); });
+  }
+  setMode(mode) {
+    this.mode = mode; this.element.dataset.mapMode = mode;
+    this.three?.setActive(mode === '3d');
+    for (const button of this.element.querySelectorAll('[data-map-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mapMode === mode));
+    if (mode === '2d') {
+      const [ox, oy, width, height] = this.layout.viewBox;
+      for (const [key, entry] of this.countryNodes) {
+        const point = this.layout.countries[key].label;
+        entry.button.style.left = `${(point[0] - ox) / width * 100}%`; entry.button.style.top = `${(point[1] - oy) / height * 100}%`; entry.button.hidden = false;
+      }
+    }
+  }
+  async start3D() {
+    if (!this.layout || this.loading3D) return;
+    if (this.three && !this.three.disposed) { this.setMode('3d'); this.update(this.state); return; }
+    this.loading3D = true;
+    const status = this.element.querySelector('.atlas-model-status'); text(status, '3D 지도를 준비해요');
+    try {
+      const { Atlas3D } = await import('./atlas-3d.js');
+      if (!this.element.isConnected || !this.want3D) return;
+      this.three = new Atlas3D(this.surface, this.layout, {
+        onSelect: key => { this.selected = key; this.update(this.state); },
+        onProject: positions => {
+          for (const [key, p] of positions) {
+            const button = this.countryNodes.get(key)?.button; if (!button) continue;
+            const left = `${p.x.toFixed(3)}%`, top = `${p.y.toFixed(3)}%`;
+            if (button.style.left !== left) button.style.left = left;
+            if (button.style.top !== top) button.style.top = top;
+            button.hidden = !p.visible;
+          }
+        },
+        onStatus: message => text(status, message),
+        onFailure: message => { this.setMode('2d'); text(status, message); },
+      });
+      this.setMode('3d'); this.update(this.state);
+    } catch { this.setMode('2d'); text(status, '이 기기에서는 2D 지도로 표시해요. 나라 선택과 거래 기능은 그대로 사용할 수 있어요.'); }
+    finally { this.loading3D = false; }
   }
   build() {
     const l = this.layout, [ox, oy, width, height] = l.viewBox;
@@ -112,6 +161,7 @@ class WorldMap {
       if (halo.getAttribute('class') !== className) halo.setAttribute('class', className);
     }
     this.updateRoutes(state.world_trades || []);
+    this.three?.update(state, tradeRoutes(state.world_trades || []), this.selected, this.showRoutes);
     this.updateInspector();
   }
   updateRoutes(trades) {
