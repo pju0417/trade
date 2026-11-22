@@ -136,7 +136,7 @@ function roomHtml(r) {
     return `<tr><td>${KO[n]}</td><td><b>${p}</b></td><td>${isStu ? '학생' : 'AI'}</td><td>${on ? `접속 ${on}대` : '-'}</td>
       <td>${r.info.ready.includes(n) ? '준비 완료' : ''}</td>
       <td><button data-act="ctl" data-code="${esc(r.code)}" data-country="${n}" data-mode="${isStu ? 'ai' : 'student'}">${isStu ? 'AI에게 맡기기' : '학생에게 돌려주기'}</button></td>
-      <td><a href="${esc(studentLink(r.code, n))}" target="_blank">학생 화면 열기</a></td></tr>`;
+      <td><a href="${esc(studentLink(r.code, n))}" target="_blank">학생 화면 열기</a> · <a href="harbor.html?country=${encodeURIComponent(n)}" target="_blank">항구 외형 미리보기</a></td></tr>`;
   }).join('');
   const nations = t.nations.map((n) => `<tr><td>${esc(n.label)}${n.student ? ' (학생)' : ''}</td><td>${n.cash}G</td>
     <td>${Object.entries(n.levels).map(([g, lv]) => `${t.goods[g]} ${lv}`).join(', ')}</td><td>${t.goods[n.focus]}</td>

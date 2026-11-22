@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#123a44"><title>무역 게임 · 항구 지도</title>
+  <link rel="stylesheet" href="harbor.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.module.js"}}</script>
+</head>
+<body class="harbor-page">
+  <main class="harbor-shell">
+    <div id="map" class="harbor-canvas"><p id="map-status" class="map-status" role="status">항구 지도를 준비하는 중…</p></div>
+    <header class="map-header">
+      <a class="map-brand" href="index.html"><span class="brand-mark" aria-hidden="true">⚓</span><span>TRADE ATLAS<small>우리 나라가 자라는 지도</small></span></a>
+      <span class="preview-badge">외형 미리보기</span>
+      <a class="game-link" href="student.html">학생 화면</a>
+    </header>
+    <aside class="map-panel">
+      <p class="map-eyebrow">항구에서 시작되는 무역</p>
+      <h1 id="country-title">트로피아</h1><p id="stage-title" class="stage-title">증기 시대</p>
+      <p class="map-intro">투자가 쌓이면 항구의 풍경도 달라져요.</p>
+      <div class="evolution-control"><label for="stage">대표 산업 레벨 <output id="stage-value">1</output></label><input id="stage" type="range" min="1" max="4" value="1" step="1"><div class="range-labels"><span>증기</span><span>산업</span><span>현대</span><span>스마트</span></div></div>
+      <div class="tech-controls"><label for="machine">기계 세대<select id="machine"><option value="1">1 · 증기선 / 초기 트럭</option><option value="2">2 · 디젤선 / 디젤 트럭</option><option value="3">3 · 컨테이너선 / 전기차</option></select></label><label for="electronics">전자제품 세대<select id="electronics"><option value="1">1 · 복엽기</option><option value="2">2 · 쌍발 프로펠러기</option><option value="3">3 · 제트 화물기</option></select></label></div>
+      <p class="visual-note">이 화면은 외형을 시험하는 미리보기예요. 실제 게임에서는 우리 나라의 산업 레벨과 생산·보유 세대를 따라 바뀌며, 운송 속도나 점수는 바뀌지 않아요.</p>
+      <button id="evolve" class="evolve-button">다음 발전 모습 보기</button>
+    </aside>
+    <div class="map-toolbar" aria-label="지도 시점">
+      <button data-focus="overview" title="전체 지도">전체</button><button data-focus="warehouse">창고</button><button data-focus="dock">부두</button><button data-focus="ship">선박</button><button data-focus="plane">공항</button>
+    </div>
+    <section id="selection" class="map-selection" aria-live="polite"><span class="selection-icon" aria-hidden="true">⌖</span><div><h2 id="selection-title">항구를 둘러보세요</h2><p id="selection-copy">물체를 누르면 자세히 볼 수 있어요. 드래그로 회전 · 휠로 확대</p></div></section>
+    <nav id="countries" class="country-bar" aria-label="미리 볼 나라"></nav>
+    <details class="asset-library"><summary>추가 제작한 모델 15개</summary><div id="asset-links"></div><a href="../docs/HARBOR_MAP.md">맵 제작 안내</a></details>
+  </main>
+  <script type="module" src="js/harbor-preview.js"></script>
+</body>
+</html>

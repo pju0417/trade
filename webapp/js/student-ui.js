@@ -2,6 +2,7 @@
 import { StudentClient } from './student-client.js';
 import { openServer, parseRoomCode, serverList, LOCAL_FLAG } from './transport.js';
 import { esc, $, render, num, fmt } from './dom.js';
+import { updateHarborState } from './harbor-embed.js';
 
 const drafts = {};
 let me = null;
@@ -45,7 +46,7 @@ async function join() {
     const server = await openServer(parsed.server);
     transport = server.room(parsed.code);
     me = new StudentClient({ transport, country, token: pin });
-    me.onState((state) => { S = state; stateAt = Date.now(); draw(); });
+    me.onState((state) => { S = state; stateAt = Date.now(); updateHarborState(state); draw(); });
     const r = await me.connect();
     lastMsg = r.msg;
     if (!r.ok) { me = null; transport.close(); return; }

@@ -1,0 +1,18 @@
+{
+  "name": "trade-harbor-map",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "assets": "node tools/prepare-harbor-assets.mjs && node tools/export-harbor-models.mjs",
+    "test:harbor": "node --test webapp/tests/harbor.test.mjs",
+    "serve": "python -m http.server 8000 --bind 127.0.0.1"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "meshoptimizer": "0.22.0",
+    "sharp": "0.35.5",
+    "three": "0.170.0"
+  }
+}

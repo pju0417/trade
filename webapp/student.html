@@ -5,9 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>무역 게임 · 학생</title>
 <link rel="stylesheet" href="trade.css">
+<link rel="stylesheet" href="harbor.css">
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.js"}}</script>
 </head>
 <body class="student-page">
 <header id="status" class="status" hidden><div class="shell status-inner"><div id="identity"></div><div id="bar"></div></div></header>
+<button id="harbor-open" class="harbor-embed-launch" hidden>우리 나라 항구 지도 열기<small>산업이 자라면 항구와 운송 수단도 달라져요.</small></button>
+<section id="harbor-live" class="harbor-embed" hidden aria-label="우리 나라 항구 지도">
+  <header><h2 id="harbor-live-title">우리 나라의 항구</h2><p id="harbor-live-note"></p><button id="harbor-reset">전체 보기</button><button id="harbor-close">지도 닫기</button></header>
+  <div id="harbor-live-canvas" class="harbor-canvas"><p id="harbor-live-status" class="map-status" role="status"></p></div>
+  <footer><p id="harbor-live-selection" aria-live="polite">물체를 누르면 설명을 볼 수 있어요.</p>외형 변화는 산업 발전을 표현해요. 운송 속도와 점수는 바뀌지 않아요.</footer>
+</section>
 <main id="app" class="shell">불러오는 중…</main>
 <script type="module" src="js/student-ui.js"></script>
 </body>
