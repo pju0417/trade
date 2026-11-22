@@ -662,3 +662,7 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
   line-height: 1.4;
 }
 .atlas-controls [data-camera="reset"] { padding-inline: .65rem; font-size: .83rem; }
+
+.world-map.is-3d.scenic :is(.country-marker, .atlas-landmark, .atlas-inset) { display: none; }
+.atlas-controls [data-camera="scenic"] { padding-inline: .6rem; font-size: .83rem; }
+.atlas-controls [data-camera="scenic"][aria-pressed="true"] { background: #f0dca9; color: #322a1d; }
