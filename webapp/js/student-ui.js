@@ -186,11 +186,31 @@ function worldMap() {
   const markers = Object.entries(MAP_POSITIONS).filter(([country]) => S.countries.includes(country));
   return `<section id="world" class="panel world-panel">
     <h2>세계 무역 지도</h2>
-    <p class="atlas-help">우리 대륙의 항구에서 출발해요. 다른 나라와 거래하려면 ‘세계 전체’를 누른 뒤 나라를 고르세요.</p>
+    <p class="atlas-help">다른 나라를 누르면 판매 물건과 교역로가 열려요.</p>
     <p class="atlas-flat-help">나라를 누르면 판매 물건과 교역로를 볼 수 있어요.</p>
     <div class="world-layout">
       <div class="route-view">
-        <div class="atlas-frame" data-atlas-country="${esc(S.country)}">
+        <div class="atlas-frame showing-harbor" data-atlas-country="${esc(S.country)}">
+          <div class="harbor-view">
+            <div class="harbor-window" tabindex="0" role="group" aria-label="항구에서 갈 곳 고르기">
+              <div class="harbor-picture">
+                <img src="art/harbor-panorama.webp" alt="벽돌 창고 앞에 배가 정박해 있고, 시장 광장 너머로 밀밭과 풍차가 보여요." draggable="false" fetchpriority="high">
+                <div class="harbor-water" aria-hidden="true"></div>
+                <div class="harbor-deliveries" aria-hidden="true"></div>
+                <img class="harbor-steamer" src="art/harbor-steamer.webp" alt="" draggable="false">
+                ${[['warehouse','창고'],['market','시장'],['farm','농경지'],['quay','부두']].map(([site,name]) =>
+                  `<button type="button" class="harbor-site site-${site}" data-harbor="${site}" aria-label="${name} 열기"><span>${name}</span></button>`).join('')}
+              </div>
+            </div>
+            <div class="harbor-tools">
+              <button type="button" data-harbor="world">세계 전체 보기</button>
+              <button type="button" data-harbor="in" aria-label="항구 그림 확대">＋</button>
+              <button type="button" data-harbor="out" aria-label="항구 그림 축소">−</button>
+              <button type="button" data-harbor="labels" aria-pressed="false">장소 이름</button>
+              <span>건물을 눌러 창고와 시장을 열어 보세요.</span>
+            </div>
+          </div>
+          <button type="button" class="harbor-return" data-harbor="home">항구 전경 보기</button>
         <div class="world-map" role="group" aria-label="세계지도에서 나라 고르기">
           <canvas class="atlas-canvas" tabindex="0" aria-label="3D 지도. 화살표로 이동, 더하기와 빼기로 확대·축소, 0으로 세계 전체 보기"></canvas>
           <button type="button" class="atlas-inset" data-camera="reset" aria-label="작은 지도로 세계 전체 보기"><span>세계 전체</span></button>
@@ -322,6 +342,10 @@ function drawMapRoute(country) {
     if (!tradeAtlas?.ready) drawShipments(layer, legs, elapsed);
   }
 
+  const seaCargo = legs.filter((leg) => (leg.seller === S.country || leg.buyer === S.country) &&
+    leg.good !== 'electronics' && MAP_POSITIONS[leg.seller][2] !== MAP_POSITIONS[leg.buyer][2]);
+  showHarborCargo(seaCargo, departedAt);
+
   const cargo = $('#route-cargo');
   render(cargo, `<h3>교역로의 물건</h3>
     ${legs.length ? `<ul class="cargo-legs">${legs.map((leg) => `<li>${icon(leg.good)}<div>
@@ -329,6 +353,7 @@ function drawMapRoute(country) {
     </li>`).join('')}</ul>
     ${tradeAtlas?.ready ? '<p id="shipment-stage" role="status">교역로 확인 중</p>' : ''}
     <div class="actions"><button type="button" data-act="replay-route" data-index="${displayedTrade}">운송 다시 보기</button>
+    ${seaCargo.length ? '<button type="button" data-act="harbor-delivery">항구에서 짐 보기</button>' : ''}
     ${tradeAtlas?.ready ? '<button type="button" data-act="follow-shipment" aria-pressed="false">화물 따라가기</button>' : ''}</div>`
     : '<p>거래가 성사되면 이곳에 보낸 물건과 교역로가 표시돼요.</p>'}
     ${S.transactions_this_round.length > 1 ? `<label>이번 라운드 교역로
@@ -341,8 +366,159 @@ function drawMapRoute(country) {
   tradeAtlas?.updateRouteStatus(performance.now());
 }
 
+function showHarborCargo(legs, departure) {
+  const layer = $('.harbor-deliveries');
+  if (!layer) return;
+  const key = JSON.stringify([legs, departure]);
+  if (layer.dataset.key === key) return;
+  layer.dataset.key = key;
+  const elapsed = performance.now() - departure;
+  const active = legs.length && departure && elapsed < TRIP_MS;
+  layer.replaceChildren();
+  if (!active) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  for (const [i, leg] of legs.entries()) {
+    const vessel = document.createElement('div');
+    vessel.className = 'harbor-load';
+    const ship = document.createElement('img');
+    ship.src = 'art/harbor-steamer.webp';
+    ship.alt = '';
+    const tag = document.createElement('span');
+    tag.textContent = cargoName(leg);
+    vessel.append(ship, tag);
+    layer.append(vessel);
+    const dock = { left: (32 + i*11) + '%', top: (76 + i*6) + '%' };
+    const sea = { left: '-17%', top: '69%' };
+    const arriving = leg.buyer === S.country;
+    if (!arriving) ship.style.transform = 'scaleX(-1)';
+    Object.assign(vessel.style, dock);
+    if (!reduced) {
+      const frames = arriving ? [sea, { ...dock, offset: .75 }, dock]
+        : [dock, { ...dock, offset: .25 }, sea];
+      vessel.animate(frames, { duration: TRIP_MS, delay: -elapsed, fill: 'both' });
+    }
+    setTimeout(() => vessel.remove(), TRIP_MS - elapsed);
+  }
+}
+
+function openTradeMap() {
+  const frame = $('.atlas-frame');
+  if (!frame?.classList.contains('showing-harbor')) return;
+  frame.classList.remove('showing-harbor');
+  if (tradeAtlas?.ready) tradeAtlas.changeCamera('reset');
+  else if (tradeAtlas) tradeAtlas.camera = { x: 0, z: 0, zoom: 1, yaw: -.12 };
+}
+
+function bindHarbor(frame) {
+  if (!frame || frame.dataset.harborBound) return;
+  frame.dataset.harborBound = 'true';
+  const view = $('.harbor-window', frame);
+  const picture = $('.harbor-picture', frame);
+  const pointers = new Map();
+  let zoom = 1, x = 0, y = 0, dragged = false;
+  const drawView = () => {
+    const width = view.clientWidth, height = view.clientHeight;
+    x = within(x, width * (1 - zoom), 0);
+    y = within(y, height * (1 - zoom), 0);
+    picture.style.transform = `translate(${x}px,${y}px) scale(${zoom})`;
+  };
+  // Reapply the current fractional pan if the student rotates the tablet.
+  let previousWidth = 0;
+  const resize = new ResizeObserver(() => {
+    if (!view.isConnected) { resize.disconnect(); return; }
+    if (!view.clientWidth) return;
+    if (previousWidth) {
+      x *= view.clientWidth / previousWidth;
+      y *= view.clientWidth / previousWidth;
+    }
+    previousWidth = view.clientWidth;
+    drawView();
+  });
+  resize.observe(view);
+  const setZoom = (next, cx = view.clientWidth / 2, cy = view.clientHeight / 2) => {
+    next = within(next, 1, 4);
+    x = cx - (cx - x) * next / zoom;
+    y = cy - (cy - y) * next / zoom;
+    zoom = next;
+    drawView();
+  };
+  view.addEventListener('keydown', (event) => {
+    if (event.target !== view) return;
+    const arrows = { ArrowRight: [-48,0], ArrowLeft: [48,0], ArrowUp: [0,48], ArrowDown: [0,-48] };
+    if (arrows[event.key]) {
+      event.preventDefault();
+      x += arrows[event.key][0];
+      y += arrows[event.key][1];
+      drawView();
+    }
+    if (['+','=','-','0'].includes(event.key)) {
+      event.preventDefault();
+      setZoom(event.key === '0' ? 1 : zoom * (event.key === '-' ? 1/1.5 : 1.5));
+    }
+  });
+  view.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const rect = view.getBoundingClientRect();
+    setZoom(zoom * Math.exp(-event.deltaY * .002), event.clientX - rect.left, event.clientY - rect.top);
+  }, { passive: false });
+  view.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    if (!pointers.size) dragged = false;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    event.target.setPointerCapture(event.pointerId);
+  });
+  view.addEventListener('pointermove', (event) => {
+    const old = pointers.get(event.pointerId);
+    if (!old) return;
+    const dx = event.clientX - old.x, dy = event.clientY - old.y;
+    if (!dragged && pointers.size === 1 && Math.hypot(dx, dy) < 5) return;
+    dragged = true;
+    const other = [...pointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
+    if (other) {
+      const before = Math.hypot(old.x - other.x, old.y - other.y);
+      const after = Math.hypot(event.clientX - other.x, event.clientY - other.y);
+      const rect = view.getBoundingClientRect();
+      if (before > 2) setZoom(zoom * after / before, (old.x + other.x)/2 - rect.left, (old.y + other.y)/2 - rect.top);
+      x += dx/2; y += dy/2;
+    } else { x += dx; y += dy; }
+    old.x = event.clientX; old.y = event.clientY;
+    drawView();
+  });
+  for (const type of ['pointerup','pointercancel','lostpointercapture']) {
+    view.addEventListener(type, (event) => pointers.delete(event.pointerId));
+  }
+  frame.addEventListener('click', (event) => {
+    const control = event.target.closest('[data-harbor]');
+    if (!control || (dragged && view.contains(control) && event.detail)) return;
+    const action = control.dataset.harbor;
+    if (action === 'home') {
+      frame.classList.add('showing-harbor');
+      setZoom(1);
+      $('.harbor-tools button', frame).focus({ preventScroll: true });
+    } else if (action === 'world' || action === 'quay') {
+      openTradeMap();
+      $('.country-marker.our-country', frame)?.focus({ preventScroll: true });
+    } else if (action === 'in' || action === 'out') {
+      setZoom(zoom * (action === 'in' ? 1.5 : 1/1.5));
+    } else if (action === 'labels') {
+      control.setAttribute('aria-pressed', String(view.classList.toggle('show-names')));
+    } else {
+      const destination = action === 'farm' ? (S.phase === 'invest' ? 'industry' : 'settlement')
+        : action === 'market' && S.phase === 'invest' ? null : action;
+      if (!destination) { openTradeMap(); return; }
+      const heading = document.querySelector(`#${destination} h2`);
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+        heading.closest('section').scrollIntoView({ block: 'start' });
+      }
+    }
+  });
+}
+
 function playRoute(index) {
   if (!S.transactions_this_round[index]) return;
+  openTradeMap();
   displayedTrade = index;
   departedAt = performance.now();
   drawMapRoute(mapCountry || S.country);
@@ -533,6 +709,7 @@ function draw() {
   if (frame && previousMap && frame !== previousMap && frame.dataset.atlasCountry === previousMap.dataset.atlasCountry) {
     frame.replaceWith(previousMap);
   }
+  bindHarbor($('.atlas-frame'));
   updateAtlas($('.world-map'));
   drawWorldCountry();
   if (active !== document.activeElement) {
@@ -591,7 +768,10 @@ async function act(el) {
       const rect = map.getBoundingClientRect();
       if (rect.bottom <= $('#status').getBoundingClientRect().bottom || rect.top >= innerHeight) {
         $('#world').scrollIntoView({ block: 'start' });
-        playRoute(S.transactions_this_round.length - 1);
+        if ($('.atlas-frame.showing-harbor') && $('[data-act="harbor-delivery"]')) {
+          departedAt = performance.now();
+          drawMapRoute(mapCountry || S.country);
+        } else playRoute(S.transactions_this_round.length - 1);
       }
     }
   }
@@ -601,6 +781,13 @@ document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
   e.preventDefault();
+  if (el.dataset.act === 'harbor-delivery') {
+    $('.harbor-return')?.click();
+    departedAt = performance.now();
+    drawMapRoute(mapCountry || S.country);
+    $('#world').scrollIntoView({ block: 'start' });
+    return;
+  }
   if (el.dataset.act === 'follow-shipment') {
     if (tradeAtlas?.ready && displayedTrade !== null) {
       tradeAtlas.following = !tradeAtlas.following;
@@ -1928,6 +2115,10 @@ class TradeAtlas {
     }
     this.viewport.parentElement.querySelectorAll('[data-camera]').forEach((button) => button.addEventListener('click', () => {
       const action = button.dataset.camera;
+      if (action === 'port') {
+        $('.harbor-return', this.viewport.parentElement).click();
+        return;
+      }
       this.changeCamera(action === 'in' ? 1.3 : action === 'out' ? 1 / 1.3 : action);
     }));
   }

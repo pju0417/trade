@@ -666,3 +666,93 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
 .world-map.is-3d.scenic :is(.country-marker, .atlas-landmark, .atlas-inset) { display: none; }
 .atlas-controls [data-camera="scenic"] { padding-inline: .6rem; font-size: .83rem; }
 .atlas-controls [data-camera="scenic"][aria-pressed="true"] { background: #f0dca9; color: #322a1d; }
+
+/* The port painting and the navigable trade map share a persistent view switch. */
+.harbor-view, .showing-harbor > .harbor-return,
+.showing-harbor > .world-map, .atlas-frame.showing-harbor > .atlas-controls { display: none; }
+.showing-harbor > .harbor-view { display: block; }
+.world-layout:has(.showing-harbor) { grid-template-columns: minmax(0, 1fr); }
+.world-layout:has(.showing-harbor) > .world-country,
+.world-panel:has(.showing-harbor) :is(.atlas-help,.atlas-flat-help) { display: none; }
+.harbor-window {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  border: 1px solid #a98047;
+  border-radius: .55rem;
+  background: #1a393c;
+  touch-action: none;
+  user-select: none;
+}
+.harbor-picture, .harbor-picture > img, .harbor-water { position: absolute; inset: 0; width: 100%; height: 100%; }
+.harbor-picture { transform-origin: top left; }
+.harbor-picture > img { object-fit: fill; pointer-events: none; }
+.harbor-water {
+  background: url("art/harbor-panorama.webp") center / 100% 100%;
+  pointer-events: none;
+  clip-path: polygon(0 81%, 10% 88%, 28% 95%, 35% 100%, 0 100%);
+  animation: harbor-ripple 3.8s ease-in-out infinite alternate;
+}
+@keyframes harbor-ripple { to { transform: translate(.8px, -.5px) scale(1.002); filter: brightness(1.07); } }
+@media (prefers-reduced-motion: reduce) { .harbor-water { display: none; } }
+.harbor-window .harbor-site {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.harbor-site span {
+  opacity: 0;
+  background: #26322bed;
+  color: #fff4d9;
+  padding: .28rem .65rem;
+  border: 1px solid #d6af6c;
+  border-radius: .3rem;
+}
+.harbor-site:focus-visible span, .show-names .harbor-site span { opacity: 1; }
+@media (hover:hover) { .harbor-site:hover span { opacity: 1; } }
+.site-warehouse { left: 5%; top: 24%; width: 28%; height: 25%; }
+.site-market { left: 54%; top: 42%; width: 28%; height: 23%; }
+.site-farm { left: 69%; top: 1%; width: 30%; height: 22%; }
+.site-quay { left: 12%; top: 59%; width: 34%; height: 22%; }
+.harbor-tools { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; margin-block: .6rem; }
+.harbor-tools span { color: var(--muted); font-size: .85rem; }
+.harbor-return { margin-bottom: .5rem; }
+
+.harbor-picture > .harbor-steamer {
+  inset: auto;
+  width: 13%;
+  height: auto;
+  left: -15%;
+  top: 77%;
+  animation: harbor-sailing 27s linear infinite;
+  filter: drop-shadow(0 2px 1px #12382fa8);
+}
+@keyframes harbor-sailing {
+  0% { transform: translate(0,0) rotate(7deg); }
+  83%, 100% { transform: translate(525%,230%) rotate(7deg); }
+}
+@media (prefers-reduced-motion: reduce) { .harbor-picture > .harbor-steamer { animation: none; } }
+
+.harbor-deliveries { position: absolute; inset: 0; pointer-events: none; }
+.harbor-load { position: absolute; width: 13%; }
+.harbor-load img { display: block; width: 100%; }
+.harbor-load span {
+  position: absolute;
+  left: 50%;
+  bottom: 94%;
+  transform: translateX(-50%);
+  background: #26322bf2;
+  color: #fff4d9;
+  border: 1px solid #d6af6c;
+  border-radius: .3rem;
+  padding: .15rem .45rem;
+  font-size: .8rem;
+  white-space: nowrap;
+}
+.harbor-deliveries:not(:empty) + .harbor-steamer { visibility: hidden; }
