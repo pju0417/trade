@@ -195,6 +195,9 @@ function worldMap() {
           <canvas class="atlas-canvas" tabindex="0" aria-label="3D 지도. 화살표로 이동, 더하기와 빼기로 확대·축소, 0으로 처음 보기"></canvas>
           <span class="atlas-cargo-badge" aria-hidden="true" hidden></span>
           <span class="atlas-cargo-badge" aria-hidden="true" hidden></span>
+          <span class="atlas-landmark" data-site="warehouse" aria-hidden="true" hidden></span>
+          <span class="atlas-landmark" data-site="production" aria-hidden="true" hidden></span>
+          <span class="atlas-landmark" data-site="harbor" aria-hidden="true" hidden></span>
           <span class="ocean-surface" aria-hidden="true"></span>
           <span class="map-compass" aria-hidden="true">북<span>✦</span></span>
           <span class="map-route" aria-hidden="true" hidden></span>
@@ -213,6 +216,8 @@ function worldMap() {
             <button type="button" data-camera="left" aria-label="왼쪽으로 돌리기" title="왼쪽으로 돌리기">↶</button>
             <button type="button" data-camera="right" aria-label="오른쪽으로 돌리기" title="오른쪽으로 돌리기">↷</button>
             <button type="button" data-camera="reset" aria-label="처음 시점" title="처음 시점">⌂</button>
+            <button type="button" data-camera="town">마을 보기</button>
+            <button type="button" data-camera="port">항구 보기</button>
           </div>
         </div>
         <section id="route-cargo" class="route-cargo" aria-label="교역로와 운송 물건"></section>
@@ -304,7 +309,6 @@ function drawMapRoute(country) {
   preview.hidden = Boolean(legs.length) || country === S.country || !MAP_POSITIONS[country];
   if (!preview.hidden) preview.style.cssText = routeCoordinates(MAP_POSITIONS[S.country], MAP_POSITIONS[country]);
 
-  tradeAtlas?.setRoute(country, legs, departedAt);
   const layer = $('.delivery-layer');
   const routeKey = JSON.stringify([legs, departedAt]);
   if (layer.dataset.routeKey !== routeKey) {
@@ -318,7 +322,9 @@ function drawMapRoute(country) {
     ${legs.length ? `<ul class="cargo-legs">${legs.map((leg) => `<li>${icon(leg.good)}<div>
       <strong>${esc(cargoName(leg))}</strong><small>${esc(gname(leg.seller))} → ${esc(gname(leg.buyer))} · ${MAP_POSITIONS[leg.seller][2] === MAP_POSITIONS[leg.buyer][2] ? '화물차' : tradeAtlas?.ready && leg.good === 'electronics' ? '비행기' : '화물차와 배'}</small></div>
     </li>`).join('')}</ul>
-    <button type="button" data-act="replay-route" data-index="${displayedTrade}">운송 다시 보기</button>`
+    ${tradeAtlas?.ready ? '<p id="shipment-stage" role="status">교역로 확인 중</p>' : ''}
+    <div class="actions"><button type="button" data-act="replay-route" data-index="${displayedTrade}">운송 다시 보기</button>
+    ${tradeAtlas?.ready ? '<button type="button" data-act="follow-shipment" aria-pressed="false">화물 따라가기</button>' : ''}</div>`
     : '<p>거래가 성사되면 이곳에 보낸 물건과 교역로가 표시돼요.</p>'}
     ${S.transactions_this_round.length > 1 ? `<label>이번 라운드 교역로
       <select id="trade-route-choice" data-k="route-history"><option value="">교역로 고르기</option>
@@ -326,6 +332,8 @@ function drawMapRoute(country) {
       </select></label>` : ''}`, drafts);
   const choice = $('#trade-route-choice');
   if (choice) choice.value = displayedTrade ?? '';
+  tradeAtlas?.setRoute(country, legs, departedAt);
+  tradeAtlas?.updateRouteStatus(performance.now());
 }
 
 function playRoute(index) {
@@ -588,7 +596,19 @@ document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
   e.preventDefault();
+  if (el.dataset.act === 'follow-shipment') {
+    if (tradeAtlas?.ready && displayedTrade !== null) {
+      tradeAtlas.following = !tradeAtlas.following;
+      if (tradeAtlas.following) {
+        $('#world').scrollIntoView({ block: 'start' });
+        playRoute(displayedTrade);
+      }
+      tradeAtlas.updateFollowControl();
+    }
+    return;
+  }
   if (el.dataset.act === 'replay-route') {
+    $('#world').scrollIntoView({ block: 'start' });
     playRoute(num(el.dataset.index));
     return;
   }
@@ -719,6 +739,21 @@ function atlasTerrain(art, mask) {
     const inland = Math.min(1, distance / 10);
     return .05 + inland * (.13 + snow ** 1.65 * .93 + ridges * .06);
   });
+  const raw = elevation.slice();
+  for (const country of Object.values(MAP_POSITIONS)) {
+    const centerX = country[0] / 100 * (TERRAIN_WIDTH - 1);
+    const centerZ = country[1] / 100 * (TERRAIN_DEPTH - 1);
+    const index = Math.round(centerZ) * TERRAIN_WIDTH + Math.round(centerX);
+    const level = within(raw[index], .11, .5);
+    for (let z = Math.max(0, Math.floor(centerZ - 9)); z <= Math.min(TERRAIN_DEPTH - 1, Math.ceil(centerZ + 9)); z++) {
+      for (let x = Math.max(0, Math.floor(centerX - 9)); x <= Math.min(TERRAIN_WIDTH - 1, Math.ceil(centerX + 9)); x++) {
+        const i = z * TERRAIN_WIDTH + x;
+        if (raw[i] <= 0) continue;
+        const blend = within((9 - Math.hypot(x - centerX, z - centerZ)) / 4, 0, 1);
+        elevation[i] = raw[i] + (level - raw[i]) * blend;
+      }
+    }
+  }
   const vertices = [];
   const indices = [];
   for (let v = 0; v < TERRAIN_DEPTH; v++) {
@@ -802,11 +837,196 @@ function craftLocation({ nodes, lengths }, progress) {
   return [ax + (bx - ax) * weight, az + (bz - az) * weight, Math.atan2(bz - az, bx - ax)];
 }
 
+// Local scenery is modelled in world coordinates. The miniature town uses the
+// same warehouse gates and docks as the route animation.
+const TOWN_PRODUCTION = {
+  Mineria: '광산', Grainia: '밀 농장', Tropia: '바나나 농장', Oilia: '연료 작업장',
+  Technia: '전자제품 공장', Mechania: '기계 공장', Novia: '공장',
+  Agrea: '농장', Ferria: '광산',
+};
+const FARM_TOWNS = new Set(['Grainia', 'Tropia', 'Agrea']);
+const NEAR_ZOOM = 5.6;
+const ATLAS_TRIP_MS = 10400;
+
+function dockLayout(continent) {
+  const { harbor, offshore } = CONTINENT_ROUTES[continent];
+  const [[x, z], [hx, hz]] = [mapXZ(harbor), mapXZ(offshore)];
+  const yaw = Math.atan2(hz - z, hx - x);
+  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const point = (forward, side = 0) => [x + forward * c - side * s, z + forward * s + side * c];
+  const mapPoint = (forward, side) => worldUV(...point(forward, side)).map((v) => v * 100);
+  return { harbor, offshore, yaw, point, apron: mapPoint(-.08, -.04), berth: mapPoint(.57, .26) };
+}
+
+function settlementLayout(country) {
+  const [x, z, area] = MAP_POSITIONS[country];
+  const [wx, wz] = mapXZ([x, z]);
+  const [jx, jz] = mapXZ(CONTINENT_ROUTES[area].junction);
+  const yaw = Math.atan2(jz - wz, jx - wx);
+  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const point = (forward, side = 0) => [wx + forward * c - side * s, wz + forward * s + side * c];
+  const gate = worldUV(...point(-.23, .05)).map((v) => v * 100);
+  return { yaw, point, gate, area };
+}
+
+function gable(build, x, y, z, w, d, rise, color, yaw) {
+  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const q = (a, h, b) => [x + a * c - b * s, y + h, z + a * s + b * c];
+  const a = q(-w / 2, 0, -d / 2), b = q(w / 2, 0, -d / 2);
+  const f = q(-w / 2, rise, 0), g = q(w / 2, rise, 0);
+  const e = q(-w / 2, 0, d / 2), h = q(w / 2, 0, d / 2);
+  quad(build, a, f, g, b, shade(color, .88));
+  quad(build, f, e, h, g, color);
+  triangle(build, a, e, f, shade(color, .68));
+  triangle(build, b, g, h, shade(color, .77));
+}
+
+function atlasBuilding(build, x, y, z, w, h, d, wall, roof, yaw, warehouse = false) {
+  piece(build, x, y - .02, z, w * 1.07, .055, d * 1.07, [.34, .31, .23], yaw);
+  piece(build, x, y + .02, z, w, h, d, wall, yaw);
+  gable(build, x, y + h + .02, z, w * 1.13, d * 1.16, d * .35, roof, yaw);
+  const facade = (a, b, height, dw, dh, color) => piece(build,
+    x + a * Math.cos(yaw) - b * Math.sin(yaw), y + height, z + a * Math.sin(yaw) + b * Math.cos(yaw),
+    dw, dh, .012, color, yaw);
+  const door = [.31, .19, .13];
+  facade(0, d / 2, .025, w * (warehouse ? .34 : .18), h * .64, door);
+  for (const u of [-.31, .31]) {
+    facade(u * w, d / 2, h * .47, w * .12, h * .23, [.25, .37, .4]);
+    facade(u * w, d / 2 + .003, h * .54, w * .019, h * .22, [.92, .85, .66]);
+  }
+}
+
+function atlasTree(build, x, y, z, scale, salt) {
+  piece(build, x, y, z, .035 * scale, .16 * scale, .035 * scale, [.36, .24, .14]);
+  const colors = [[.24, .39, .19], [.36, .45, .18], [.28, .46, .26]];
+  const top = [x, y + .32 * scale, z];
+  const radius = .1 * scale;
+  const base = Array.from({ length: 6 }, (_, i) => [x + Math.cos(i * Math.PI / 3) * radius,
+    y + (.125 + (i % 2) * .022) * scale, z + Math.sin(i * Math.PI / 3) * radius]);
+  for (let i = 0; i < base.length; i++) triangle(build, top, base[i], base[(i + 1) % base.length],
+    shade(colors[salt % 3], .72 + i * .055));
+}
+
+function atlasCrate(build, x, y, z, yaw, size = .093) {
+  piece(build, x, y, z, size, size * .84, size, [.77, .48, .23], yaw);
+  piece(build, x, y + size * .83, z, size * 1.05, size * .105, size * 1.04, [.98, .76, .42], yaw);
+}
+
+function addSettlement(build, country, surface, treeSeed) {
+  const { yaw, point } = settlementLayout(country);
+  const wall = [.82, .71, .53], tile = [.53, .19, .11], wood = [.66, .47, .29];
+  const place = (u, v, size, colors, warehouse = false) => {
+    const [x, z] = point(u, v);
+    const y = surface(x, z);
+    if (y >= -.015) atlasBuilding(build, x, y, z, ...size, ...colors, yaw, warehouse);
+  };
+  place(-.24, -.17, [.38, .2, .26], [wall, tile], true);
+  for (const [u, v, w, h, color] of [
+    [-.5, .17, .18, .145, tile], [-.26,.25,.17,.155,[.4,.23,.15]], [-.02,.29,.19,.14,tile],
+    [.25,.32,.21,.19,[.26,.38,.4]], [.48,.26,.19,.145,tile], [.54,-.18,.18,.14,[.37,.44,.35]],
+  ]) place(u, v, [w, h, .146], [wall, color]);
+
+  for (const [u, v] of [[-.08,-.16], [.025,-.19], [.018,-.28], [-.085,-.28]]) {
+    const [x, z] = point(u, v);
+    const y = surface(x, z);
+    if (y >= 0) atlasCrate(build, x, y + .028, z, yaw, .083);
+  }
+
+  if (FARM_TOWNS.has(country)) {
+    const [fx, fz] = point(.34, -.42);
+    if (surface(fx, fz) > 0) {
+      for (let row = 0; row < 7; row++) {
+        const [x, z] = point(.38, -.66 + row * .056);
+        const y = surface(x, z);
+        piece(build, x, y + .005, z, .47, .02, .042, row % 2 ? [.66, .44, .15] : [.39, .28, .11], yaw);
+        for (let plot = 0; plot < 6; plot++) {
+          const [px, pz] = point(.18 + plot * .075, -.66 + row * .056);
+          const height = .033 + ((plot + row) % 3) * .012;
+          if (country === 'Tropia' && row % 2 === 0 && plot % 2 === 0) {
+            atlasTree(build, px, surface(px, pz) + .018, pz, .41, plot + row);
+          } else if (country !== 'Tropia') piece(build, px, surface(px, pz) + .02, pz, .036, height, .028, [.8, .68, .22], yaw);
+        }
+      }
+    }
+  } else {
+    place(.35, -.42, [.36, .23, .25], [[.66,.51,.37], [.33,.24,.19]]);
+    for (const [u, v] of [[.39,-.49],[.52,-.46]]) {
+      const [x, z] = point(u, v);
+      const y = surface(x, z);
+      if (y < 0) continue;
+      piece(build, x, y, z, .059, .41, .065, [.56, .34, .26], yaw);
+      piece(build, x, y + .39, z, .089, .036, .09, [.27, .27, .25], yaw);
+    }
+  }
+
+  for (let i = 0; i < 18; i++) {
+    const angle = i * 2.399 + treeSeed;
+    const [x, z] = point(Math.cos(angle) * (.68 + i % 4 * .075), Math.sin(angle) * (.62 + i % 3 * .068));
+    const y = surface(x, z);
+    if (y > .04) atlasTree(build, x, y, z, .8 + (i % 5) * .13, i + treeSeed);
+  }
+
+  const [x, z] = point(.11, .14);
+  const plaza = surface(x, z);
+  if (plaza > 0) piece(build, x, plaza + .006, z, .22, .018, .16, wood, yaw);
+}
+
+function addHarbor(build, continent, surface) {
+  const { point, yaw } = dockLayout(continent);
+  const at = (forward, side, y, w, h, d, color) => {
+    const [x, z] = point(forward, side);
+    piece(build, x, y, z, w, h, d, color, yaw);
+  };
+  const deck = [.66, .48, .27], timber = [.4, .28, .16], iron = [.29, .37, .37];
+  at(.33, -.045, .075, .89, .104, .39, deck);
+  for (let i = 0; i < 11; i++) at(-.07 + i * .078, -.045, .179, .008, .007, .38, shade(timber, .88));
+  for (const u of [.02, .22, .43, .66]) for (const side of [-.22, .135]) {
+    at(u, side, -.05, .046, .263, .046, timber);
+  }
+  for (const [u, v] of [[.36,-.11],[.47,-.105],[.57,-.11],[.36,-.035],[.47,-.035]]) {
+    const [x, z] = point(u, v);
+    atlasCrate(build, x, .19, z, yaw);
+  }
+  const [x, z] = point(-.22, .065);
+  atlasBuilding(build, x, Math.max(.05, surface(x, z)), z, .32, .22, .23, [.83, .7, .49], [.37, .25, .16], yaw, true);
+
+  // Gantry with a boom over the berth and the hook above the load position.
+  for (const side of [-.105, .07]) at(.43, side, .18, .047, .34, .043, iron);
+  at(.43, .026, .48, .068, .05, .31, iron);
+  at(.45, .16, .52, .05, .039, .32, [.84, .58, .23]);
+  at(.45, .281, .31, .014, .22, .014, [.32, .27, .2]);
+  at(.45, .281, .295, .04, .028, .028, [.77, .57, .3]);
+}
+
+function atlasShipment(leg) {
+  const start = settlementLayout(leg.seller), end = settlementLayout(leg.buyer);
+  const first = CONTINENT_ROUTES[start.area], last = CONTINENT_ROUTES[end.area];
+  if (start.area === end.area) {
+    return [{ type: 'truck', points: [start.gate, first.junction, end.gate], from: 0, to: 1,
+      caption: '화물차가 창고로 가는 중' }];
+  }
+  if (leg.good === 'electronics') return shipmentStages(leg, true).map((stage) => ({
+    ...stage, caption: '비행기가 화물을 운송하는 중',
+  }));
+  const origin = dockLayout(start.area), destination = dockLayout(end.area);
+  return [
+    { type: 'truck', points: [start.gate, first.junction, origin.apron], from: 0, to: .22, caption: '출발지 창고에서 항구로 가는 중' },
+    { type: 'load', points: [origin.apron, origin.berth], from: .22, to: .36, dock: origin,
+      caption: '출발 항구에서 배에 짐을 싣는 중' },
+    { type: 'ship', points: [origin.berth, origin.offshore, destination.offshore, destination.berth],
+      from: .36, to: .70, caption: '화물선이 바다를 건너는 중' },
+    { type: 'unload', points: [destination.berth, destination.apron], from: .70, to: .84, dock: destination,
+      caption: '도착 항구에서 배의 짐을 내리는 중' },
+    { type: 'truck', points: [destination.apron, last.junction, end.gate], from: .84, to: 1,
+      caption: '도착지 창고로 가는 중' },
+  ];
+}
+
 class TradeAtlas {
   constructor(viewport) {
     this.viewport = viewport;
     this.canvas = $('.atlas-canvas', viewport);
-    this.gl = this.canvas.getContext('webgl2', { alpha: false, antialias: true, powerPreference: 'low-power' });
+    this.gl = this.canvas.getContext('webgl2', { alpha: false, antialias: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
     if (!this.gl) throw new Error('WebGL is unavailable');
     const info = this.gl.getExtension('WEBGL_debug_renderer_info');
     this.software = Boolean(info && /swiftshader|llvmpipe|software/i.test(this.gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
@@ -913,24 +1133,19 @@ class TradeAtlas {
 
   scenery() {
     const output = [];
-    for (const [i, country] of Object.values(MAP_POSITIONS).entries()) {
-      const [x, z] = mapXZ(country);
-      for (let j = 0; j < 9; j++) {
-        const angle = j * 2.39 + i;
-        const radius = .16 + j * .039;
-        const bx = x + Math.cos(angle) * radius, bz = z + Math.sin(angle) * radius;
-        const by = this.surface(bx, bz);
-        if (by < 0) continue;
-        const tall = .076 + (j % 3) * .035;
-        piece(output, bx, by, bz, .105, tall, .088, [.9, .78, .53], angle);
-        piece(output, bx, by + tall, bz, .118, .038, .1, [[.73,.29,.15],[.41,.54,.55],[.72,.41,.18]][i % 3], angle);
-      }
+    const surface = this.surface.bind(this);
+    for (const [i, country] of Object.keys(MAP_POSITIONS).entries()) {
+      const town = settlementLayout(country);
+      const { junction } = CONTINENT_ROUTES[town.area];
+      const localRoad = [-.58, .62].map((u) => worldUV(...town.point(u, .05)).map((v) => v * 100));
+      this.routeRibbon(output, makeCraft('truck', localRoad), [.54, .43, .27], .057);
+      this.routeRibbon(output, makeCraft('truck', [town.gate, junction]), [.49, .42, .29], .035);
+      addSettlement(output, country, surface, i);
     }
-    for (const { harbor, offshore } of Object.values(CONTINENT_ROUTES)) {
-      const [[x, z], [tx, tz]] = [mapXZ(harbor), mapXZ(offshore)];
-      const angle = Math.atan2(tz - z, tx - x);
-      piece(output, x + Math.cos(angle) * .19, .02, z + Math.sin(angle) * .19, .38, .065, .125, [.61, .44, .25], angle);
-      piece(output, x, Math.max(0, this.surface(x, z)), z, .17, .12, .13, [.96, .8, .46], angle);
+    for (const region of Object.keys(CONTINENT_ROUTES)) {
+      const dock = dockLayout(region);
+      this.routeRibbon(output, makeCraft('truck', [CONTINENT_ROUTES[region].junction, dock.apron]), [.53, .43, .29], .04);
+      addHarbor(output, region, surface);
     }
     return output;
   }
@@ -951,10 +1166,13 @@ class TradeAtlas {
     const key = JSON.stringify([country, legs, departed]);
     if (key === this.routeKey) return;
     this.routeKey = key;
+    this.selectedCountry = country;
+    if (!legs.length) this.following = false;
     this.preview = country !== S.country ? [MAP_POSITIONS[S.country], MAP_POSITIONS[country]] : null;
     this.routes = legs.map((leg) => ({
-      cargo: cargoName(leg),
-      stages: shipmentStages(leg, true).map(({ type, points, from, to }) => makeCraft(type, points, from, to)),
+      cargo: cargoName(leg), seller: leg.seller, buyer: leg.buyer,
+      stages: atlasShipment(leg).map(({ type, points, from, to, caption, dock }) =>
+        ({ ...makeCraft(type, points, from, to), caption, dock })),
     }));
     this.departed = departed;
     if (this.ready) {
@@ -963,8 +1181,9 @@ class TradeAtlas {
       if (!this.routes.length && this.preview?.every(Boolean)) {
         this.routeRibbon(paths, makeCraft('truck', this.preview), [.95, .82, .49], .028, true);
       }
-      this.routes.forEach(({ stages }, i) => stages.forEach((stage) =>
-        this.routeRibbon(paths, stage, i ? [.54, .94, .97] : [1., .81, .36], .039, stage.type === 'plane')));
+      this.routes.forEach(({ stages }, i) => stages.forEach((stage) => {
+        if (!stage.dock) this.routeRibbon(paths, stage, i ? [.54, .94, .97] : [1., .81, .36], .039, stage.type === 'plane');
+      }));
       this.activeRoads = this.buffer(paths);
       if (old) { this.gl.deleteBuffer(old.vbo); this.gl.deleteVertexArray(old.vao); }
       this.render();
@@ -973,7 +1192,7 @@ class TradeAtlas {
 
   matrices(width, height) {
     const { x, z, yaw, zoom } = this.camera;
-    const pitch = width < 500 ? 1.17 : .96;
+    const pitch = this.pitch(width, zoom);
     const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
     const halfW = Math.max(width < 500 ? 10.3 : 10.9, 5.95 * width / height) / zoom;
     const halfH = halfW * height / width;
@@ -1008,6 +1227,19 @@ class TradeAtlas {
 
   craft(output, stage, progress) {
     const [x, z, yaw] = craftLocation(stage, progress);
+    if (stage.dock) {
+      const { dock } = stage;
+      const [bx, bz] = mapXZ(dock.berth);
+      const [tx, tz] = mapXZ(dock.apron);
+      modelVehicle(output, 'ship', bx, .012, bz, dock.yaw);
+      modelVehicle(output, 'truck', tx, Math.max(.18, this.surface(tx, tz)), tz, dock.yaw);
+      const y = .14 + Math.sin(progress * Math.PI) * .32;
+      atlasCrate(output, x, y, z, dock.yaw, .123);
+      const [cx, cz] = dock.point(.43, .18);
+      const wire = [.31, .26, .17];
+      triangle(output, [cx, .53, cz], [x - .008, y + .09, z], [x + .008, y + .09, z], wire);
+      return this.project(x, y + .22, z);
+    }
     const y = stage.type === 'plane' ? .69 + Math.sin(progress * Math.PI) * .34
       : stage.type === 'ship' ? .012 : Math.max(.012, this.surface(x, z));
     modelVehicle(output, stage.type, x, y, z, yaw);
@@ -1028,8 +1260,13 @@ class TradeAtlas {
     gl.viewport(0, 0, w, h);
     gl.clearColor(.055, .22, .27, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const elapsed = this.departed ? (now - this.departed) / ATLAS_TRIP_MS : 2;
+    const lead = this.routes[0];
+    const activeStage = lead?.stages.find((stage) => elapsed < stage.end);
+    this.updateCamera(now, elapsed, activeStage, lead);
     this.matrix = this.matrices(width, height);
     gl.uniformMatrix4fv(this.uniform.camera, false, this.matrix);
+    this.updateRouteStatus(now, activeStage);
     const clock = this.motion.matches ? 0 : now / 1000;
     gl.uniform1f(this.uniform.time, clock % 180.0);
     const draw = (buffer, mode) => {
@@ -1048,7 +1285,6 @@ class TradeAtlas {
       const travel = (clock / (22 + i * 2) + i * .27) % 2;
       this.craft(mesh, travel < 1 ? forward : reverse, travel % 1);
     }
-    const elapsed = this.departed ? (now - this.departed) / TRIP_MS : 2;
     for (const [i, badge] of this.badges.entries()) {
       const route = this.routes[i];
       let position;
@@ -1068,16 +1304,90 @@ class TradeAtlas {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh), gl.STREAM_DRAW);
     this.dynamic.count = mesh.length / 6;
     draw(this.dynamic, 2);
-    const labelKey = JSON.stringify([width, height, this.camera]);
+    const detailCountry = this.following && lead ? (elapsed < .53 ? lead.seller : lead.buyer) : this.selectedCountry;
+    const labelKey = JSON.stringify([width, height, this.camera, detailCountry]);
     if (this.labelKey === labelKey) return;
     this.labelKey = labelKey;
+    const near = this.camera.zoom > 3.6;
     for (const label of this.labels) {
       const [x, z] = mapXZ(MAP_POSITIONS[label.dataset.country]);
-      const [left, top] = this.project(x, Math.max(0, this.surface(x, z)) + .37, z);
+      const [left, top] = this.project(x, Math.max(0, this.surface(x, z)) + (near ? 1.02 : .37), z);
       label.style.setProperty('--map-x', `${left}%`);
       label.style.setProperty('--map-y', `${top}%`);
       label.style.visibility = left < 4 || left > 96 || top < 5 || top > 95 ? 'hidden' : '';
     }
+    this.updateLandmarks(near, detailCountry || S.country);
+  }
+
+  updateLandmarks(near, country) {
+    const town = settlementLayout(country);
+    const dock = dockLayout(town.area);
+    const markers = {
+      warehouse: [...town.point(-.24, -.17), '창고'],
+      production: [...town.point(.35, -.42), TOWN_PRODUCTION[country]],
+      harbor: [...dock.point(.38, .1), '공동 항구'],
+    };
+    for (const label of this.landmarks) {
+      const [x, z, name] = markers[label.dataset.site];
+      const [left, top] = this.project(x, Math.max(.12, this.surface(x, z)) + .37, z);
+      label.hidden = !near || left < 7 || left > 93 || top < 7 || top > 93;
+      if (!label.hidden) {
+        label.textContent = name;
+        label.style.left = `${left}%`;
+        label.style.top = `${top}%`;
+      }
+    }
+  }
+
+  pitch(width, zoom) {
+    const overhead = width < 500 ? 1.17 : .96;
+    return overhead + (.67 - overhead) * within((zoom - 1.7) / 3.5, 0, 1);
+  }
+
+  updateRouteStatus(now, activeStage) {
+    const lead = this.routes[0];
+    const elapsed = this.departed ? (now - this.departed) / ATLAS_TRIP_MS : 2;
+    const stage = activeStage ?? lead?.stages.find((step) => elapsed < step.end);
+    const stageText = $('#shipment-stage', this.viewport.closest('.route-view'));
+    const caption = lead ? (this.motion.matches || !stage ? '도착지 창고로 운송 완료' : stage.caption) : '';
+    if (stageText && stageText.textContent !== caption) stageText.textContent = caption;
+    this.updateFollowControl();
+  }
+
+  updateFollowControl() {
+    const control = $('[data-act="follow-shipment"]', this.viewport.closest('.route-view'));
+    if (!control) return;
+    const pressed = String(Boolean(this.following));
+    if (control.getAttribute('aria-pressed') !== pressed) control.setAttribute('aria-pressed', pressed);
+    const label = this.following ? '따라가기 멈추기' : '화물 따라가기';
+    if (control.textContent !== label) control.textContent = label;
+  }
+
+  updateCamera(now, elapsed, activeStage, route) {
+    if (this.following && route && !this.motion.matches) {
+      const stage = activeStage || route.stages.at(-1);
+      const progress = activeStage ? within((elapsed - stage.begin) / (stage.end - stage.begin), 0, 1) : 1;
+      const [x, z] = craftLocation(stage, progress);
+      const zoom = stage.type === 'ship' || stage.type === 'plane' ? 3.65 : NEAR_ZOOM;
+      const blend = this.lastCameraFrame ? 1 - Math.exp(-Math.max(0, now - this.lastCameraFrame) / 140) : .12;
+      this.camera.x += (x - this.camera.x) * blend;
+      this.camera.z += (z - this.camera.z) * blend;
+      this.camera.zoom += (zoom - this.camera.zoom) * blend;
+    } else if (this.cameraMotion) {
+      const { started, from, target } = this.cameraMotion;
+      const t = within((now - started) / 370, 0, 1);
+      for (const key of ['x', 'z', 'zoom']) this.camera[key] = from[key] + (target[key] - from[key]) * (t * t * (3 - 2 * t));
+      if (t === 1) this.cameraMotion = null;
+    }
+    this.lastCameraFrame = now;
+  }
+
+  localView(place) {
+    const country = this.selectedCountry || S.country;
+    const point = place === 'port' ? dockLayout(settlementLayout(country).area).point(.19, .03) : mapXZ(MAP_POSITIONS[country]);
+    const target = { x: point[0], z: point[1], zoom: NEAR_ZOOM };
+    if (this.motion.matches) Object.assign(this.camera, target);
+    else this.cameraMotion = { started: performance.now(), from: { ...this.camera }, target };
   }
 
   startFrames() {
@@ -1094,12 +1404,20 @@ class TradeAtlas {
   }
 
   changeCamera(action, point) {
+    this.following = false;
+    this.cameraMotion = null;
+    if (action === 'town' || action === 'port') {
+      this.localView(action);
+      if (this.viewport.getBoundingClientRect().top < $('#status').getBoundingClientRect().bottom) {
+        this.viewport.closest('#world').scrollIntoView({ block: 'start' });
+      }
+    }
     const camera = this.camera;
     if (action === 'reset') Object.assign(camera, { x: 0, z: 0, zoom: 1, yaw: -.12 });
     if (action === 'left' || action === 'right') camera.yaw += action === 'right' ? .23 : -.23;
     if (typeof action === 'number') {
       const previous = camera.zoom;
-      camera.zoom = within(previous * action, .8, 5);
+      camera.zoom = within(previous * action, .8, 8);
       if (point && camera.zoom !== previous) {
         const rect = this.canvas.getBoundingClientRect();
         const offset = 1 - previous / camera.zoom;
@@ -1111,10 +1429,12 @@ class TradeAtlas {
   }
 
   pan(dx, dy, zoom = this.camera.zoom) {
+    this.following = false;
+    this.cameraMotion = null;
     const { yaw } = this.camera;
     const width = this.viewport.clientWidth, height = this.viewport.clientHeight;
     const worldPerPixel = 2 * Math.max(width < 500 ? 10.3 : 10.9, 5.95 * width / height) / width / zoom;
-    const across = -dx * worldPerPixel, down = -dy * worldPerPixel / Math.sin(width < 500 ? 1.17 : .96);
+    const across = -dx * worldPerPixel, down = -dy * worldPerPixel / Math.sin(this.pitch(width, zoom));
     this.camera.x = within(this.camera.x + across * Math.cos(yaw) + down * Math.sin(yaw), -9, 9);
     this.camera.z = within(this.camera.z - across * Math.sin(yaw) + down * Math.cos(yaw), -6, 6);
   }
@@ -1122,6 +1442,7 @@ class TradeAtlas {
   controls() {
     const canvas = this.canvas;
     this.badges = [...this.viewport.querySelectorAll('.atlas-cargo-badge')];
+    this.landmarks = [...this.viewport.querySelectorAll('.atlas-landmark')];
     this.viewport.addEventListener('wheel', (event) => {
       if (this.disposed) return;
       event.preventDefault();
