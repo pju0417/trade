@@ -262,6 +262,11 @@ function routeCoordinates(start, end) {
 
 const cargoName = (leg) => `${leg.label}${genTxt(leg.good, leg.gen)} ${leg.qty}개`;
 const TRIP_MS = 5200;
+const VEHICLE_ART = {
+  ship: { file: 'harbor-steamer.webp', width: .86, unit: 3 },
+  truck: { file: 'cargo-truck.webp', width: .56, unit: 4 },
+  plane: { file: 'trade-plane.webp', width: .88, unit: 5 },
+};
 
 // The hand-painted map has a road junction, harbor and offshore way point per continent.
 const CONTINENT_ROUTES = {
@@ -282,7 +287,7 @@ function seaLane(from, to, departure = CONTINENT_ROUTES[from].harbor, arrival = 
   return [departure, CONTINENT_ROUTES[from].offshore, ...turns, CONTINENT_ROUTES[to].offshore, arrival];
 }
 
-function shipmentStages(leg, airRoutes = false) {
+function shipmentStages(leg) {
   const start = MAP_POSITIONS[leg.seller];
   const end = MAP_POSITIONS[leg.buyer];
   const origin = CONTINENT_ROUTES[start[2]];
@@ -290,7 +295,7 @@ function shipmentStages(leg, airRoutes = false) {
   if (origin === destination) {
     return [{ type: 'truck', points: [start, origin.junction, end], from: 0, to: 1 }];
   }
-  if (airRoutes && leg.good === 'electronics') {
+  if (leg.good === 'electronics') {
     return [{ type: 'plane', points: [start, [start[0] * .5 + end[0] * .5, (start[1] + end[1]) / 2 - 7], end], from: 0, to: 1 }];
   }
   return [
@@ -330,7 +335,7 @@ function drawShipments(layer, legs, elapsed) {
     return `${path}<span class="delivery-vehicle delivery-vehicle-${i} delivery-${stage.type}"
       data-seller="${esc(leg.seller)}" data-buyer="${esc(leg.buyer)}" data-vehicle="${stage.type}">
       <span class="vehicle-cargo">${esc(cargoName(leg))}</span>
-      <img src="art/cargo-${stage.type}.webp" alt="" draggable="false">
+      <img src="art/${VEHICLE_ART[stage.type].file}" alt="" draggable="false">
     </span>`;
   }).join('')).join('');
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -361,7 +366,7 @@ function drawMapRoute(country) {
   const cargo = $('#route-cargo');
   render(cargo, `<h3>교역로의 물건</h3>
     ${legs.length ? `<ul class="cargo-legs">${legs.map((leg) => `<li>${icon(leg.good)}<div>
-      <strong>${esc(cargoName(leg))}</strong><small>${esc(gname(leg.seller))} → ${esc(gname(leg.buyer))} · ${MAP_POSITIONS[leg.seller][2] === MAP_POSITIONS[leg.buyer][2] ? '화물차' : tradeAtlas?.ready && leg.good === 'electronics' ? '비행기' : '화물차와 배'}</small></div>
+      <strong>${esc(cargoName(leg))}</strong><small>${esc(gname(leg.seller))} → ${esc(gname(leg.buyer))} · ${MAP_POSITIONS[leg.seller][2] === MAP_POSITIONS[leg.buyer][2] ? '화물차' : leg.good === 'electronics' ? '비행기' : '화물차와 배'}</small></div>
     </li>`).join('')}</ul>
     ${tradeAtlas?.ready ? '<p id="shipment-stage" role="status">교역로 확인 중</p>' : ''}
     <div class="actions"><button type="button" data-act="replay-route" data-index="${displayedTrade}">운송 다시 보기</button>
@@ -873,7 +878,7 @@ const ATLAS_FRAGMENT = `#version 300 es
   }
   uniform sampler2D materials;
   uniform sampler2D worldPainting;
-  uniform sampler2D steamer;
+  uniform sampler2D vehicleSprite;
   uniform float zoom;
   in vec2 uv;
   uniform int layer;
@@ -889,7 +894,7 @@ const ATLAS_FRAGMENT = `#version 300 es
   }
   void main() {
     if (layer == 3) {
-      pixel = texture(steamer, uv);
+      pixel = texture(vehicleSprite, uv);
       if (pixel.a < .08) discard;
       return;
     }
@@ -1525,7 +1530,7 @@ function atlasShipment(leg) {
     return [{ type: 'truck', points: [start.gate, first.junction, end.gate], from: 0, to: 1,
       caption: '화물차가 창고로 가는 중' }];
   }
-  if (leg.good === 'electronics') return shipmentStages(leg, true).map((stage) => ({
+  if (leg.good === 'electronics') return shipmentStages(leg).map((stage) => ({
     ...stage, caption: '비행기가 화물을 운송하는 중',
   }));
   const origin = dockLayout(start.area), destination = dockLayout(end.area);
@@ -1562,15 +1567,15 @@ class TradeAtlas {
   }
 
   async init() {
-    const [art, ocean, materials, ship] = await Promise.all([
+    const [art, ocean, materials, ...vehicles] = await Promise.all([
       atlasImage('art/world-map.webp'), atlasImage('art/ocean-mask.webp'),
-      atlasImage('art/harbor-materials.webp'), atlasImage('art/harbor-steamer.webp'),
+      atlasImage('art/harbor-materials.webp'), ...Object.values(VEHICLE_ART).map(({ file }) => atlasImage('art/' + file)),
     ]);
     if (this.disposed) return;
     const gl = this.gl;
     this.program = atlasProgram(gl);
     gl.useProgram(this.program);
-    this.uniform = Object.fromEntries(['camera', 'time', 'layer', 'zoom'].map((key) => [key, gl.getUniformLocation(this.program, key)]));
+    this.uniform = Object.fromEntries(['camera', 'time', 'layer', 'zoom', 'vehicleSprite'].map((key) => [key, gl.getUniformLocation(this.program, key)]));
     const terrain = atlasTerrain(imagePixels(art), imagePixels(ocean));
     this.elevation = terrain.elevation;
     this.terrain = this.buffer(terrain.vertices, terrain.indices);
@@ -1579,7 +1584,14 @@ class TradeAtlas {
     this.water = this.buffer(water);
     this.props = this.buffer(this.scenery());
     this.bakeSunlight();
-    for (const [unit, texture, sampler] of [[1, materials, 'materials'], [2, art, 'worldPainting'], [3, ship, 'steamer']]) {
+    const textures = [[1, materials, 'materials'], [2, art, 'worldPainting']];
+    this.vehicleRatios = {};
+    Object.entries(VEHICLE_ART).forEach(([type, asset], index) => {
+      const image = vehicles[index];
+      this.vehicleRatios[type] = image.height / image.width;
+      textures.push([asset.unit, image, 'vehicleSprite']);
+    });
+    for (const [unit, texture, sampler] of textures) {
       gl.activeTexture(gl.TEXTURE0 + unit);
       gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture);
@@ -1589,7 +1601,7 @@ class TradeAtlas {
       gl.generateMipmap(gl.TEXTURE_2D);
       gl.uniform1i(gl.getUniformLocation(this.program, sampler), unit);
     }
-    this.shipBuffer = this.buffer([]);
+    this.spriteBuffer = this.buffer([]);
     this.dynamic = this.buffer([]);
     this.ambient = this.traffic().map((craft) => ({
       forward: craft,
@@ -1860,19 +1872,21 @@ class TradeAtlas {
     }
   }
 
-  ship(output, sprites, x, y, z, heading) {
+  vehicle(output, sprites, type, x, y, z, heading) {
     if (this.camera.zoom > 3.5) {
-      modelVehicle(output, 'ship', x, y, z, heading);
+      modelVehicle(output, type, x, y, z, heading);
       return;
     }
     const { yaw } = this.camera;
     const pitch = this.pitch(this.viewport.clientWidth, this.camera.zoom);
     const flip = Math.cos(yaw + heading) < 0;
-    // Stand the miniature in the camera plane with its keel on the sea route.
+    // Keep small vehicles readable while their ground positions follow the 3D routes.
+    const width = VEHICLE_ART[type].width;
+    const height = width * this.vehicleRatios[type];
     for (const [u,v] of [[0,1],[1,1],[1,0],[0,1],[1,0],[0,0]]) {
-      const right = (u-.5)*.82, up = (.92-v)*.55;
+      const right = (u-.5)*width, up = (.92-v)*height;
       const forward = -Math.sin(pitch)*up;
-      sprites.push(x + Math.cos(yaw)*right + Math.sin(yaw)*forward, y + Math.cos(pitch)*up,
+      sprites[type].push(x + Math.cos(yaw)*right + Math.sin(yaw)*forward, y + Math.cos(pitch)*up,
         z - Math.sin(yaw)*right + Math.cos(yaw)*forward, 1,1,1, flip ? 1-u : u,v);
     }
   }
@@ -1883,8 +1897,8 @@ class TradeAtlas {
       const { dock } = stage;
       const [bx, bz] = mapXZ(dock.berth);
       const [tx, tz] = mapXZ(dock.apron);
-      this.ship(output, sprites, bx, .012, bz, dock.yaw);
-      modelVehicle(output, 'truck', tx, Math.max(.18, this.surface(tx, tz)), tz, dock.yaw);
+      this.vehicle(output, sprites, 'ship', bx, .012, bz, dock.yaw);
+      this.vehicle(output, sprites, 'truck', tx, Math.max(.18, this.surface(tx, tz)), tz, dock.yaw);
       const y = .14 + Math.sin(progress * Math.PI) * .32;
       atlasCrate(output, x, y, z, dock.yaw, .123);
       const [cx, cz] = dock.point(.43, .18);
@@ -1894,8 +1908,7 @@ class TradeAtlas {
     }
     const y = stage.type === 'plane' ? .69 + Math.sin(progress * Math.PI) * .34
       : stage.type === 'ship' ? .012 : Math.max(.012, this.surface(x, z));
-    if (stage.type === 'ship') this.ship(output, sprites, x, y, z, yaw);
-    else modelVehicle(output, stage.type, x, y, z, yaw);
+    this.vehicle(output, sprites, stage.type, x, y, z, yaw);
     return this.project(x, y + .31, z);
   }
 
@@ -1946,7 +1959,7 @@ class TradeAtlas {
     }
     if (this.camera.zoom < 3.6) draw(this.ambientRoads, 2);
     if (this.activeRoads) draw(this.activeRoads, 2);
-    const mesh = [], sprites = [];
+    const mesh = [], sprites = { ship: [], truck: [], plane: [] };
     if (localDetail) for (const mill of this.mills) millSails(mesh, mill, clock);
     if (!this.motion.matches) for (const [i, { forward, reverse }] of this.ambient.entries()) {
       if (this.camera.zoom > 12 && forward.type === 'plane') continue; // Keep dock and street close-ups clear.
@@ -1972,13 +1985,15 @@ class TradeAtlas {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh), gl.STREAM_DRAW);
     this.dynamic.count = mesh.length / 8;
     draw(this.dynamic, 2);
-    if (sprites.length) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.shipBuffer.vbo);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sprites), gl.STREAM_DRAW);
-      this.shipBuffer.count = sprites.length / 8;
+    for (const [type, vertices] of Object.entries(sprites)) {
+      if (!vertices.length) continue;
+      gl.uniform1i(this.uniform.vehicleSprite, VEHICLE_ART[type].unit);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteBuffer.vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STREAM_DRAW);
+      this.spriteBuffer.count = vertices.length / 8;
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      draw(this.shipBuffer, 3);
+      draw(this.spriteBuffer, 3);
       gl.disable(gl.BLEND);
     }
     const detailCountry = this.following && lead ? (elapsed < .53 ? lead.seller : lead.buyer) : this.selectedCountry;
