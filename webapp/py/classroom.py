@@ -752,7 +752,11 @@ class Session:
                 'quotes': {k: {gen: g.quote(k, gen) for gen in ((1, 2, 3) if k in DURABLES else (1,))} for k in GOODS},
                 'population': g.pop(), 'food_need': g.food_need(),
                 'operating_schedule': self._operating_schedule(),
-                'market': [self._order_view(o) for o in sorted(g.orders.values(), key=lambda o: (o.good, o.gen, o.price, o.oid))]}
+                'market': [self._order_view(o) for o in sorted(g.orders.values(), key=lambda o: (o.good, o.gen, o.price, o.oid))],
+                # for the world map: every country's industries and all trades of this round
+                'profiles': {n: {'main': c.main, 'expand': c.expand, 'focus': c.focus, 'levels': dict(c.levels),
+                                 'student': n in g.students, 'evaluated': n in ORIGINAL} for n, c in g.cs.items()},
+                'world_trades': [self._tx_view(t, None) for t in g.transactions[self.tx_round_start:]]}
 
     def view(self, n):
         """Everything one student's screen needs."""
