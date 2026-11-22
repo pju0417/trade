@@ -854,6 +854,7 @@ const within = (value, low, high) => Math.max(low, Math.min(high, value));
 const mapXZ = ([u, v]) => [(u / 100 - .5) * MAP_WIDTH, (v / 100 - .5) * MAP_DEPTH];
 const worldUV = (x, z) => [x / MAP_WIDTH + .5, z / MAP_DEPTH + .5];
 
+const CONTINENTAL_ZOOM = 2.4;
 const ATLAS_VERTEX = `#version 300 es
   layout(location = 0) in vec3 position;
   layout(location = 1) in vec3 color;
@@ -877,7 +878,8 @@ const ATLAS_FRAGMENT = `#version 300 es
     return .64 + .36 * texture(shadows, uv);
   }
   uniform sampler2D materials;
-  uniform sampler2D worldPainting;
+  uniform sampler2D regionalPainting;
+  uniform sampler2D continentalRelief;
   uniform sampler2D vehicleSprite;
   uniform float zoom;
   in vec2 uv;
@@ -907,7 +909,11 @@ const ATLAS_FRAGMENT = `#version 300 es
     vec2 mapUV = p.xz / vec2(18., 12.) + .5;
     float margin = min(min(mapUV.x, mapUV.y), min(1.-mapUV.x, 1.-mapUV.y));
     vec2 waveUV = .00034 * vec2(sin(p.z*12.+time), cos(p.x*13.-time*.7));
-    vec3 paint = texture(worldPainting, mapUV + (rgb.r < 0. ? waveUV : vec2(0.))).rgb;
+    vec2 sampleUV = mapUV + (rgb.r < 0. ? waveUV : vec2(0.));
+    vec3 paint = texture(continentalRelief, sampleUV).rgb;
+    // Regional artwork contains individual roofs and ships. Reveal it only after zooming in.
+    float regional = smoothstep(${CONTINENTAL_ZOOM}, 5.4, zoom);
+    if (regional > 0.) paint = mix(paint, texture(regionalPainting, sampleUV).rgb, regional);
     float ink = smoothstep(-.005,.016,margin) * (1.-smoothstep(3.5,11.,zoom));
     float grain = noise(p.xz * 4.) * .7 + noise(p.xz * 23.) * .3;
     if (layer == 1 && rgb.r > 0.) {
@@ -1567,8 +1573,8 @@ class TradeAtlas {
   }
 
   async init() {
-    const [art, ocean, materials, ...vehicles] = await Promise.all([
-      atlasImage('art/world-map.webp'), atlasImage('art/ocean-mask.webp'),
+    const [art, relief, ocean, materials, ...vehicles] = await Promise.all([
+      atlasImage('art/world-map.webp'), atlasImage('art/world-relief.webp'), atlasImage('art/ocean-mask.webp'),
       atlasImage('art/harbor-materials.webp'), ...Object.values(VEHICLE_ART).map(({ file }) => atlasImage('art/' + file)),
     ]);
     if (this.disposed) return;
@@ -1584,7 +1590,7 @@ class TradeAtlas {
     this.water = this.buffer(water);
     this.props = this.buffer(this.scenery());
     this.bakeSunlight();
-    const textures = [[1, materials, 'materials'], [2, art, 'worldPainting']];
+    const textures = [[1, materials, 'materials'], [2, art, 'regionalPainting'], [6, relief, 'continentalRelief']];
     this.vehicleRatios = {};
     Object.entries(VEHICLE_ART).forEach(([type, asset], index) => {
       const image = vehicles[index];
@@ -1881,7 +1887,7 @@ class TradeAtlas {
     const pitch = this.pitch(this.viewport.clientWidth, this.camera.zoom);
     const flip = Math.cos(yaw + heading) < 0;
     // Keep small vehicles readable while their ground positions follow the 3D routes.
-    const width = VEHICLE_ART[type].width;
+    const width = VEHICLE_ART[type].width * within((this.camera.zoom - CONTINENTAL_ZOOM) / 1.1, .15, 1);
     const height = width * this.vehicleRatios[type];
     for (const [u,v] of [[0,1],[1,1],[1,0],[0,1],[1,0],[0,0]]) {
       const right = (u-.5)*width, up = (.92-v)*height;
@@ -1893,6 +1899,10 @@ class TradeAtlas {
 
   craft(output, sprites, stage, progress) {
     const [x, z, yaw] = craftLocation(stage, progress);
+    if (this.camera.zoom <= CONTINENTAL_ZOOM) {
+      // Track the shipment as a cartographic point at its actual position.
+      return this.project(x, Math.max(0, this.surface(x, z)) + .06, z);
+    }
     if (stage.dock) {
       const { dock } = stage;
       const [bx, bz] = mapXZ(dock.berth);
@@ -1949,7 +1959,9 @@ class TradeAtlas {
     gl.uniform1f(this.uniform.zoom, this.camera.zoom);
     draw(this.water, 0);
     draw(this.terrain, 1);
-    const localDetail = this.camera.zoom > 2.8;
+    const continental = this.camera.zoom <= CONTINENTAL_ZOOM;
+    this.viewport.classList.toggle('continental', continental);
+    const localDetail = this.camera.zoom >= 5;
     if (localDetail) draw(this.props, 2);
     // Skip the detailed houses of distant nations when the camera is over a single town.
     const { halfW, halfH, pitch } = this.projection(width, height);
@@ -1957,11 +1969,11 @@ class TradeAtlas {
     for (const { center: [x, z], mesh } of this.districts) {
       if (localDetail && Math.hypot(x - this.camera.x, z - this.camera.z) <= visibleRadius) draw(mesh, 2);
     }
-    if (this.camera.zoom < 3.6) draw(this.ambientRoads, 2);
+    if (!continental && this.camera.zoom < 3.6) draw(this.ambientRoads, 2);
     if (this.activeRoads) draw(this.activeRoads, 2);
     const mesh = [], sprites = { ship: [], truck: [], plane: [] };
     if (localDetail) for (const mill of this.mills) millSails(mesh, mill, clock);
-    if (!this.motion.matches) for (const [i, { forward, reverse }] of this.ambient.entries()) {
+    if (!continental && !this.motion.matches) for (const [i, { forward, reverse }] of this.ambient.entries()) {
       if (this.camera.zoom > 12 && forward.type === 'plane') continue; // Keep dock and street close-ups clear.
       const travel = (clock / (22 + i * 2) + i * .27) % 2;
       this.craft(mesh, sprites, travel < 1 ? forward : reverse, travel % 1);
