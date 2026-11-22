@@ -927,6 +927,12 @@ function mooredVessel(mesh, x, z, yaw) {
     }
     for (const side of [-1,1]) for (const offset of [-.09,.06]) rope(pt(u,.565,0),pt(u+offset,.127,side*.115));
   }
+  const linen = [.88,.82,.65];
+  const head = pt(.151,.53,0), tack = pt(.393,.164,0), clew = pt(.197,.192,.027);
+  const belly = pt(.245,.274,.044);
+  triangle(mesh,head,belly,clew,shade(linen,.90));
+  triangle(mesh,head,tack,belly,linen);
+  triangle(mesh,belly,tack,clew,shade(linen,.96));
   rope(pt(-.40,.13,0),pt(-.19,.595,0)); rope(pt(-.19,.595,0),pt(.145,.595,0));
   rope(pt(.145,.595,0),pt(.45,.13,0));
 }
@@ -1236,8 +1242,24 @@ function addHarbor(build, continent, surface) {
       }
     }
   }
-  const [fx, fz] = point(-.82,-.74);
-  piece(build, fx, Math.max(.15,surface(fx,fz))+.008, fz, .52,.025,.57,[1.14,1.08,.95],yaw,5);
+  // The upper street and orchard sit uphill from the loading sheds.
+  for (const [u,v] of [[-.60,.88],[-.62,.59],[-.66,.31],[-.93,.74]]) {
+    const [hx,hz] = point(u,v);
+    const ground = surface(hx,hz);
+    if (ground > .025) atlasBuilding(build,hx,ground,hz,.21,.19,.17,
+      [.90,.83,.70],[.56,.37,.29],yaw+Math.PI/2);
+  }
+  const [fx, fz] = point(-.86,-.13);
+  const fieldY = Math.max(.14,surface(fx,fz));
+  piece(build,fx,fieldY,fz,.55,.032,.52,[1.17,1.10,.93],yaw,5);
+  for (const v of [-.40,.14]) {
+    for (const u of [-1.12,-.94,-.76,-.59]) {
+      const [px,pz] = point(u,v);
+      piece(build,px,fieldY+.03,pz,.009,.043,.009,[.45,.33,.21],yaw);
+    }
+    const [rx,rz] = point(-.85,v);
+    piece(build,rx,fieldY+.058,rz,.55,.009,.008,[.58,.45,.32],yaw);
+  }
   // A moored two-masted vessel gives the stone quay a visible loading berth.
   const [shipX,shipZ] = point(.30,.70);
   mooredVessel(build, shipX, shipZ, yaw + Math.PI/2);
