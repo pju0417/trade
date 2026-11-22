@@ -848,8 +848,9 @@ document.addEventListener('click', (e) => {
 // so the same port and road waypoints serve both the 3D map and the 2D fallback.
 const MAP_WIDTH = 18;
 const MAP_DEPTH = 12;
-const TERRAIN_WIDTH = 145;
-const TERRAIN_DEPTH = 97;
+const TERRAIN_WIDTH = 289;
+const TERRAIN_DEPTH = 193;
+const TERRAIN_CELL = MAP_WIDTH / (TERRAIN_WIDTH - 1);
 const within = (value, low, high) => Math.max(low, Math.min(high, value));
 const mapXZ = ([u, v]) => [(u / 100 - .5) * MAP_WIDTH, (v / 100 - .5) * MAP_DEPTH];
 const worldUV = (x, z) => [x / MAP_WIDTH + .5, z / MAP_DEPTH + .5];
@@ -880,6 +881,7 @@ const ATLAS_FRAGMENT = `#version 300 es
   uniform sampler2D materials;
   uniform sampler2D regionalPainting;
   uniform sampler2D continentalRelief;
+  uniform sampler2D groundDetail;
   uniform sampler2D vehicleSprite;
   uniform float zoom;
   in vec2 uv;
@@ -912,26 +914,37 @@ const ATLAS_FRAGMENT = `#version 300 es
     vec2 sampleUV = mapUV + (rgb.r < 0. ? waveUV : vec2(0.));
     vec3 paint = texture(continentalRelief, sampleUV).rgb;
     // Regional artwork contains individual roofs and ships. Reveal it only after zooming in.
-    float regional = smoothstep(${CONTINENTAL_ZOOM}, 5.4, zoom);
+    float regional = smoothstep(${CONTINENTAL_ZOOM}, 3.4, zoom);
     if (regional > 0.) paint = mix(paint, texture(regionalPainting, sampleUV).rgb, regional);
-    float ink = smoothstep(-.005,.016,margin) * (1.-smoothstep(3.5,11.,zoom));
+    // A town-sized view must not stretch painted houses and islands under the 3D streets.
+    float ink = smoothstep(-.005,.016,margin) * (1.-smoothstep(3.2,5.,zoom));
     float grain = noise(p.xz * 4.) * .7 + noise(p.xz * 23.) * .3;
     if (layer == 1 && rgb.r > 0.) {
-      vec3 n = normalize(cross(dFdx(p), dFdy(p)));
+      vec3 n = normalize(vec3(-rgb.g, 1., -rgb.b));
       float sunlight = abs(dot(n, normalize(vec3(-.46, 1., -.37))));
       vec3 grass = mix(vec3(.32,.46,.21), vec3(.69,.72,.37), grain);
       vec3 rock = mix(vec3(.42,.45,.40), vec3(.76,.73,.59), grain);
       vec3 ground = mix(grass, rock, smoothstep(.28,.68,p.y) * (1. - abs(n.y)*.56));
       ground = mix(ground, vec3(.88,.89,.79), smoothstep(.73,.94,p.y));
-      ground = mix(vec3(.84,.75,.51), ground, smoothstep(.008,.14,rgb.r));
+      float inland = smoothstep(.008,.14,rgb.r);
+      ground = mix(vec3(.84,.75,.51), ground, inland);
+      if (ink < 1.) {
+        // Ground-space UVs and mipmaps keep blades and pebbles sharp while panning or rotating.
+        vec3 meadow = texture(groundDetail, p.xz * 1.7).rgb;
+        float grit = dot(meadow, vec3(.30,.59,.11));
+        vec3 sand = vec3(.84,.76,.56) * (.65 + grit);
+        vec3 turf = mix(ground * (.78 + .48*grit), meadow * (.87 + .26*grain), .76*(1.-smoothstep(.28,.70,p.y)));
+        ground = mix(sand, turf, inland);
+      }
       pixel = vec4(mix(ground * (.73 + sunlight*.36) * light(p), paint * (.95 + .065*sunlight), ink), 1.);
     } else {
       float depth = layer == 1 ? -rgb.r : 1.;
       vec3 sea = mix(vec3(.21,.65,.59),vec3(.055,.32,.43), smoothstep(0.,.65,depth));
       float swell = sin(p.z*19. + sin(p.x*7.-time*.8));
       float wave = sin(p.z*111.+p.x*15.+grain*7.+time*2.1) * .65 + .35*swell;
-      float surf = (1. - smoothstep(.01,.15,depth)) * smoothstep(-.65,.7,sin(depth*132.-time*2.2+grain));
-      vec3 coast = mix(sea, vec3(.87,.91,.77), surf*.74);
+      float shore = depth + (grain-.5)*.014;
+      float surf = (1. - smoothstep(.003,.046,shore)) * (.65+.35*swell);
+      vec3 coast = mix(sea, vec3(.87,.91,.77), surf*.51);
       pixel = vec4(mix(coast, paint, ink) + vec3(.04,.07,.06)*smoothstep(.49,.93,wave)*grain,1.);
     }
   }`;
@@ -969,31 +982,36 @@ function imagePixels(image) {
 }
 
 function atlasTerrain(art, mask) {
-  const { length } = mask;
-  const coast = new Uint8Array(length / 4);
-  // A distance grid creates a low shoreline and rising inland terrain.
-  for (let i = 0; i < coast.length; i++) coast[i] = mask[i * 4 + 3] > 115 ? 0 : 24;
-  for (let i = 0; i < coast.length; i++) {
-    if (i % TERRAIN_WIDTH) coast[i] = Math.min(coast[i], coast[i - 1] + 1);
-    if (i >= TERRAIN_WIDTH) coast[i] = Math.min(coast[i], coast[i - TERRAIN_WIDTH] + 1);
+  // Measure distance on both sides of the shoreline so shallow water slopes into the beach.
+  function shoreDistance(water) {
+    const distance = new Uint8Array(mask.length / 4);
+    for (let i = 0; i < distance.length; i++) {
+      distance[i] = (mask[i * 4 + 3] > 115) === water ? 48 : 0;
+    }
+    for (let i = 0; i < distance.length; i++) {
+      if (i % TERRAIN_WIDTH) distance[i] = Math.min(distance[i], distance[i - 1] + 1);
+      if (i >= TERRAIN_WIDTH) distance[i] = Math.min(distance[i], distance[i - TERRAIN_WIDTH] + 1);
+    }
+    for (let i = distance.length - 1; i >= 0; i--) {
+      if (i % TERRAIN_WIDTH < TERRAIN_WIDTH - 1) distance[i] = Math.min(distance[i], distance[i + 1] + 1);
+      if (i + TERRAIN_WIDTH < distance.length) distance[i] = Math.min(distance[i], distance[i + TERRAIN_WIDTH] + 1);
+    }
+    return distance;
   }
-  for (let i = coast.length - 1; i >= 0; i--) {
-    if (i % TERRAIN_WIDTH < TERRAIN_WIDTH - 1) coast[i] = Math.min(coast[i], coast[i + 1] + 1);
-    if (i + TERRAIN_WIDTH < coast.length) coast[i] = Math.min(coast[i], coast[i + TERRAIN_WIDTH] + 1);
-  }
+  const coast = shoreDistance(false), offshore = shoreDistance(true);
   const elevation = Float32Array.from(coast, (distance, i) => {
-    if (!distance) return -.85;
+    if (!distance) return -Math.min(.85, (offshore[i] - .5) * TERRAIN_CELL * .72);
     const [r, g, b] = art.subarray(i * 4, i * 4 + 3);
     const snow = Math.max(0, (Math.min(r, g, b) - 80) / 145);
-    const ridges = Math.sin(i % TERRAIN_WIDTH * .47) * Math.sin(Math.floor(i / TERRAIN_WIDTH) * .37);
-    const inland = Math.min(1, distance / 10);
+    const ridges = Math.sin(i % TERRAIN_WIDTH * TERRAIN_CELL * 3.76) * Math.sin(Math.floor(i / TERRAIN_WIDTH) * TERRAIN_CELL * 2.96);
+    const inland = Math.min(1, distance * TERRAIN_CELL / 1.25);
     return .05 + inland * (.13 + snow ** 1.65 * .93 + ridges * .06);
   });
   // Taper the outermost terrain cells into the surrounding sea.
   for (let i = 0; i < elevation.length; i++) {
     const x = i % TERRAIN_WIDTH, z = Math.floor(i / TERRAIN_WIDTH);
     const edge = Math.min(x, TERRAIN_WIDTH-1-x, z, TERRAIN_DEPTH-1-z);
-    elevation[i] = Math.min(elevation[i], (edge-3)*.22);
+    elevation[i] = Math.min(elevation[i], (edge*TERRAIN_CELL-.375)*1.76);
   }
   const raw = elevation.slice();
   for (const country of Object.values(MAP_POSITIONS)) {
@@ -1001,11 +1019,12 @@ function atlasTerrain(art, mask) {
     const centerZ = country[1] / 100 * (TERRAIN_DEPTH - 1);
     const index = Math.round(centerZ) * TERRAIN_WIDTH + Math.round(centerX);
     const level = within(raw[index], .11, .5);
-    for (let z = Math.max(0, Math.floor(centerZ - 9)); z <= Math.min(TERRAIN_DEPTH - 1, Math.ceil(centerZ + 9)); z++) {
-      for (let x = Math.max(0, Math.floor(centerX - 9)); x <= Math.min(TERRAIN_WIDTH - 1, Math.ceil(centerX + 9)); x++) {
+    const radius = 1.125 / TERRAIN_CELL;
+    for (let z = Math.max(0, Math.floor(centerZ - radius)); z <= Math.min(TERRAIN_DEPTH - 1, Math.ceil(centerZ + radius)); z++) {
+      for (let x = Math.max(0, Math.floor(centerX - radius)); x <= Math.min(TERRAIN_WIDTH - 1, Math.ceil(centerX + radius)); x++) {
         const i = z * TERRAIN_WIDTH + x;
         if (raw[i] <= 0) continue;
-        const blend = within((9 - Math.hypot(x - centerX, z - centerZ)) / 4, 0, 1);
+        const blend = within((radius - Math.hypot(x - centerX, z - centerZ)) * TERRAIN_CELL / .5, 0, 1);
         elevation[i] = raw[i] + (level - raw[i]) * blend;
       }
     }
@@ -1037,13 +1056,26 @@ function atlasTerrain(art, mask) {
       elevation[i]=Math.min(elevation[i], .06-inlet*.96);
     }
   }
+  // Round one-cell corners left by raster sampling before placing roads and buildings.
+  const shaped = elevation.slice();
+  for (let v = 1; v < TERRAIN_DEPTH - 1; v++) {
+    for (let u = 1; u < TERRAIN_WIDTH - 1; u++) {
+      const i = v * TERRAIN_WIDTH + u;
+      elevation[i] = .5*shaped[i] + .125*(shaped[i-1] + shaped[i+1] +
+        shaped[i-TERRAIN_WIDTH] + shaped[i+TERRAIN_WIDTH]);
+    }
+  }
   const vertices = [];
   const indices = [];
   for (let v = 0; v < TERRAIN_DEPTH; v++) {
     for (let u = 0; u < TERRAIN_WIDTH; u++) {
       const i = v * TERRAIN_WIDTH + u;
+      const west = Math.max(-.045, elevation[v * TERRAIN_WIDTH + Math.max(0, u - 1)]);
+      const east = Math.max(-.045, elevation[v * TERRAIN_WIDTH + Math.min(TERRAIN_WIDTH - 1, u + 1)]);
+      const north = Math.max(-.045, elevation[Math.max(0, v - 1) * TERRAIN_WIDTH + u]);
+      const south = Math.max(-.045, elevation[Math.min(TERRAIN_DEPTH - 1, v + 1) * TERRAIN_WIDTH + u]);
       vertices.push((u / (TERRAIN_WIDTH - 1) - .5) * MAP_WIDTH, Math.max(-.045, elevation[i]),
-        (v / (TERRAIN_DEPTH - 1) - .5) * MAP_DEPTH, elevation[i], 0, 0, -1, -1);
+        (v / (TERRAIN_DEPTH - 1) - .5) * MAP_DEPTH, elevation[i], (east-west)/(2*TERRAIN_CELL), (south-north)/(2*TERRAIN_CELL), -1, -1);
       if (u && v) indices.push(i, i - 1, i - TERRAIN_WIDTH, i - 1, i - TERRAIN_WIDTH - 1, i - TERRAIN_WIDTH);
     }
   }
@@ -1573,9 +1605,9 @@ class TradeAtlas {
   }
 
   async init() {
-    const [art, relief, ocean, materials, ...vehicles] = await Promise.all([
+    const [art, relief, ocean, materials, detail, ...vehicles] = await Promise.all([
       atlasImage('art/world-map.webp'), atlasImage('art/world-relief.webp'), atlasImage('art/ocean-mask.webp'),
-      atlasImage('art/harbor-materials.webp'), ...Object.values(VEHICLE_ART).map(({ file }) => atlasImage('art/' + file)),
+      atlasImage('art/harbor-materials.webp'), atlasImage('art/ground-detail.webp'), ...Object.values(VEHICLE_ART).map(({ file }) => atlasImage('art/' + file)),
     ]);
     if (this.disposed) return;
     const gl = this.gl;
@@ -1590,21 +1622,27 @@ class TradeAtlas {
     this.water = this.buffer(water);
     this.props = this.buffer(this.scenery());
     this.bakeSunlight();
-    const textures = [[1, materials, 'materials'], [2, art, 'regionalPainting'], [6, relief, 'continentalRelief']];
+    const textures = [[1, materials, 'materials'], [2, art, 'regionalPainting'], [6, relief, 'continentalRelief'], [7, detail, 'groundDetail']];
     this.vehicleRatios = {};
     Object.entries(VEHICLE_ART).forEach(([type, asset], index) => {
       const image = vehicles[index];
       this.vehicleRatios[type] = image.height / image.width;
       textures.push([asset.unit, image, 'vehicleSprite']);
     });
+    const filtering = gl.getExtension('EXT_texture_filter_anisotropic');
     for (const [unit, texture, sampler] of textures) {
       gl.activeTexture(gl.TEXTURE0 + unit);
       gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const wrap = sampler === 'groundDetail' ? gl.REPEAT : gl.CLAMP_TO_EDGE;
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
       gl.generateMipmap(gl.TEXTURE_2D);
+      if (filtering && sampler === 'groundDetail') {
+        gl.texParameterf(gl.TEXTURE_2D, filtering.TEXTURE_MAX_ANISOTROPY_EXT,
+          Math.min(4, gl.getParameter(filtering.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+      }
       gl.uniform1i(gl.getUniformLocation(this.program, sampler), unit);
     }
     this.spriteBuffer = this.buffer([]);
@@ -1927,7 +1965,7 @@ class TradeAtlas {
     const width = this.viewport.clientWidth, height = this.viewport.clientHeight;
     if (!width || !height) return;
     const gl = this.gl;
-    const ratio = Math.min(devicePixelRatio, this.software ? 1 : 1.5);
+    const ratio = Math.min(devicePixelRatio, this.software ? 1 : 2, Math.sqrt(2400000 / (width * height)));
     const w = Math.round(width * ratio), h = Math.round(height * ratio);
     if (this.canvas.width !== w || this.canvas.height !== h) {
       this.canvas.width = w;
