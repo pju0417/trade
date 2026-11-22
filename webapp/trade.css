@@ -626,3 +626,39 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
   font-size: .82rem;
   font-variant-numeric: tabular-nums;
 }
+
+.atlas-inset { display: none; }
+.is-3d .atlas-inset:not([hidden]) {
+  display: grid;
+  align-items: end;
+  position: absolute;
+  right: .55rem;
+  bottom: .55rem;
+  z-index: 3;
+  width: clamp(78px, 17%, 124px);
+  aspect-ratio: 3 / 2;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #efd49a;
+  border-radius: .3rem;
+  background: #17444c url("art/world-map.webp") center / 100% 100%;
+  box-shadow: 0 2px 8px #13281db0;
+}
+.atlas-inset::before {
+  content: "";
+  position: absolute;
+  left: var(--where-x);
+  top: var(--where-y);
+  width: 12%;
+  height: 15%;
+  transform: translate(-50%,-50%);
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 1px #302814;
+}
+.atlas-inset span {
+  color: #fff3d7;
+  background: #122a30e6;
+  font-size: .72rem;
+  line-height: 1.4;
+}
+.atlas-controls [data-camera="reset"] { padding-inline: .65rem; font-size: .83rem; }

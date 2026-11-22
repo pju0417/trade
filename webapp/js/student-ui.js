@@ -186,13 +186,14 @@ function worldMap() {
   const markers = Object.entries(MAP_POSITIONS).filter(([country]) => S.countries.includes(country));
   return `<section id="world" class="panel world-panel">
     <h2>세계 무역 지도</h2>
-    <p class="atlas-help">지도를 끌어 이동하고, 휠이나 두 손가락 또는 +·−로 크기를 바꿔 보세요. 나라를 누르면 시장이 열려요.</p>
+    <p class="atlas-help">우리 마을에서 출발해요. 다른 나라와 거래하려면 ‘세계 전체’를 누른 뒤 나라를 고르세요.</p>
     <p class="atlas-flat-help">나라를 누르면 판매 물건과 교역로를 볼 수 있어요.</p>
     <div class="world-layout">
       <div class="route-view">
         <div class="atlas-frame" data-atlas-country="${esc(S.country)}">
         <div class="world-map" role="group" aria-label="세계지도에서 나라 고르기">
-          <canvas class="atlas-canvas" tabindex="0" aria-label="3D 지도. 화살표로 이동, 더하기와 빼기로 확대·축소, 0으로 처음 보기"></canvas>
+          <canvas class="atlas-canvas" tabindex="0" aria-label="3D 지도. 화살표로 이동, 더하기와 빼기로 확대·축소, 0으로 세계 전체 보기"></canvas>
+          <button type="button" class="atlas-inset" data-camera="reset" aria-label="작은 지도로 세계 전체 보기"><span>세계 전체</span></button>
           <span class="atlas-cargo-badge" aria-hidden="true" hidden></span>
           <span class="atlas-cargo-badge" aria-hidden="true" hidden></span>
           <span class="atlas-landmark" data-site="warehouse" aria-hidden="true" hidden></span>
@@ -215,7 +216,7 @@ function worldMap() {
             <button type="button" data-camera="out" aria-label="지도 축소" title="지도 축소">−</button>
             <button type="button" data-camera="left" aria-label="왼쪽으로 돌리기" title="왼쪽으로 돌리기">↶</button>
             <button type="button" data-camera="right" aria-label="오른쪽으로 돌리기" title="오른쪽으로 돌리기">↷</button>
-            <button type="button" data-camera="reset" aria-label="처음 시점" title="처음 시점">⌂</button>
+            <button type="button" data-camera="reset" aria-label="세계 전체 보기" title="세계 전체 보기">세계 전체</button>
             <button type="button" data-camera="town">마을 보기</button>
             <button type="button" data-camera="port">항구 보기</button>
             <button type="button" data-camera="warehouse">창고 확대</button>
@@ -656,42 +657,50 @@ const ATLAS_VERTEX = `#version 300 es
   }`;
 
 const ATLAS_FRAGMENT = `#version 300 es
-  precision mediump float;
-  uniform sampler2D atlas;
-  uniform sampler2D ocean;
+  precision highp float;
+  uniform highp sampler2DShadow shadows;
+  float light(vec3 position) {
+    vec3 uv = vec3((position.xz - position.y * vec2(.70,.50)) / vec2(20.,14.) + .5, .5-position.y*.20-.002);
+    return .64 + .36 * texture(shadows, uv);
+  }
   uniform int layer;
   uniform float time;
   in vec3 p;
   in vec3 rgb;
   out vec4 pixel;
+  float noise(vec2 v) {
+    vec2 i = floor(v), f = fract(v);
+    f *= f * (3. - 2. * f);
+    vec4 h = fract(sin(mod(dot(i, vec2(17.13, 43.71)) + vec4(0.,17.13,43.71,60.84), 6.28318)) * 1273.43);
+    return mix(mix(h.x,h.y,f.x), mix(h.z,h.w,f.x), f.y);
+  }
   void main() {
-    vec2 uv = vec2(p.x / 18., p.z / 12.) + .5;
-    vec3 art = texture(atlas, uv).rgb;
     if (layer == 2) {
-      pixel = vec4(rgb, 1.);
-    } else if (layer == 1) {
-      if (texture(ocean, uv).a > .55 || min(min(uv.x, uv.y), min(1. - uv.x, 1. - uv.y)) < .017) discard;
-      vec3 normal = normalize(cross(dFdx(p), dFdy(p)));
-      float sun = max(0., dot(normal, normalize(vec3(-.65, 1., .35))));
-      float coast = clamp(1. - p.y * 2.6, 0., 1.);
-      vec3 ground = mix(art, art * vec3(1.07, 1.025, .95), .55);
-      ground = ground * (.66 + sun * .46) + vec3(.07, .055, .04) * coast;
-      pixel = vec4(ground, 1.);
+      pixel = vec4(rgb * light(p), 1.);
+      return;
+    }
+    float grain = noise(p.xz * 4.) * .7 + noise(p.xz * 23.) * .3;
+    if (layer == 1 && rgb.r > 0.) {
+      vec3 n = normalize(cross(dFdx(p), dFdy(p)));
+      float sunlight = abs(dot(n, normalize(vec3(-.46, 1., -.37))));
+      vec3 grass = mix(vec3(.32,.46,.21), vec3(.69,.72,.37), grain);
+      vec3 rock = mix(vec3(.42,.45,.40), vec3(.76,.73,.59), grain);
+      vec3 ground = mix(grass, rock, smoothstep(.28,.68,p.y) * (1. - abs(n.y)*.56));
+      ground = mix(ground, vec3(.88,.89,.79), smoothstep(.73,.94,p.y));
+      ground = mix(vec3(.84,.75,.51), ground, smoothstep(.008,.14,rgb.r));
+      pixel = vec4(ground * (.73 + sunlight*.36) * light(p), 1.);
     } else {
-      float waves = sin(p.x * 18. + p.z * 5. + time * 1.4) * .46
-        + sin(p.z * 23. - p.x * 9. - time * 1.7) * .32
-        + sin(p.x * 42. + p.z * 19. + time * 2.1) * .22;
-      vec3 water = mix(vec3(.025, .22, .27), max(art * 1.06, vec3(.025, .14, .19)), .57);
-      float edge = smoothstep(.01, .1, min(min(uv.x, uv.y), min(1. - uv.x, 1. - uv.y)));
-      float shimmer = smoothstep(.52, .94, waves);
-      vec3 openSea = vec3(.028, .19, .244) + vec3(.008, .026, .03) * sin(p.x * .23 + p.z * .08);
-      pixel = vec4(mix(openSea, water, edge) + vec3(.039, .081, .092) * shimmer, 1.);
+      float depth = layer == 1 ? -rgb.r : 1.;
+      vec3 sea = mix(vec3(.21,.65,.59),vec3(.055,.32,.43), smoothstep(0.,.65,depth));
+      float wave = sin(p.z*54. + sin(p.x*12. + time)*1.9 + time*2.1);
+      float surf = (1. - smoothstep(.01,.15,depth)) * smoothstep(-.65,.7,sin(depth*132.-time*2.2+grain));
+      pixel = vec4(mix(sea,vec3(.87,.91,.77),surf*.74) + vec3(.04,.07,.06)*smoothstep(.72,1.,wave)*grain,1.);
     }
   }`;
 
-function atlasProgram(gl) {
+function atlasProgram(gl, vertex = ATLAS_VERTEX, fragment = ATLAS_FRAGMENT) {
   const program = gl.createProgram();
-  const shaders = [[gl.VERTEX_SHADER, ATLAS_VERTEX], [gl.FRAGMENT_SHADER, ATLAS_FRAGMENT]].map(([type, source]) => {
+  const shaders = [[gl.VERTEX_SHADER, vertex], [gl.FRAGMENT_SHADER, fragment]].map(([type, source]) => {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
@@ -735,13 +744,19 @@ function atlasTerrain(art, mask) {
     if (i + TERRAIN_WIDTH < coast.length) coast[i] = Math.min(coast[i], coast[i + TERRAIN_WIDTH] + 1);
   }
   const elevation = Float32Array.from(coast, (distance, i) => {
-    if (!distance) return -.065;
+    if (!distance) return -.85;
     const [r, g, b] = art.subarray(i * 4, i * 4 + 3);
     const snow = Math.max(0, (Math.min(r, g, b) - 80) / 145);
     const ridges = Math.sin(i % TERRAIN_WIDTH * .47) * Math.sin(Math.floor(i / TERRAIN_WIDTH) * .37);
     const inland = Math.min(1, distance / 10);
     return .05 + inland * (.13 + snow ** 1.65 * .93 + ridges * .06);
   });
+  // Fade out the decorative border that belongs only to the illustrated 2D map.
+  for (let i = 0; i < elevation.length; i++) {
+    const x = i % TERRAIN_WIDTH, z = Math.floor(i / TERRAIN_WIDTH);
+    const edge = Math.min(x, TERRAIN_WIDTH-1-x, z, TERRAIN_DEPTH-1-z);
+    elevation[i] = Math.min(elevation[i], (edge-3)*.22);
+  }
   const raw = elevation.slice();
   for (const country of Object.values(MAP_POSITIONS)) {
     const centerX = country[0] / 100 * (TERRAIN_WIDTH - 1);
@@ -757,13 +772,38 @@ function atlasTerrain(art, mask) {
       }
     }
   }
+  // Give each settlement a continuous terrace large enough for streets and fields.
+  for (const location of Object.values(MAP_POSITIONS)) {
+    const [cx, cz] = mapXZ(location);
+    const level = Math.max(.15, elevation[Math.round(location[1] * .01 * (TERRAIN_DEPTH-1)) * TERRAIN_WIDTH
+      + Math.round(location[0] * .01 * (TERRAIN_WIDTH-1))]);
+    for (let i = 0; i < elevation.length; i++) {
+      const x = (i % TERRAIN_WIDTH / (TERRAIN_WIDTH-1) - .5) * MAP_WIDTH - cx;
+      const z = (Math.floor(i / TERRAIN_WIDTH) / (TERRAIN_DEPTH-1) - .5) * MAP_DEPTH - cz;
+      const edge = 1.54 - Math.hypot(x,z) + .09*Math.sin(7*x+2*z);
+      elevation[i] = Math.max(elevation[i], Math.min(level, edge*.75));
+    }
+  }
+  // Cut navigable water alongside each quay, including where a town meets the dock.
+  for (const region of Object.keys(CONTINENT_ROUTES)) {
+    const dock = dockLayout(region);
+    const [dx,dz] = dock.point(0);
+    for (let i=0; i<elevation.length; i++) {
+      const x=(i%TERRAIN_WIDTH/(TERRAIN_WIDTH-1)-.5)*MAP_WIDTH-dx;
+      const z=(Math.floor(i/TERRAIN_WIDTH)/(TERRAIN_DEPTH-1)-.5)*MAP_DEPTH-dz;
+      const forward=x*Math.cos(dock.yaw)+z*Math.sin(dock.yaw);
+      const side=z*Math.cos(dock.yaw)-x*Math.sin(dock.yaw);
+      const inlet=Math.min(forward-.01, .87-Math.abs(side-.26), 1.95-forward);
+      elevation[i]=Math.min(elevation[i], .06-inlet*.96);
+    }
+  }
   const vertices = [];
   const indices = [];
   for (let v = 0; v < TERRAIN_DEPTH; v++) {
     for (let u = 0; u < TERRAIN_WIDTH; u++) {
       const i = v * TERRAIN_WIDTH + u;
-      vertices.push((u / (TERRAIN_WIDTH - 1) - .5) * MAP_WIDTH, elevation[i],
-        (v / (TERRAIN_DEPTH - 1) - .5) * MAP_DEPTH, 0, 0, 0);
+      vertices.push((u / (TERRAIN_WIDTH - 1) - .5) * MAP_WIDTH, Math.max(-.045, elevation[i]),
+        (v / (TERRAIN_DEPTH - 1) - .5) * MAP_DEPTH, elevation[i], 0, 0);
       if (u && v) indices.push(i, i - 1, i - TERRAIN_WIDTH, i - 1, i - TERRAIN_WIDTH - 1, i - TERRAIN_WIDTH);
     }
   }
@@ -794,9 +834,10 @@ function piece(output, x, y, z, width, height, depth, color, yaw = 0) {
 }
 
 function modelVehicle(output, type, x, y, z, yaw) {
+  const scale = type === 'truck' ? .52 : 1;
   const at = (forward, up, side, w, h, d, color) => piece(output,
-    x + forward * Math.cos(yaw) - side * Math.sin(yaw), y + up,
-    z + forward * Math.sin(yaw) + side * Math.cos(yaw), w, h, d, color, yaw);
+    x + scale*(forward*Math.cos(yaw) - side*Math.sin(yaw)), y + scale*up,
+    z + scale*(forward*Math.sin(yaw) + side*Math.cos(yaw)), w*scale, h*scale, d*scale, color, yaw);
   const gold = [.97, .68, .29], pale = [.95, .9, .72], navy = [.14, .23, .3];
   if (type === 'truck') {
     at(0, .048, 0, .35, .065, .16, navy);
@@ -805,8 +846,15 @@ function modelVehicle(output, type, x, y, z, yaw) {
     at(-.092, .112, 0, .146, .083, .143, gold);
     for (const forward of [-.114, .105]) for (const side of [-.081, .081]) at(forward, .016, side, .075, .075, .043, navy);
   } else if (type === 'ship') {
-    at(-.035, .005, 0, .48, .091, .194, [.4, .20, .13]);
-    at(.22, .025, 0, .1, .07, .125, [.57, .28, .16]);
+    const hullPoint = (u,h,v) => [x+u*Math.cos(yaw)-v*Math.sin(yaw), y+h, z+u*Math.sin(yaw)+v*Math.cos(yaw)];
+    const rail = [[-.26,-.067],[-.18,-.105],[.14,-.101],[.32,0],[.14,.101],[-.18,.105],[-.26,.067]];
+    for (let i=0;i<rail.length;i++) {
+      const [a,b]=rail[i], [c,d]=rail[(i+1)%rail.length];
+      quad(output,hullPoint(a*.9,.003,b*.76),hullPoint(c*.9,.003,d*.76),hullPoint(c,.10,d),hullPoint(a,.10,b),shade(navy,.77+i*.04));
+      triangle(output,hullPoint(a,.10,b),hullPoint(c,.10,d),hullPoint(0,.10,0),[.72,.55,.32]);
+    }
+    at(.12,.11,0,.012,.26,.014,[.43,.33,.23]);
+    triangle(output,hullPoint(.12,.368,0),hullPoint(.12,.318,0),hullPoint(.024,.345,.014),[.9,.44,.20]);
     at(-.03, .095, 0, .395, .027, .17, gold);
     at(-.134, .12, 0, .127, .128, .126, pale);
     at(-.145, .246, 0, .056, .088, .052, navy);
@@ -901,17 +949,68 @@ function atlasBuilding(build, x, y, z, w, h, d, wall, roof, yaw, warehouse = fal
     facade(u * w, d / 2, h * .47, w * .12, h * .23, [.25, .37, .4]);
     facade(u * w, d / 2 + .003, h * .54, w * .019, h * .22, [.92, .85, .66]);
   }
+  const detail = (a, b, dy, dw, dh, dd, color) => piece(build,
+    x + a*Math.cos(yaw) - b*Math.sin(yaw), y + dy, z + a*Math.sin(yaw) + b*Math.cos(yaw),
+    dw, dh, dd, color, yaw);
+  const frame = [.34,.23,.17], glass = [.22,.38,.42];
+  for (const side of [-1,1]) {
+    for (const u of [-.44,0,.44]) detail(u*w, side*d*.50, .023, .011,h,.009,frame);
+    detail(0,side*d*.50,h*.65,w,.011,.012,frame);
+    for (const u of [-.28,.27]) detail(u*w,side*d*.51,h*.50,w*.13,h*.28,.01,glass);
+    detail(side*w*.504,0,h*.45,.009,h*.28,d*.27,glass);
+  }
+  detail(w*.28,-d*.2,h+.013,.038,d*.49,.04,[.62,.37,.25]);
+  detail(w*.28,-d*.2,h+.008+d*.49,.047,.014,.048,[.36,.30,.24]);
+  for (const sign of [-1,1]) for (let row=1; row<=4; row++) {
+    const b = sign*d*.58*row/5;
+    detail(0,b,h+.022+d*.35*(1-row/5),w*1.14,.007,.011,shade(roof,1.12));
+  }
+
 }
 
 function atlasTree(build, x, y, z, scale, salt) {
   piece(build, x, y, z, .035 * scale, .16 * scale, .035 * scale, [.36, .24, .14]);
-  const colors = [[.24, .39, .19], [.36, .45, .18], [.28, .46, .26]];
-  const top = [x, y + .32 * scale, z];
-  const radius = .1 * scale;
-  const base = Array.from({ length: 6 }, (_, i) => [x + Math.cos(i * Math.PI / 3) * radius,
-    y + (.125 + (i % 2) * .022) * scale, z + Math.sin(i * Math.PI / 3) * radius]);
-  for (let i = 0; i < base.length; i++) triangle(build, top, base[i], base[(i + 1) % base.length],
-    shade(colors[salt % 3], .72 + i * .055));
+  const hues = [[.29,.47,.21],[.41,.54,.22],[.21,.43,.29],[.52,.58,.25]];
+  const color = hues[salt%4];
+  const rings = [[.105,.058],[.18,.123],[.26,.114],[.327,.069],[.36,.012]];
+  const crowns = rings.map(([h,r],row)=>Array.from({length:7},(_,i)=>{
+    const angle=i*Math.PI*2/7 + salt*.53 + (row%2)*.24;
+    const radius=r*scale*(1+.1*Math.sin(i*7+salt));
+    return [x+Math.cos(angle)*radius,y+h*scale,z+Math.sin(angle)*radius];
+  }));
+  for (let row=1;row<crowns.length;row++) for(let i=0;i<7;i++) {
+    const next=(i+1)%7;
+    const tint=.73+row*.068+.09*Math.cos(i*.90+salt*.53);
+    quad(build,crowns[row-1][i],crowns[row-1][next],crowns[row][next],crowns[row][i],shade(color,tint));
+  }
+}
+
+function bananaPlant(mesh, x, y, z, seed) {
+  const stem = [.51, .49, .22];
+  piece(mesh, x, y, z, .025, .17, .023, stem);
+  for (let i = 0; i < 7; i++) {
+    const angle = i * 2.4 + seed;
+    const dx = Math.cos(angle), dz = Math.sin(angle);
+    const tip = [x + dx * .108, y + .15 + (i % 3) * .012, z + dz * .108];
+    const ridge = [x + dx * .057, y + .208, z + dz * .057];
+    const base = [x, y + .164, z];
+    for (const side of [-1, 1]) {
+      const edge = [ridge[0] - dz * side * .024, ridge[1] - .019, ridge[2] + dx * side * .024];
+      quad(mesh, base, ridge, tip, edge, side > 0 ? [.30, .53, .23] : [.40, .61, .25]);
+    }
+  }
+  piece(mesh, x + .021, y + .10, z, .029, .041, .025, [.89, .71, .23]);
+}
+
+function millSails(mesh, mill, time) {
+  const { x, y, z, yaw } = mill;
+  const point = (right, up) => [x + right * Math.cos(yaw), y + up, z + right * Math.sin(yaw)];
+  for (let i = 0; i < 4; i++) {
+    const angle = time * .57 + i * Math.PI / 2 + .42;
+    const arm = (r, w) => point(r * Math.cos(angle) - w * Math.sin(angle), r * Math.sin(angle) + w * Math.cos(angle));
+    quad(mesh, arm(0, -.006), arm(.20, -.006), arm(.20, .006), arm(0, .006), [.42, .32, .20]);
+    quad(mesh, arm(.075, .006), arm(.198, .006), arm(.18, .042), arm(.078, .036), [.94, .86, .63]);
+  }
 }
 
 function atlasCrate(build, x, y, z, yaw, size = .093) {
@@ -950,7 +1049,7 @@ function addSettlement(build, country, surface, treeSeed) {
           const [px, pz] = point(.18 + plot * .075, -.66 + row * .056);
           const height = .033 + ((plot + row) % 3) * .012;
           if (country === 'Tropia' && row % 2 === 0 && plot % 2 === 0) {
-            atlasTree(build, px, surface(px, pz) + .018, pz, .41, plot + row);
+            bananaPlant(build, px, surface(px, pz) + .018, pz, plot + row);
           } else if (country !== 'Tropia') piece(build, px, surface(px, pz) + .02, pz, .036, height, .028, [.8, .68, .22], yaw);
         }
       }
@@ -966,8 +1065,56 @@ function addSettlement(build, country, surface, treeSeed) {
     }
   }
 
+  // Perimeter streets enclose small residential blocks around the market square.
+  const paving = [.66,.60,.47], slate = [.26,.39,.42];
+  const street = (u,v,w,d) => {
+    const [x,z] = point(u,v);
+    piece(build,x,surface(x,z)+.006,z,w,.019,d,paving,yaw);
+  };
+  street(0,.53,1.86,.083);
+  street(-.72,0,.087,1.16);
+  street(.72,0,.087,1.16);
+  street(0,-.76,1.55,.083);
+  street(-.45,-.52,.49,.40);
+  for (let block=0; block<7; block++) {
+    const u = -.86+block*.28;
+    for (const v of [.71,.94]) {
+      const roof = [tile,slate,[.63,.31,.16]][(block+treeSeed+(v>.8?1:0))%3];
+      place(u,v,[.195,.14+(block%3)*.023,.16],[[.89,.80,.62],roof]);
+    }
+  }
+  // Canvas awnings and trestles face the cobbled square.
+  for (let i=0;i<3;i++) {
+    const [x,z] = point(-.61+i*.15,-.53);
+    const y=surface(x,z);
+    piece(build,x,y+.023,z,.119,.088,.078,wood,yaw);
+    for (let band=0;band<5;band++) {
+      const [bx,bz]=point(-.665+i*.15+band*.027,-.53);
+      gable(build,bx,y+.13,bz,.028,.13,.03,band%2 ? [.95,.85,.64] : [.68,.24,.14],yaw);
+    }
+  }
+  const [tx,tz]=point(-.52,-.91);
+  const ty=surface(tx,tz);
+  atlasBuilding(build,tx,ty,tz,.31,.25,.21,wall,slate,yaw);
+  piece(build,tx,ty+.23,tz,.15,.25,.15,[.85,.76,.55],yaw);
+  const cap = [tx,ty+.70,tz];
+  const corners = [[-.10,-.10],[.10,-.10],[.10,.10],[-.10,.10]].map(([a,b])=>{
+    const [x,z]=point(-.52+a,-.91+b);
+    return [x,ty+.48,z];
+  });
+  corners.forEach((a,i)=>triangle(build,a,corners[(i+1)%4],cap,shade(slate,.8+i*.1)));
+  for (let i=0;i<4;i++) {
+    const [x,z]=point(.96,-.66+i*.32);
+    piece(build,x,surface(x,z)+.012,z,.31,.016,.29,[.50,.42,.20],yaw);
+    for (let row=0;row<8;row++) {
+      const [fx,fz]=point(.96,-.78+i*.32+row*.034);
+      piece(build,fx,surface(fx,fz)+.031,fz,.292,.025,.023,
+        i%2 ? [.69,.69,.26] : [.40,.56,.23],yaw);
+    }
+  }
   for (let i = 0; i < 18; i++) {
     const angle = i * 2.399 + treeSeed;
+    if (Math.sin(angle) > .40) continue; // Keep the residential streets clear.
     const [x, z] = point(Math.cos(angle) * (.68 + i % 4 * .075), Math.sin(angle) * (.62 + i % 3 * .068));
     const y = surface(x, z);
     if (y > .04) atlasTree(build, x, y, z, .8 + (i % 5) * .13, i + treeSeed);
@@ -996,6 +1143,25 @@ function addHarbor(build, continent, surface) {
   }
   const [x, z] = point(-.22, .065);
   atlasBuilding(build, x, Math.max(.05, surface(x, z)), z, .32, .22, .23, [.83, .7, .49], [.37, .25, .16], yaw, true);
+
+  const [lx,lz] = point(.66,-.39);
+  const stone = [.76,.72,.60], ochre = [.69,.31,.17];
+  const tapered = (base, height, lower, upper, color) => {
+    const corners = (y,r) => Array.from({length:8},(_,i)=>[
+      lx+r*Math.cos(i*Math.PI/4),y,lz+r*Math.sin(i*Math.PI/4)]);
+    const bottom=corners(base,lower), top=corners(base+height,upper);
+    for (let i=0;i<8;i++) {
+      quad(build,bottom[i],bottom[(i+1)%8],top[(i+1)%8],top[i],shade(color,.81+.17*Math.cos(i*.78)));
+      triangle(build,top[i],top[(i+1)%8],[lx,base+height,lz],color);
+    }
+  };
+  tapered(-.05,.22,.16,.14,stone);
+  tapered(.17,.16,.086,.076,stone);
+  tapered(.33,.09,.076,.068,ochre);
+  tapered(.42,.12,.068,.059,stone);
+  tapered(.54,.025,.089,.089,[.27,.32,.30]);
+  tapered(.565,.072,.054,.054,[1.,.80,.40]);
+  tapered(.637,.065,.079,.008,[.25,.36,.34]);
 
   // Gantry with a boom over the berth and the hook above the load position.
   for (const side of [-.105, .07]) at(.43, side, .18, .047, .34, .043, iron);
@@ -1037,7 +1203,8 @@ class TradeAtlas {
     if (!this.gl) throw new Error('WebGL is unavailable');
     const info = this.gl.getExtension('WEBGL_debug_renderer_info');
     this.software = Boolean(info && /swiftshader|llvmpipe|software/i.test(this.gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
-    this.camera = { x: 0, z: 0, zoom: 1, yaw: -.12 };
+    const [x, z] = mapXZ(MAP_POSITIONS[S.country]);
+    this.camera = { x, z, zoom: 8, yaw: .58 };
     this.visible = true;
     this.motion = matchMedia('(prefers-reduced-motion: reduce)');
     this.pointers = new Map();
@@ -1052,16 +1219,6 @@ class TradeAtlas {
     this.program = atlasProgram(gl);
     gl.useProgram(this.program);
     this.uniform = Object.fromEntries(['camera', 'time', 'layer'].map((key) => [key, gl.getUniformLocation(this.program, key)]));
-    for (const [i, image] of [art, ocean].entries()) {
-      gl.activeTexture(gl.TEXTURE0 + i);
-      gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.uniform1i(gl.getUniformLocation(this.program, i ? 'ocean' : 'atlas'), i);
-    }
     const terrain = atlasTerrain(imagePixels(art), imagePixels(ocean));
     this.elevation = terrain.elevation;
     this.terrain = this.buffer(terrain.vertices, terrain.indices);
@@ -1069,6 +1226,7 @@ class TradeAtlas {
     quad(water, [-24, -.05, -21], [24, -.05, -21], [24, -.05, 21], [-24, -.05, 21], [0, 0, 0]);
     this.water = this.buffer(water);
     this.props = this.buffer(this.scenery());
+    this.bakeSunlight();
     this.dynamic = this.buffer([]);
     this.ambient = this.traffic().map((craft) => ({
       forward: craft,
@@ -1109,6 +1267,45 @@ class TradeAtlas {
     this.startFrames();
   }
 
+  bakeSunlight() {
+    // Buildings and terrain stay in place, so their shadow map only needs one draw.
+    const gl = this.gl;
+    const sun = atlasProgram(gl, `#version 300 es
+      layout(location=0) in vec3 p;
+      void main() {
+        gl_Position=vec4((p.xz-p.y*vec2(.70,.50))/vec2(10.,7.), -p.y*.4, 1.);
+      }`, `#version 300 es
+      precision mediump float;
+      void main() {}`);
+    const depth = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, depth);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, 2048, 2048);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+    for (const key of [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER]) gl.texParameteri(gl.TEXTURE_2D,key,gl.LINEAR);
+    for (const key of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T]) gl.texParameteri(gl.TEXTURE_2D,key,gl.CLAMP_TO_EDGE);
+    const frame = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,frame);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,depth,0);
+    gl.drawBuffers([gl.NONE]);
+    gl.readBuffer(gl.NONE);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('그림자 준비 실패');
+    gl.useProgram(sun);
+    gl.viewport(0,0,2048,2048);
+    gl.enable(gl.DEPTH_TEST);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.bindVertexArray(this.terrain.vao);
+    gl.drawElements(gl.TRIANGLES,this.terrain.count,gl.UNSIGNED_SHORT,0);
+    for (const mesh of [this.props, ...this.districts.map((district) => district.mesh)]) {
+      gl.bindVertexArray(mesh.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    gl.deleteFramebuffer(frame);
+    gl.deleteProgram(sun);
+    gl.useProgram(this.program);
+    gl.uniform1i(gl.getUniformLocation(this.program,'shadows'),0);
+  }
+
   buffer(vertices, indices) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
@@ -1141,18 +1338,38 @@ class TradeAtlas {
   scenery() {
     const output = [];
     const surface = this.surface.bind(this);
+    this.mills = [];
+    this.districts = [];
     for (const [i, country] of Object.keys(MAP_POSITIONS).entries()) {
       const town = settlementLayout(country);
       const { junction } = CONTINENT_ROUTES[town.area];
       const localRoad = [-.58, .62].map((u) => worldUV(...town.point(u, .05)).map((v) => v * 100));
       this.routeRibbon(output, makeCraft('truck', localRoad), [.54, .43, .27], .057);
       this.routeRibbon(output, makeCraft('truck', [town.gate, junction]), [.49, .42, .29], .035);
-      addSettlement(output, country, surface, i);
+      const buildings = [];
+      addSettlement(buildings, country, surface, i);
+      if (country === 'Grainia' || country === 'Agrea') {
+        const [x, z] = town.point(.88, -.88);
+        const y = surface(x, z);
+        atlasBuilding(buildings, x, y, z, .18, .28, .17, [.87, .76, .56], [.38, .25, .18], town.yaw);
+        const [hx, hz] = town.point(.88, -.773);
+        this.mills.push({ x: hx, y: y + .24, z: hz, yaw: town.yaw });
+      }
+      this.districts.push({ center: mapXZ(MAP_POSITIONS[country]), mesh: this.buffer(buildings) });
     }
     for (const region of Object.keys(CONTINENT_ROUTES)) {
       const dock = dockLayout(region);
       this.routeRibbon(output, makeCraft('truck', [CONTINENT_ROUTES[region].junction, dock.apron]), [.53, .43, .29], .04);
       addHarbor(output, region, surface);
+    }
+    const centers = Object.values(MAP_POSITIONS).map(mapXZ);
+    for (let i=0;i<1250;i++) {
+      const x = ((i*.61803399)%1-.5)*MAP_WIDTH;
+      const z = ((i*.75487767)%1-.5)*MAP_DEPTH;
+      const y = surface(x,z);
+      if (y<.10 || y>.69 || Math.sin(x*3.1)+Math.cos(z*3.3)<.13) continue;
+      if (centers.some(([cx,cz])=>Math.hypot(cx-x,cz-z)<1.37)) continue;
+      atlasTree(output,x,y,z,.65+(i%7)*.13,i);
     }
     return output;
   }
@@ -1333,9 +1550,16 @@ class TradeAtlas {
     draw(this.water, 0);
     draw(this.terrain, 1);
     draw(this.props, 2);
+    // Skip the detailed houses of distant nations when the camera is over a single town.
+    const { halfW, halfH, pitch } = this.projection(width, height);
+    const visibleRadius = Math.hypot(halfW, halfH / Math.sin(pitch)) + 2.5;
+    for (const { center: [x, z], mesh } of this.districts) {
+      if (Math.hypot(x - this.camera.x, z - this.camera.z) <= visibleRadius) draw(mesh, 2);
+    }
     draw(this.ambientRoads, 2);
     if (this.activeRoads) draw(this.activeRoads, 2);
     const mesh = [];
+    for (const mill of this.mills) millSails(mesh, mill, clock);
     if (!this.motion.matches) for (const [i, { forward, reverse }] of this.ambient.entries()) {
       if (this.camera.zoom > 12 && forward.type === 'plane') continue; // Keep dock and street close-ups clear.
       const travel = (clock / (22 + i * 2) + i * .27) % 2;
@@ -1372,6 +1596,10 @@ class TradeAtlas {
       label.style.setProperty('--map-y', `${top}%`);
       label.style.visibility = left < 4 || left > 96 || top < 5 || top > 95 ? 'hidden' : '';
     }
+    this.inset.hidden = !near;
+    const [u, v] = worldUV(this.camera.x, this.camera.z);
+    this.inset.style.setProperty('--where-x', (within(u,.02,.98)*100)+'%');
+    this.inset.style.setProperty('--where-y', (within(v,.02,.98)*100)+'%');
     this.updateLandmarks(near, detailCountry || S.country);
   }
 
@@ -1502,6 +1730,7 @@ class TradeAtlas {
     const canvas = this.canvas;
     this.badges = [...this.viewport.querySelectorAll('.atlas-cargo-badge')];
     this.landmarks = [...this.viewport.querySelectorAll('.atlas-landmark')];
+    this.inset = $('.atlas-inset',this.viewport);
     this.zoomDisplay = $('.atlas-zoom', this.viewport.parentElement);
     this.viewport.addEventListener('wheel', (event) => {
       if (this.disposed) return;
