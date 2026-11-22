@@ -175,11 +175,11 @@ document.addEventListener('change', (e) => {
 // same map works with a touch screen, a mouse, and a keyboard.
 const MAP_POSITIONS = {
   // Western continent
-  Mineria: [13, 14, 'west'], Grainia: [19, 39, 'west'], Tropia: [12, 65, 'west'], Oilia: [34, 50, 'west'],
+  Mineria: [13, 21, 'west'], Grainia: [19, 39, 'west'], Tropia: [12, 65, 'west'], Oilia: [30, 48, 'west'],
   // Eastern continent
-  Technia: [66, 23, 'east'], Mechania: [89, 34, 'east'], Novia: [72, 54, 'east'],
+  Technia: [65, 26, 'east'], Mechania: [88, 38, 'east'], Novia: [72, 54, 'east'],
   // Southern continent
-  Agrea: [36, 81, 'south'], Ferria: [56, 86, 'south'],
+  Agrea: [37, 83, 'south'], Ferria: [56, 86, 'south'],
 };
 
 function worldMap() {
@@ -227,8 +227,8 @@ function worldMap() {
             <button type="button" class="country-marker ${country === S.country ? 'our-country' : ''}"
               style="--map-x:${x}%;--map-y:${y}%" data-act="map-select" data-country="${country}"
               aria-controls="world-country" aria-pressed="false">
-              ${country === S.country ? '<span aria-hidden="true">★</span><span class="sr-only">우리 나라 </span>' : ''}
-              ${esc(gname(country))}
+              <span class="country-name">${country === S.country ? '<span aria-hidden="true">★</span><span class="sr-only">우리 나라 </span>' : ''}
+              ${esc(gname(country))}</span>
             </button>`).join('')}
         </div>
           <div class="atlas-controls" role="group" aria-label="지도 카메라">
@@ -265,10 +265,22 @@ const TRIP_MS = 5200;
 
 // The hand-painted map has a road junction, harbor and offshore way point per continent.
 const CONTINENT_ROUTES = {
-  west: { junction: [18, 46], harbor: [34, 56], offshore: [42, 61] },
-  east: { junction: [68, 42], harbor: [61, 46], offshore: [58, 52] },
-  south: { junction: [47, 80], harbor: [55, 70], offshore: [54, 65] },
+  west: { junction: [20, 45], harbor: [34, 53], offshore: [36, 54.1] },
+  east: { junction: [74, 45], harbor: [72, 59], offshore: [71.5, 61.6] },
+  south: { junction: [47, 82], harbor: [61.4, 91.6], offshore: [65.8, 94.5] },
 };
+
+// Ordered offshore waypoints keep both renderers on the same navigable channels.
+const SEA_LANES = {
+  west: { east: [[52.5,52.9], [68.7,61.6]],
+    south: [[55.1,64.3], [63,65.5], [72,64], [75,71], [74,76], [73,87]] },
+  east: { south: [[72,64], [75,71], [74,76], [73,87]] },
+};
+
+function seaLane(from, to, departure = CONTINENT_ROUTES[from].harbor, arrival = CONTINENT_ROUTES[to].harbor) {
+  const turns = SEA_LANES[from]?.[to] || [...SEA_LANES[to][from]].reverse();
+  return [departure, CONTINENT_ROUTES[from].offshore, ...turns, CONTINENT_ROUTES[to].offshore, arrival];
+}
 
 function shipmentStages(leg, airRoutes = false) {
   const start = MAP_POSITIONS[leg.seller];
@@ -283,7 +295,7 @@ function shipmentStages(leg, airRoutes = false) {
   }
   return [
     { type: 'truck', points: [start, origin.junction, origin.harbor], from: 0, to: .23 },
-    { type: 'ship', points: [origin.harbor, origin.offshore, destination.offshore, destination.harbor], from: .23, to: .77 },
+    { type: 'ship', points: seaLane(start[2], end[2]), from: .23, to: .77 },
     { type: 'truck', points: [destination.harbor, destination.junction, end], from: .77, to: 1 },
   ];
 }
@@ -405,8 +417,9 @@ function openTradeMap() {
   const frame = $('.atlas-frame');
   if (!frame?.classList.contains('showing-harbor')) return;
   frame.classList.remove('showing-harbor');
+  frame.closest('#world').scrollIntoView({ block: 'start' });
   if (tradeAtlas?.ready) tradeAtlas.changeCamera('reset');
-  else if (tradeAtlas) tradeAtlas.camera = { x: 0, z: 0, zoom: 1, yaw: -.12 };
+  else if (tradeAtlas) tradeAtlas.camera = { x: 0, z: 0, zoom: 1, yaw: 0 };
 }
 
 function bindHarbor(frame) {
@@ -859,6 +872,9 @@ const ATLAS_FRAGMENT = `#version 300 es
     return .64 + .36 * texture(shadows, uv);
   }
   uniform sampler2D materials;
+  uniform sampler2D worldPainting;
+  uniform sampler2D steamer;
+  uniform float zoom;
   in vec2 uv;
   uniform int layer;
   uniform float time;
@@ -872,11 +888,22 @@ const ATLAS_FRAGMENT = `#version 300 es
     return mix(mix(h.x,h.y,f.x), mix(h.z,h.w,f.x), f.y);
   }
   void main() {
+    if (layer == 3) {
+      pixel = texture(steamer, uv);
+      if (pixel.a < .08) discard;
+      return;
+    }
     if (layer == 2) {
       vec3 albedo = uv.x < 0. ? rgb : rgb * texture(materials, uv).rgb;
       pixel = vec4(albedo * light(p), 1.);
       return;
     }
+    // The painting follows world coordinates through rotation, zoom and every terrain triangle.
+    vec2 mapUV = p.xz / vec2(18., 12.) + .5;
+    float margin = min(min(mapUV.x, mapUV.y), min(1.-mapUV.x, 1.-mapUV.y));
+    vec2 waveUV = .00034 * vec2(sin(p.z*12.+time), cos(p.x*13.-time*.7));
+    vec3 paint = texture(worldPainting, mapUV + (rgb.r < 0. ? waveUV : vec2(0.))).rgb;
+    float ink = smoothstep(-.005,.016,margin) * (1.-smoothstep(3.5,11.,zoom));
     float grain = noise(p.xz * 4.) * .7 + noise(p.xz * 23.) * .3;
     if (layer == 1 && rgb.r > 0.) {
       vec3 n = normalize(cross(dFdx(p), dFdy(p)));
@@ -886,14 +913,15 @@ const ATLAS_FRAGMENT = `#version 300 es
       vec3 ground = mix(grass, rock, smoothstep(.28,.68,p.y) * (1. - abs(n.y)*.56));
       ground = mix(ground, vec3(.88,.89,.79), smoothstep(.73,.94,p.y));
       ground = mix(vec3(.84,.75,.51), ground, smoothstep(.008,.14,rgb.r));
-      pixel = vec4(ground * (.73 + sunlight*.36) * light(p), 1.);
+      pixel = vec4(mix(ground * (.73 + sunlight*.36) * light(p), paint * (.95 + .065*sunlight), ink), 1.);
     } else {
       float depth = layer == 1 ? -rgb.r : 1.;
       vec3 sea = mix(vec3(.21,.65,.59),vec3(.055,.32,.43), smoothstep(0.,.65,depth));
       float swell = sin(p.z*19. + sin(p.x*7.-time*.8));
       float wave = sin(p.z*111.+p.x*15.+grain*7.+time*2.1) * .65 + .35*swell;
       float surf = (1. - smoothstep(.01,.15,depth)) * smoothstep(-.65,.7,sin(depth*132.-time*2.2+grain));
-      pixel = vec4(mix(sea,vec3(.87,.91,.77),surf*.74) + vec3(.04,.07,.06)*smoothstep(.49,.93,wave)*grain,1.);
+      vec3 coast = mix(sea, vec3(.87,.91,.77), surf*.74);
+      pixel = vec4(mix(coast, paint, ink) + vec3(.04,.07,.06)*smoothstep(.49,.93,wave)*grain,1.);
     }
   }`;
 
@@ -950,7 +978,7 @@ function atlasTerrain(art, mask) {
     const inland = Math.min(1, distance / 10);
     return .05 + inland * (.13 + snow ** 1.65 * .93 + ridges * .06);
   });
-  // Fade out the decorative border that belongs only to the illustrated 2D map.
+  // Taper the outermost terrain cells into the surrounding sea.
   for (let i = 0; i < elevation.length; i++) {
     const x = i % TERRAIN_WIDTH, z = Math.floor(i / TERRAIN_WIDTH);
     const edge = Math.min(x, TERRAIN_WIDTH-1-x, z, TERRAIN_DEPTH-1-z);
@@ -1505,7 +1533,7 @@ function atlasShipment(leg) {
     { type: 'truck', points: [start.gate, first.junction, origin.apron], from: 0, to: .22, caption: '출발지 창고에서 항구로 가는 중' },
     { type: 'load', points: [origin.apron, origin.berth], from: .22, to: .36, dock: origin,
       caption: '출발 항구에서 배에 짐을 싣는 중' },
-    { type: 'ship', points: [origin.berth, origin.offshore, destination.offshore, destination.berth],
+    { type: 'ship', points: seaLane(start.area, end.area, origin.berth, destination.berth),
       from: .36, to: .70, caption: '화물선이 바다를 건너는 중' },
     { type: 'unload', points: [destination.berth, destination.apron], from: .70, to: .84, dock: destination,
       caption: '도착 항구에서 배의 짐을 내리는 중' },
@@ -1534,12 +1562,15 @@ class TradeAtlas {
   }
 
   async init() {
-    const [art, ocean, materials] = await Promise.all([atlasImage('art/world-map.webp'), atlasImage('art/ocean-mask.webp'), atlasImage('art/harbor-materials.webp')]);
+    const [art, ocean, materials, ship] = await Promise.all([
+      atlasImage('art/world-map.webp'), atlasImage('art/ocean-mask.webp'),
+      atlasImage('art/harbor-materials.webp'), atlasImage('art/harbor-steamer.webp'),
+    ]);
     if (this.disposed) return;
     const gl = this.gl;
     this.program = atlasProgram(gl);
     gl.useProgram(this.program);
-    this.uniform = Object.fromEntries(['camera', 'time', 'layer'].map((key) => [key, gl.getUniformLocation(this.program, key)]));
+    this.uniform = Object.fromEntries(['camera', 'time', 'layer', 'zoom'].map((key) => [key, gl.getUniformLocation(this.program, key)]));
     const terrain = atlasTerrain(imagePixels(art), imagePixels(ocean));
     this.elevation = terrain.elevation;
     this.terrain = this.buffer(terrain.vertices, terrain.indices);
@@ -1548,12 +1579,17 @@ class TradeAtlas {
     this.water = this.buffer(water);
     this.props = this.buffer(this.scenery());
     this.bakeSunlight();
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, materials);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.uniform1i(gl.getUniformLocation(this.program, 'materials'), 1);
+    for (const [unit, texture, sampler] of [[1, materials, 'materials'], [2, art, 'worldPainting'], [3, ship, 'steamer']]) {
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.uniform1i(gl.getUniformLocation(this.program, sampler), unit);
+    }
+    this.shipBuffer = this.buffer([]);
     this.dynamic = this.buffer([]);
     this.ambient = this.traffic().map((craft) => ({
       forward: craft,
@@ -1709,8 +1745,8 @@ class TradeAtlas {
       makeCraft('truck', [MAP_POSITIONS.Tropia, west.junction, MAP_POSITIONS.Grainia]),
       makeCraft('truck', [MAP_POSITIONS.Mechania, east.junction, MAP_POSITIONS.Novia]),
       makeCraft('truck', [MAP_POSITIONS.Agrea, south.junction, MAP_POSITIONS.Ferria]),
-      makeCraft('ship', [west.harbor, west.offshore, east.offshore, east.harbor]),
-      makeCraft('ship', [east.harbor, east.offshore, south.offshore, south.harbor]),
+      makeCraft('ship', seaLane('west', 'east')),
+      makeCraft('ship', seaLane('east', 'south')),
       makeCraft('plane', [MAP_POSITIONS.Agrea, [41, 69], [28, 68], MAP_POSITIONS.Tropia]),
     ];
   }
@@ -1744,7 +1780,7 @@ class TradeAtlas {
   }
 
   projection(width, height, zoom = this.camera.zoom) {
-    const halfW = Math.max(width < 500 ? 10.3 : 10.9, 5.95 * width / height) / zoom;
+    const halfW = Math.max(9.02, 5.65 * width / height) / zoom;
     return { halfW, halfH: halfW * height / width, pitch: this.pitch(width, zoom) };
   }
 
@@ -1824,13 +1860,30 @@ class TradeAtlas {
     }
   }
 
-  craft(output, stage, progress) {
+  ship(output, sprites, x, y, z, heading) {
+    if (this.camera.zoom > 3.5) {
+      modelVehicle(output, 'ship', x, y, z, heading);
+      return;
+    }
+    const { yaw } = this.camera;
+    const pitch = this.pitch(this.viewport.clientWidth, this.camera.zoom);
+    const flip = Math.cos(yaw + heading) < 0;
+    // Stand the miniature in the camera plane with its keel on the sea route.
+    for (const [u,v] of [[0,1],[1,1],[1,0],[0,1],[1,0],[0,0]]) {
+      const right = (u-.5)*.82, up = (.92-v)*.55;
+      const forward = -Math.sin(pitch)*up;
+      sprites.push(x + Math.cos(yaw)*right + Math.sin(yaw)*forward, y + Math.cos(pitch)*up,
+        z - Math.sin(yaw)*right + Math.cos(yaw)*forward, 1,1,1, flip ? 1-u : u,v);
+    }
+  }
+
+  craft(output, sprites, stage, progress) {
     const [x, z, yaw] = craftLocation(stage, progress);
     if (stage.dock) {
       const { dock } = stage;
       const [bx, bz] = mapXZ(dock.berth);
       const [tx, tz] = mapXZ(dock.apron);
-      modelVehicle(output, 'ship', bx, .012, bz, dock.yaw);
+      this.ship(output, sprites, bx, .012, bz, dock.yaw);
       modelVehicle(output, 'truck', tx, Math.max(.18, this.surface(tx, tz)), tz, dock.yaw);
       const y = .14 + Math.sin(progress * Math.PI) * .32;
       atlasCrate(output, x, y, z, dock.yaw, .123);
@@ -1841,7 +1894,8 @@ class TradeAtlas {
     }
     const y = stage.type === 'plane' ? .69 + Math.sin(progress * Math.PI) * .34
       : stage.type === 'ship' ? .012 : Math.max(.012, this.surface(x, z));
-    modelVehicle(output, stage.type, x, y, z, yaw);
+    if (stage.type === 'ship') this.ship(output, sprites, x, y, z, yaw);
+    else modelVehicle(output, stage.type, x, y, z, yaw);
     return this.project(x, y + .31, z);
   }
 
@@ -1850,7 +1904,7 @@ class TradeAtlas {
     const width = this.viewport.clientWidth, height = this.viewport.clientHeight;
     if (!width || !height) return;
     const gl = this.gl;
-    const ratio = Math.min(devicePixelRatio, this.software ? .85 : 1.5);
+    const ratio = Math.min(devicePixelRatio, this.software ? 1 : 1.5);
     const w = Math.round(width * ratio), h = Math.round(height * ratio);
     if (this.canvas.width !== w || this.canvas.height !== h) {
       this.canvas.width = w;
@@ -1879,30 +1933,32 @@ class TradeAtlas {
       if (buffer.indexed) gl.drawElements(gl.TRIANGLES, buffer.count, gl.UNSIGNED_SHORT, 0);
       else gl.drawArrays(gl.TRIANGLES, 0, buffer.count);
     };
+    gl.uniform1f(this.uniform.zoom, this.camera.zoom);
     draw(this.water, 0);
     draw(this.terrain, 1);
-    draw(this.props, 2);
+    const localDetail = this.camera.zoom > 2.8;
+    if (localDetail) draw(this.props, 2);
     // Skip the detailed houses of distant nations when the camera is over a single town.
     const { halfW, halfH, pitch } = this.projection(width, height);
     const visibleRadius = Math.hypot(halfW, halfH / Math.sin(pitch)) + 2.5;
     for (const { center: [x, z], mesh } of this.districts) {
-      if (Math.hypot(x - this.camera.x, z - this.camera.z) <= visibleRadius) draw(mesh, 2);
+      if (localDetail && Math.hypot(x - this.camera.x, z - this.camera.z) <= visibleRadius) draw(mesh, 2);
     }
     if (this.camera.zoom < 3.6) draw(this.ambientRoads, 2);
     if (this.activeRoads) draw(this.activeRoads, 2);
-    const mesh = [];
-    for (const mill of this.mills) millSails(mesh, mill, clock);
+    const mesh = [], sprites = [];
+    if (localDetail) for (const mill of this.mills) millSails(mesh, mill, clock);
     if (!this.motion.matches) for (const [i, { forward, reverse }] of this.ambient.entries()) {
       if (this.camera.zoom > 12 && forward.type === 'plane') continue; // Keep dock and street close-ups clear.
       const travel = (clock / (22 + i * 2) + i * .27) % 2;
-      this.craft(mesh, travel < 1 ? forward : reverse, travel % 1);
+      this.craft(mesh, sprites, travel < 1 ? forward : reverse, travel % 1);
     }
     for (const [i, badge] of this.badges.entries()) {
       const route = this.routes[i];
       let position;
       if (route) for (const stage of route.stages) {
         if (!this.motion.matches && elapsed >= stage.begin && elapsed < stage.end) {
-          position = this.craft(mesh, stage, (elapsed - stage.begin) / (stage.end - stage.begin));
+          position = this.craft(mesh, sprites, stage, (elapsed - stage.begin) / (stage.end - stage.begin));
         }
       }
       badge.hidden = !position || position.some((v) => v < 3 || v > 97);
@@ -1916,6 +1972,15 @@ class TradeAtlas {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh), gl.STREAM_DRAW);
     this.dynamic.count = mesh.length / 8;
     draw(this.dynamic, 2);
+    if (sprites.length) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.shipBuffer.vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sprites), gl.STREAM_DRAW);
+      this.shipBuffer.count = sprites.length / 8;
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      draw(this.shipBuffer, 3);
+      gl.disable(gl.BLEND);
+    }
     const detailCountry = this.following && lead ? (elapsed < .53 ? lead.seller : lead.buyer) : this.selectedCountry;
     const labelKey = JSON.stringify([width, height, this.camera, detailCountry]);
     if (this.labelKey === labelKey) return;
@@ -1956,7 +2021,7 @@ class TradeAtlas {
   }
 
   pitch(width, zoom) {
-    const overhead = width < 500 ? 1.17 : .96;
+    const overhead = width < 500 ? 1.39 : 1.30;
     return overhead + (.67 - overhead) * within((zoom - 1.7) / 3.5, 0, 1);
   }
 
@@ -2048,7 +2113,7 @@ class TradeAtlas {
       }
     }
     const camera = this.camera;
-    if (action === 'reset') Object.assign(camera, { x: 0, z: 0, zoom: 1, yaw: -.12 });
+    if (action === 'reset') Object.assign(camera, { x: 0, z: 0, zoom: 1, yaw: 0 });
     if (action === 'left' || action === 'right') camera.yaw += action === 'right' ? .23 : -.23;
     if (typeof action === 'number') this.zoomAround(action, point);
     this.render();

@@ -346,7 +346,7 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
 }
 .world-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.75fr) minmax(16rem, 1fr);
+  grid-template-columns: minmax(0, 2.5fr) minmax(16rem, 1fr);
   align-items: start;
   gap: .85rem;
 }
@@ -390,29 +390,32 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
   transform: translate(-50%, -50%);
   z-index: 1;
   min-height: 44px;
-  padding: .25rem .55rem;
-  background: #162d32ed;
+  min-width: 44px;
+  padding: 0;
   color: #fff6df;
-  border: 1px solid #e5cb89;
-  border-radius: .3rem;
-  box-shadow: 0 2px 6px #12263280;
-  font-size: clamp(.68rem, 2.65cqw, .95rem);
-  line-height: 1.15;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: clamp(.68rem, 2.25cqw, .91rem);
+  line-height: 1.2;
   white-space: nowrap;
 }
-.country-marker:hover, .country-marker[aria-pressed="true"] {
-  background: #ffdf92;
-  color: #252b2c;
+.country-name {
+  display: inline-block;
+  padding: .22rem .5rem;
+  border: 1px solid #ceb77f;
+  border-radius: .16rem;
+  background: #21342feb;
+  box-shadow: 0 1px 4px #17221aab;
 }
-.country-marker[aria-pressed="true"] {
-  z-index: 2;
-  outline: 2px solid #f9e6b7;
-  outline-offset: 2px;
+.country-marker:hover, .country-marker[aria-pressed="true"] { background: transparent; z-index: 2; }
+.country-marker:hover .country-name, .country-marker[aria-pressed="true"] .country-name {
+  color: #2e281b;
+  background: #f6e4b8;
+  border-color: #fff0cb;
 }
-.country-marker:focus-visible { outline: 3px solid #7ddcfc; outline-offset: 3px; }
-.country-marker.our-country { border-width: 2px; border-color: #ffdc75; }
-.our-country span[aria-hidden] { color: var(--gold); }
-.our-country[aria-pressed="true"] span[aria-hidden], .our-country:hover span[aria-hidden] { color: #6d4715; }
+.country-marker:focus-visible { outline: 3px solid #7ddcfc; outline-offset: 1px; }
+.country-marker.our-country .country-name { border-color: #ffd474; }
 .world-country {
   min-width: 0;
   border: 1px solid var(--line);
