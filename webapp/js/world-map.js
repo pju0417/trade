@@ -1,5 +1,6 @@
 import { esc, render } from './dom.js';
 import { goodIcon } from './good-icons.js';
+import { seaRoute } from './map-navigation.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const LAYOUT_URL = new URL('../assets/map/layout.json', import.meta.url);
@@ -22,7 +23,9 @@ function getLayout() {
     for (const key of Object.keys(names)) {
       const c = layout.countries?.[key];
       if (!c || !['position', 'port', 'label'].every(k => validPoint(c[k]))) throw new Error(`${names[key]}의 지도 좌표를 확인해 주세요.`);
+      if (c.region && (c.region.length < 3 || !c.region.every(validPoint))) throw new Error(`${names[key]}의 국경 좌표를 확인해 주세요.`);
     }
+    for (const land of layout.landmasses || []) if (!Array.isArray(land.outline) || land.outline.length < 3 || !land.outline.every(validPoint)) throw new Error('대륙 해안선을 확인해 주세요.');
     if (typeof layout.background !== 'string' || !layout.background) throw new Error('지도 배경 파일을 확인해 주세요.');
     return layout;
   });
@@ -58,10 +61,14 @@ class WorldMap {
     element.innerHTML = `<header class="atlas-heading"><div><p class="eyebrow">아홉 나라, 이어지는 바닷길</p><h2>세계 무역 지도</h2></div><span class="atlas-round"></span></header>
       <div class="atlas-tools"><div class="atlas-view-modes" role="group" aria-label="지도 표시 방식"><button type="button" data-map-mode="3d" aria-pressed="false">3D 지도</button><button type="button" data-map-mode="2d" aria-pressed="true">2D 지도</button></div><div class="atlas-camera" role="group" aria-label="3D 시점 조절"><button type="button" data-camera="in" aria-label="지도 확대">＋</button><button type="button" data-camera="out" aria-label="지도 축소">−</button><button type="button" data-camera="reset">전체 보기</button></div><span class="atlas-model-status" role="status">3D 지도를 준비해요</span></div>
       <p class="atlas-gesture">드래그로 회전 · 휠 또는 두 손가락으로 확대 · 나라를 누르면 거래 정보</p>
-      <div class="map-surface"><img class="map-background" alt="아홉 나라의 섬과 바다를 그린 세계 지도"><svg class="trade-routes" aria-hidden="true"></svg><div class="map-labels"></div><span class="ocean-name">함께 잇는 바다</span><p class="map-loading" role="status">지도를 불러오는 중…</p></div>
+      <div class="map-surface"><img class="map-background" alt="대륙과 군도, 아홉 나라의 국경을 그린 세계 지도"><svg class="trade-routes" aria-hidden="true"></svg><svg class="map-connectors" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><div class="map-labels"></div><span class="ocean-name">함께 잇는 바다</span><p class="map-loading" role="status">지도를 불러오는 중…</p></div>
       <div class="map-legend"><span><i class="legend-line market"></i>시장</span><span><i class="legend-line direct"></i>직접 거래</span><span><i class="legend-line barter"></i>물물교환</span><span class="route-total"></span><button class="route-toggle" type="button" aria-pressed="true">무역로 숨기기</button></div>
       <div class="country-inspector" aria-live="polite"></div><details class="route-log"><summary>이번 라운드 무역로 설명</summary><ul></ul></details>`;
     this.surface = element.querySelector('.map-surface'); this.routes = element.querySelector('.trade-routes');
+    this.labelObserver = new ResizeObserver(() => {
+      if (!element.isConnected) { this.labelObserver.disconnect(); return; }
+      if (this.layout && this.mode === '2d') this.place2DLabels();
+    }); this.labelObserver.observe(this.surface);
     this.inspector = element.querySelector('.country-inspector');
     element.querySelector('.route-toggle').onclick = e => {
       const show = e.currentTarget.getAttribute('aria-pressed') !== 'true';
@@ -83,12 +90,43 @@ class WorldMap {
     this.three?.setActive(mode === '3d');
     for (const button of this.element.querySelectorAll('[data-map-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mapMode === mode));
     if (mode === '2d') {
-      const [ox, oy, width, height] = this.layout.viewBox;
-      for (const [key, entry] of this.countryNodes) {
-        const point = this.layout.countries[key].label;
-        entry.button.style.left = `${(point[0] - ox) / width * 100}%`; entry.button.style.top = `${(point[1] - oy) / height * 100}%`; entry.button.hidden = false;
-      }
+      this.place2DLabels();
     }
+  }
+  place2DLabels() {
+    const [ox, oy, width, height] = this.layout.viewBox, positions = new Map();
+    for (const [key, c] of Object.entries(this.layout.countries)) positions.set(key, { x: (c.label[0] - ox) / width * 100, y: (c.label[1] - oy) / height * 100, anchorX: (c.position[0] - ox) / width * 100, anchorY: (c.position[1] - oy) / height * 100, visible: true });
+    this.placeLabels(positions);
+  }
+  placeLabels(positions) {
+    const width = this.surface.clientWidth, height = this.surface.clientHeight; if (!width || !height) return;
+    const signature = `${this.mode}:${width}:${height}:` + [...positions].map(([key,p]) => `${key}:${p.x.toFixed(2)},${p.y.toFixed(2)}:${p.visible}:${this.countryNodes.get(key)?.signature}`).join('|');
+    if (signature === this.labelSignature) return; this.labelSignature = signature;
+    const nodes = [...positions].map(([key,p]) => {
+      const entry = this.countryNodes.get(key); if (!entry) return null;
+      entry.button.hidden = !p.visible;
+      return { key, p, entry, x: p.x / 100 * width, y: p.y / 100 * height, w: entry.button.offsetWidth, h: entry.button.offsetHeight };
+    }).filter(n => n && n.p.visible);
+    const clamp = n => { n.x = Math.max(n.w / 2 + 5, Math.min(width - n.w / 2 - 5, n.x)); n.y = Math.max(n.h / 2 + 5, Math.min(height - n.h / 2 - 5, n.y)); };
+    nodes.forEach(clamp);
+    // Relax only colliding callouts; the geography itself never moves or becomes a grid.
+    for (let pass = 0; pass < 48; pass++) {
+      let moved = false;
+      for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j], dx = b.x - a.x, dy = b.y - a.y;
+        const overlapX = (a.w + b.w) / 2 + 5 - Math.abs(dx), overlapY = (a.h + b.h) / 2 + 5 - Math.abs(dy);
+        if (overlapX <= 0 || overlapY <= 0) continue;
+        if (overlapX < overlapY) { const step = (overlapX + .1) / 2 * (dx >= 0 ? 1 : -1); a.x -= step; b.x += step; }
+        else { const step = (overlapY + .1) / 2 * (dy >= 0 ? 1 : -1); a.y -= step; b.y += step; }
+        clamp(a); clamp(b); moved = true;
+      }
+      if (!moved) break;
+    }
+    for (const n of nodes) {
+      n.entry.button.style.left = `${n.x / width * 100}%`; n.entry.button.style.top = `${n.y / height * 100}%`;
+      if (n.entry.leader) for (const [attr,value] of Object.entries({ x1: n.p.anchorX, y1: n.p.anchorY, x2: n.x / width * 100, y2: n.y / height * 100 })) n.entry.leader.setAttribute(attr, value);
+    }
+    for (const [key,p] of positions) { const leader = this.countryNodes.get(key)?.leader; if (leader) leader.style.display = p.visible ? '' : 'none'; }
   }
   async start3D() {
     if (!this.layout || this.loading3D) return;
@@ -100,15 +138,7 @@ class WorldMap {
       if (!this.element.isConnected || !this.want3D) return;
       this.three = new Atlas3D(this.surface, this.layout, {
         onSelect: key => { this.selected = key; this.update(this.state); },
-        onProject: positions => {
-          for (const [key, p] of positions) {
-            const button = this.countryNodes.get(key)?.button; if (!button) continue;
-            const left = `${p.x.toFixed(3)}%`, top = `${p.y.toFixed(3)}%`;
-            if (button.style.left !== left) button.style.left = left;
-            if (button.style.top !== top) button.style.top = top;
-            button.hidden = !p.visible;
-          }
-        },
+        onProject: positions => this.placeLabels(positions),
         onStatus: message => text(status, message),
         onFailure: message => { this.setMode('2d'); text(status, message); },
       });
@@ -118,6 +148,7 @@ class WorldMap {
   }
   build() {
     const l = this.layout, [ox, oy, width, height] = l.viewBox;
+    this.element.dataset.geography = l.landmasses?.length ? 'continents' : 'islands';
     this.routes.setAttribute('viewBox', l.viewBox.join(' ')); this.routes.setAttribute('preserveAspectRatio', 'none');
     const defs = svg('defs');
     for (const channel of Object.keys(channels)) {
@@ -132,7 +163,8 @@ class WorldMap {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'map-country'; button.dataset.country = key;
       button.style.left = `${(c.label[0] - ox) / width * 100}%`; button.style.top = `${(c.label[1] - oy) / height * 100}%`;
       button.onclick = () => { this.selected = key; this.update(this.state); };
-      this.element.querySelector('.map-labels').append(button); this.countryNodes.set(key, { button, signature: '' });
+      const leader = svg('line', { 'vector-effect': 'non-scaling-stroke' }); this.element.querySelector('.map-connectors').append(leader);
+      this.element.querySelector('.map-labels').append(button); this.countryNodes.set(key, { button, leader, signature: '' });
       const port = svg('circle', { cx: c.port[0], cy: c.port[1], r: 6, class: 'map-port' });
       this.routes.append(port);
       const center = svg('circle', { cx: c.position[0], cy: c.position[1], r: 63, class: 'country-halo', 'data-halo': key }); this.routes.append(center);
@@ -163,13 +195,15 @@ class WorldMap {
     this.updateRoutes(state.world_trades || []);
     this.three?.update(state, tradeRoutes(state.world_trades || []), this.selected, this.showRoutes);
     this.updateInspector();
+    if (this.mode === '2d') this.place2DLabels();
   }
   updateRoutes(trades) {
     const routes = tradeRoutes(trades); const descriptions = [];
     for (const [key, route] of routes) {
       const from = this.layout.countries[route.seller]?.port, to = this.layout.countries[route.buyer]?.port;
       if (!from || !to) continue;
-      const { d, mid } = curve(from, to, route.channel);
+      const points = this.layout.landmasses?.length ? seaRoute(this.layout, from, to) : null;
+      const { d, mid } = points ? { d: points.map((p,i) => `${i ? 'L' : 'M'}${p.join(',')}`).join(' '), mid: points[Math.floor(points.length / 2)] } : curve(from, to, route.channel);
       const description = `${channels[route.channel]} · ${names[route.seller]} ${route.channel === 'barter' ? '↔' : '→'} ${names[route.buyer]}: ${route.legs.map(l => `${names[l.seller]}의 ${goods[l.good] || l.label} ${l.qty}개${l.gen > 1 ? `(${l.gen}세대)` : ''}`).join(', ')}`;
       descriptions.push(description);
       let entry = this.routeNodes.get(key);

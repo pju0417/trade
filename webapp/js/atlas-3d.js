@@ -2,6 +2,7 @@ import * as T from '../assets/three/three.module.js';
 import { OrbitControls } from '../assets/three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from '../assets/three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from '../assets/three/addons/utils/BufferGeometryUtils.js';
+import { seaRoute } from './map-navigation.js';
 
 // Local, preserved GLBs. Shared geometry/textures are loaded once across room maps.
 const modelCache = new Map();
@@ -16,8 +17,9 @@ export function stageFor(profile) {
   const level = Number(profile?.levels?.[profile?.main] || 1);
   return level >= 4 ? 2 : level >= 2 ? 1 : 0;
 }
-function loadModel(name) {
-  if (!modelCache.has(name)) modelCache.set(name, new GLTFLoader().loadAsync(new URL(`${name}.glb`, assetRoot).href).then(gltf => {
+function loadModel(name, root = assetRoot) {
+  const key = new URL(`${name}.glb`, root).href;
+  if (!modelCache.has(key)) modelCache.set(key, new GLTFLoader().loadAsync(key).then(gltf => {
     // These are static props: bake transforms and batch by material (403 container-ship meshes -> 12 draws).
     const batched = new T.Group(), byMaterial = new Map(), originals = new Set();
     gltf.scene.updateMatrixWorld(true);
@@ -40,8 +42,8 @@ function loadModel(name) {
     for (const geometry of originals) geometry.dispose();
     batched.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.userData.sharedAsset = true; } });
     return batched;
-  }).catch(error => { modelCache.delete(name); throw error; }));
-  return modelCache.get(name);
+  }).catch(error => { modelCache.delete(key); throw error; }));
+  return modelCache.get(key);
 }
 
 export class Atlas3D {
@@ -50,7 +52,7 @@ export class Atlas3D {
     Object.assign(this, { onSelect, onProject, onStatus, onFailure });
     this.countries = new Map(); this.routes = new Map(); this.materials = new Map();
     this.pending = new Set(); this.failures = new Set(); this.disposed = false; this.active = true;
-    this.visible = true; this.dirty = true; this.elapsed = 0; this.lastFrame = 0; this.depthScale = .13;
+    this.visible = true; this.dirty = true; this.elapsed = 0; this.lastFrame = 0; this.depthScale = .105;
     this.reducedQuery = matchMedia('(prefers-reduced-motion: reduce)'); this.reduced = this.reducedQuery.matches;
     this.motionChange = e => { this.reduced = e.matches; this.dirty = true; };
     this.reducedQuery.addEventListener('change', this.motionChange);
@@ -121,34 +123,75 @@ export class Atlas3D {
     }));
     this.water.rotation.x = -Math.PI / 2; this.water.position.y = -.5; this.scene.add(this.water);
   }
+  regionShape(points, origin = null) {
+    const shape = new T.Shape(), offset = origin ? this.point(origin) : new T.Vector3();
+    points.forEach((pair, i) => {
+      const p = this.point(pair).sub(offset);
+      if (i) shape.lineTo(p.x, -p.z); else shape.moveTo(p.x, -p.z);
+    });
+    shape.closePath(); return shape;
+  }
+  buildContinents() {
+    const geography = new T.Group(); geography.name = 'world-geography'; this.scene.add(geography);
+    for (const mass of this.layout.landmasses || []) {
+      const shape = this.regionShape(mass.outline);
+      const geometry = new T.ExtrudeGeometry(shape, { depth: 2.6, bevelEnabled: true, bevelSize: .35, bevelThickness: .25, bevelSegments: 1, steps: 1 });
+      geometry.rotateX(-Math.PI / 2);
+      const land = new T.Mesh(geometry, [this.material('#83966c'), this.material('#8c8b6a')]);
+      land.position.y = -1.3; land.receiveShadow = true; land.name = mass.id; geography.add(land);
+      const points = mass.outline.map(pair => this.point(pair, -.2)); points.push(points[0]);
+      const coast = new T.Line(new T.BufferGeometry().setFromPoints(points), new T.LineBasicMaterial({ color: '#c5d3a5', transparent: true, opacity: .55 })); geography.add(coast);
+      // Shallow coastal shelf follows the exact landmass rather than a circular island base.
+      const shelf = new T.ShapeGeometry(shape); shelf.rotateX(-Math.PI / 2);
+      const center = new T.Box3().setFromBufferAttribute(shelf.attributes.position).getCenter(new T.Vector3());
+      shelf.translate(-center.x, 0, -center.z); shelf.scale(1.035, 1, 1.035); shelf.translate(center.x, 0, center.z);
+      const shallows = this.mesh(geography, shelf, '#417b76', 0, -.4, 0); shallows.castShadow = false;
+    }
+    for (const item of this.layout.terrain || []) {
+      if (item.kind === 'river') {
+        const points = item.points.map(pair => this.point(pair, 1.47));
+        const curve = new T.CatmullRomCurve3(points);
+        const river = this.mesh(geography, new T.TubeGeometry(curve, 60, .29, 5, false), '#75a9ac'); river.castShadow = false;
+      } else for (const [i, pair] of item.points.entries()) {
+        const p = this.point(pair);
+        if (item.kind === 'ridge') {
+          for (let j = 0; j < 2; j++) {
+            const height = (3.6 + (i + j) % 3 * 1.4) * item.size;
+            const peak = this.mesh(geography, new T.ConeGeometry(2.3 * item.size, height, 5), j ? '#8f9982' : '#6b7d70', p.x + j * 1.6, 1.4 + height / 2, p.z + j * 1.1); peak.rotation.y = i * .8;
+            if (height > 5) this.mesh(geography, new T.ConeGeometry(.6, 1.3, 5), '#ded8b7', p.x + j * 1.6, 1.4 + height - .5, p.z + j * 1.1);
+          }
+        } else if (item.kind === 'forest') {
+          for (const [dx,dz] of [[0,0],[1.5,1.3],[-1.2,1.4]]) this.tree(geography, p.x + dx, p.z + dz);
+        }
+      }
+    }
+    // Optional independently generated Tripo props, registered after the user supplies a GLB.
+    for (const prop of this.layout.props || []) {
+      const group = new T.Group(); group.position.copy(this.point(prop.position, 1.4)); geography.add(group);
+      this.asset(group, prop.model, prop.size || 10, [0, 0, 0], prop.rotation || 0, () => true, null, new URL('../assets/map/props/', import.meta.url));
+    }
+  }
   buildCountries() {
-    let index = 0;
+    this.buildContinents();
     for (const [key, spec] of Object.entries(this.layout.countries)) {
       const group = new T.Group(); group.userData.country = key; this.scene.add(group);
-      const shape = new T.Shape();
-      for (let i = 0; i <= 18; i++) {
-        const a = i % 18 / 18 * Math.PI * 2, radius = 1 + .11 * Math.sin(a * 5 + index * 1.7) + .07 * Math.cos(a * 3 - index);
-        const x = Math.cos(a) * 16 * radius, z = Math.sin(a) * 11.8 * radius;
-        if (i === 0) shape.moveTo(x, z); else shape.lineTo(x, z);
-      }
-      shape.closePath();
-      const geometry = new T.ExtrudeGeometry(shape, { depth: 2.6, bevelEnabled: true, bevelSize: .65, bevelThickness: .35, bevelSegments: 1, steps: 1 });
-      geometry.rotateX(-Math.PI / 2);
-      const land = new T.Mesh(geometry, [this.material(key === 'Oilia' ? '#b8aa79' : index % 3 === 2 ? '#738977' : '#6d8b59'), this.material('#8c8c6e')]);
-      land.position.y = -1.3; land.receiveShadow = true; group.add(land);
-      const shoreline = new T.ShapeGeometry(shape); shoreline.rotateX(-Math.PI / 2);
-      const shore = this.mesh(group, shoreline, '#427a72', 0, -.4, 0); shore.scale.set(1.12, 1, 1.12); shore.castShadow = false;
-      const halo = new T.Mesh(new T.RingGeometry(18, 18.22, 64), new T.MeshBasicMaterial({ color: '#ebcd7d', transparent: true, opacity: .8, side: T.DoubleSide }));
-      halo.rotation.x = -Math.PI / 2; halo.scale.y = .76; halo.position.y = -.25; halo.visible = false; group.add(halo);
-      // Persistent miniature streets, town houses, woods and a waterfront plaza.
-      this.box(group, [19, .08, 1.1], [0, 1.73, 3.3], '#c4b589');
-      this.box(group, [1.1, .08, 12], [4, 1.74, -.3], '#c4b589');
-      for (const [x,z] of [[-8,-2],[-10,2],[8,-2],[10,0]]) this.tree(group, x, z, index === 6 || index === 3);
-      for (let i = 0; i < 4; i++) this.house(group, -7 + i * 3.6, 6.3, i % 2 ? '#bd8a59' : '#a56245');
-      const assets = new T.Group(); group.add(assets);
-      const port = new T.Group(); this.scene.add(port);
-      const pin = this.mesh(port, new T.CylinderGeometry(.35, .35, .25, 8), '#eed28b', 0, .4, 0); pin.castShadow = false;
-      this.countries.set(key, { key, group, assets, port, halo, spec, signature: '', stage: -1, revision: 0 }); index++;
+      let points = spec.region;
+      if (!points) points = Array.from({ length: 18 }, (_, i) => [spec.position[0] + Math.cos(i / 18 * Math.PI * 2) * 120, spec.position[1] + Math.sin(i / 18 * Math.PI * 2) * 95]);
+      const shape = this.regionShape(points, spec.position);
+      const geometry = new T.ShapeGeometry(shape); geometry.rotateX(-Math.PI / 2);
+      const surface = this.mesh(group, geometry, spec.color || '#8a9b75', 0, 1.36, 0); surface.castShadow = false;
+      const borderPoints = points.map(pair => this.point(pair, 1.5).sub(this.point(spec.position))); borderPoints.push(borderPoints[0]);
+      const border = new T.Line(new T.BufferGeometry().setFromPoints(borderPoints), new T.LineBasicMaterial({ color: '#d2c89b', transparent: true, opacity: .65 })); group.add(border);
+      const halo = new T.Mesh(geometry.clone(), new T.MeshBasicMaterial({ color: '#ebcd7d', transparent: true, opacity: .20, depthWrite: false, side: T.DoubleSide }));
+      halo.position.y = 1.41; halo.visible = false; group.add(halo);
+      const town = new T.Group(); town.name = 'port-town'; town.scale.setScalar(.65); town.position.y = .48; group.add(town);
+      this.box(town, [19, .08, 1.1], [0, 1.73, 3.3], '#c4b589');
+      this.box(town, [1.1, .08, 12], [4, 1.74, -.3], '#c4b589');
+      for (const [x,z] of [[-8,-2],[-10,2],[8,-2],[10,0]]) this.tree(town, x, z, ['Tropia','Agrea'].includes(key));
+      for (let i = 0; i < 4; i++) this.house(town, -7 + i * 3.6, 6.3, i % 2 ? '#bd8a59' : '#a56245');
+      const assets = new T.Group(); town.add(assets);
+      const port = new T.Group(); port.userData.country = key; port.scale.setScalar(.72); port.rotation.y = spec.portAngle || 0; this.scene.add(port);
+      this.countries.set(key, { key, group, town, assets, port, halo, spec, signature: '', stage: -1, revision: 0 });
     }
   }
   tree(parent, x, z, palm = false) {
@@ -173,10 +216,10 @@ export class Atlas3D {
     });
     group.clear();
   }
-  async asset(parent, name, length, position, angle = 0, guard = () => true, height = null) {
+  async asset(parent, name, length, position, angle = 0, guard = () => true, height = null, root = assetRoot) {
     const token = {}; this.pending.add(token); this.report();
     try {
-      const prototype = await loadModel(name);
+      const prototype = await loadModel(name, root);
       if (this.disposed || !guard()) return;
       const object = prototype.clone(true);
       const bounds = new T.Box3().setFromObject(object), size = bounds.getSize(new T.Vector3()), center = bounds.getCenter(new T.Vector3());
@@ -246,7 +289,11 @@ export class Atlas3D {
         const from = this.point(this.layout.countries[data.seller].port, .25), to = this.point(this.layout.countries[data.buyer].port, .25);
         const mid = from.clone().lerp(to, .5); const delta = to.clone().sub(from);
         mid.x -= delta.z * .12; mid.z += delta.x * .12;
-        const curve = new T.QuadraticBezierCurve3(from, mid, to);
+        let curve;
+        if (this.layout.landmasses?.length) {
+          const points = seaRoute(this.layout, this.layout.countries[data.seller].port, this.layout.countries[data.buyer].port).map(p => this.point(p, .25));
+          curve = new T.CurvePath(); for (let i = 1; i < points.length; i++) curve.add(new T.LineCurve3(points[i - 1], points[i]));
+        } else curve = new T.QuadraticBezierCurve3(from, mid, to);
         const geometry = new T.BufferGeometry().setFromPoints(curve.getPoints(40));
         const material = data.channel === 'direct' ? new T.LineBasicMaterial({ color: colors[data.channel] }) : new T.LineDashedMaterial({ color: colors[data.channel], dashSize: data.channel === 'barter' ? .45 : 1.3, gapSize: .8 });
         const line = new T.Line(geometry, material); line.computeLineDistances();
@@ -275,8 +322,8 @@ export class Atlas3D {
   zoom(factor) { this.camera.zoom = T.MathUtils.clamp(this.camera.zoom * factor, .8, 3); this.camera.updateProjectionMatrix(); this.dirty = true; }
   resize() {
     const width = this.surface.clientWidth, height = this.surface.clientHeight; if (!width || !height || this.disposed) return;
-    const scale = width < 600 ? .18 : .13, changed = this.depthScale !== scale; this.depthScale = scale;
-    const aspect = width / height, vertical = Math.max(112, 161 / aspect);
+    const scale = .105, changed = this.depthScale !== scale; this.depthScale = scale;
+    const aspect = width / height, vertical = Math.max(this.layout.landmasses?.length ? 96 : 112, 161 / aspect);
     this.camera.left = -vertical * aspect / 2; this.camera.right = vertical * aspect / 2;
     this.camera.top = vertical / 2; this.camera.bottom = -vertical / 2; this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height); this.dirty = true;
@@ -287,8 +334,9 @@ export class Atlas3D {
     this.camera.updateMatrixWorld();
     const positions = new Map();
     for (const [key, entry] of this.countries) {
-      const point = this.point(entry.spec.label, 12).project(this.camera);
-      positions.set(key, { x: (point.x + 1) * 50, y: (1 - point.y) * 50, visible: point.z > -1 && point.z < 1 });
+      const point = this.point(entry.spec.label, 3).project(this.camera);
+      const anchor = this.point(entry.spec.position, 1.5).project(this.camera);
+      positions.set(key, { x: (point.x + 1) * 50, y: (1 - point.y) * 50, anchorX: (anchor.x + 1) * 50, anchorY: (1 - anchor.y) * 50, visible: point.z > -1 && point.z < 1 });
     }
     this.onProject(positions);
   }

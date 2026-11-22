@@ -28,10 +28,28 @@ diesel model in early eras and the container vessel in the modern era; original
 steam freighters are moored in all early-era ports.
 
 Country centers and ports still come from `webapp/assets/map/layout.json`.
-`position` locates a 3D island, `port` locates its dock, and `label` anchors the HTML
-country button. Coordinates use the JSON `viewBox`, and remain editable without
-changing the engine. The SVG `background` is used by the title and 2D fallback;
-changing that image does not replace the actual 3D terrain geometry.
+`position` locates the country's town, `port` locates its dock, and `label` anchors
+the HTML country button. Coordinates use the JSON `viewBox`, and remain editable
+without changing the engine. The SVG `background` is used by the title and 2D
+fallback; changing that image does not replace the actual 3D terrain geometry.
+
+The current world uses two connected continental landmasses, three sovereign
+islands and five small islets. `landmasses[].outline` contains the shared coastline;
+each country's `region` polygon specifies its territory. Neighboring countries
+reuse exactly the same border vertices, so they do not become separate island
+pedestals. `color` tints the territory and `portAngle` rotates the dock in radians.
+`terrain` supplies ridge/forest/river paths. Geography keeps the same scale and
+coordinates across screen sizes; only the camera and label callouts adapt.
+
+Sea routes use `js/map-navigation.js` to find water paths around the shared
+coastlines. This changes the drawn route only, not trade rules or delivery times.
+
+Optional new Tripo GLBs go in `assets/map/props/` and are registered in the layout's
+`props` list, e.g. `{"model":"mountain-ridge","position":[1100,440],"size":18,"rotation":0.4}`.
+The filename excludes `.glb`; position is in map coordinates, size is the maximum
+horizontal length in 3D units, and rotation is in radians. The staged prompts and
+export checklist are in `assets/map/tripo-brief.md`. Existing terrain remains usable
+with an empty props list; paid model generation was not run.
 
 The 2D button preserves the original SVG map and all country/trade interactions.
 If WebGL is unavailable or its context is lost, the same fallback appears
