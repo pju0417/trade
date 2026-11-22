@@ -218,6 +218,9 @@ function worldMap() {
             <button type="button" data-camera="reset" aria-label="처음 시점" title="처음 시점">⌂</button>
             <button type="button" data-camera="town">마을 보기</button>
             <button type="button" data-camera="port">항구 보기</button>
+            <button type="button" data-camera="warehouse">창고 확대</button>
+            <button type="button" data-camera="berth">하역 확대</button>
+            <output class="atlas-zoom" aria-label="지도 확대 배율" aria-live="off">1×</output>
           </div>
         </div>
         <section id="route-cargo" class="route-cargo" aria-label="교역로와 운송 물건"></section>
@@ -846,6 +849,10 @@ const TOWN_PRODUCTION = {
 };
 const FARM_TOWNS = new Set(['Grainia', 'Tropia', 'Agrea']);
 const NEAR_ZOOM = 5.6;
+const MIN_ATLAS_ZOOM = .8;
+const MAX_ATLAS_ZOOM = 36;
+const ATLAS_DETAIL_ZOOM = 24;
+const LOCAL_VIEWS = new Set(['town', 'port', 'warehouse', 'berth']);
 const ATLAS_TRIP_MS = 10400;
 
 function dockLayout(continent) {
@@ -1190,19 +1197,65 @@ class TradeAtlas {
     }
   }
 
-  matrices(width, height) {
-    const { x, z, yaw, zoom } = this.camera;
-    const pitch = this.pitch(width, zoom);
-    const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
+  projection(width, height, zoom = this.camera.zoom) {
     const halfW = Math.max(width < 500 ? 10.3 : 10.9, 5.95 * width / height) / zoom;
-    const halfH = halfW * height / width;
+    return { halfW, halfH: halfW * height / width, pitch: this.pitch(width, zoom) };
+  }
+
+  lookHeight(x = this.camera.x, z = this.camera.z) {
+    return (Math.max(0, this.surface(x, z)) + .22) * within((this.camera.zoom - 2) / 10, 0, 1);
+  }
+
+  matrices(width, height) {
+    const { x, z, yaw } = this.camera;
+    const y = this.lookHeight();
+    const { halfW, halfH, pitch } = this.projection(width, height);
+    const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
     const right = [cy / halfW, 0, -sy / halfW];
     const up = [-sy * sp / halfH, cp / halfH, -cy * sp / halfH];
     const depth = [-sy * cp / 30, -sp / 30, -cy * cp / 30];
     return new Float32Array([
       right[0], up[0], depth[0], 0, right[1], up[1], depth[1], 0, right[2], up[2], depth[2], 0,
-      -x * right[0] - z * right[2], -x * up[0] - z * up[2], -x * depth[0] - z * depth[2], 1,
+      -x * right[0] - z * right[2], -x * up[0] - y * up[1] - z * up[2],
+      -x * depth[0] - y * depth[1] - z * depth[2], 1,
     ]);
+  }
+
+  mapOffset(screen, projection, ground, look) {
+    const { yaw } = this.camera;
+    const { halfW, halfH, pitch } = projection;
+    const across = screen.x * halfW;
+    const down = ((ground - look) * Math.cos(pitch) - screen.y * halfH) / Math.sin(pitch);
+    return [across * Math.cos(yaw) + down * Math.sin(yaw), -across * Math.sin(yaw) + down * Math.cos(yaw)];
+  }
+
+  zoomAround(factor, point) {
+    const camera = this.camera;
+    const next = within(camera.zoom * factor, MIN_ATLAS_ZOOM, MAX_ATLAS_ZOOM);
+    if (!point || next === camera.zoom) { camera.zoom = next; return; }
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const screen = {
+      x: (point.x - rect.left) / rect.width * 2 - 1,
+      y: 1 - (point.y - rect.top) / rect.height * 2,
+    };
+    const oldProjection = this.projection(rect.width, rect.height);
+    const oldLook = this.lookHeight();
+    let ground = Math.max(0, this.surface(camera.x, camera.z));
+    // Refine the ground point under the cursor before changing scale and tilt.
+    for (let i = 0; i < 3; i++) {
+      const [dx, dz] = this.mapOffset(screen, oldProjection, ground, oldLook);
+      ground = Math.max(0, this.surface(camera.x + dx, camera.z + dz));
+    }
+    const [dx, dz] = this.mapOffset(screen, oldProjection, ground, oldLook);
+    const [anchorX, anchorZ] = [camera.x + dx, camera.z + dz];
+    camera.zoom = next;
+    const newProjection = this.projection(rect.width, rect.height);
+    for (let i = 0; i < 3; i++) {
+      const [shiftX, shiftZ] = this.mapOffset(screen, newProjection, ground, this.lookHeight());
+      camera.x = within(anchorX - shiftX, -9, 9);
+      camera.z = within(anchorZ - shiftZ, -6, 6);
+    }
   }
 
   project(x, y, z) {
@@ -1267,6 +1320,8 @@ class TradeAtlas {
     this.matrix = this.matrices(width, height);
     gl.uniformMatrix4fv(this.uniform.camera, false, this.matrix);
     this.updateRouteStatus(now, activeStage);
+    const zoomText = `${Math.round(this.camera.zoom * 10) / 10}×`;
+    if (this.zoomDisplay.textContent !== zoomText) this.zoomDisplay.textContent = zoomText;
     const clock = this.motion.matches ? 0 : now / 1000;
     gl.uniform1f(this.uniform.time, clock % 180.0);
     const draw = (buffer, mode) => {
@@ -1282,6 +1337,7 @@ class TradeAtlas {
     if (this.activeRoads) draw(this.activeRoads, 2);
     const mesh = [];
     if (!this.motion.matches) for (const [i, { forward, reverse }] of this.ambient.entries()) {
+      if (this.camera.zoom > 12 && forward.type === 'plane') continue; // Keep dock and street close-ups clear.
       const travel = (clock / (22 + i * 2) + i * .27) % 2;
       this.craft(mesh, travel < 1 ? forward : reverse, travel % 1);
     }
@@ -1368,7 +1424,7 @@ class TradeAtlas {
       const stage = activeStage || route.stages.at(-1);
       const progress = activeStage ? within((elapsed - stage.begin) / (stage.end - stage.begin), 0, 1) : 1;
       const [x, z] = craftLocation(stage, progress);
-      const zoom = stage.type === 'ship' || stage.type === 'plane' ? 3.65 : NEAR_ZOOM;
+      const zoom = stage.dock ? 19 : stage.type === 'truck' ? 12 : stage.type === 'plane' ? 4.5 : 7;
       const blend = this.lastCameraFrame ? 1 - Math.exp(-Math.max(0, now - this.lastCameraFrame) / 140) : .12;
       this.camera.x += (x - this.camera.x) * blend;
       this.camera.z += (z - this.camera.z) * blend;
@@ -1376,7 +1432,9 @@ class TradeAtlas {
     } else if (this.cameraMotion) {
       const { started, from, target } = this.cameraMotion;
       const t = within((now - started) / 370, 0, 1);
-      for (const key of ['x', 'z', 'zoom']) this.camera[key] = from[key] + (target[key] - from[key]) * (t * t * (3 - 2 * t));
+      const ease = t * t * (3 - 2 * t);
+      for (const key of ['x', 'z']) this.camera[key] = from[key] + (target[key] - from[key]) * ease;
+      this.camera.zoom = from.zoom * (target.zoom / from.zoom) ** ease;
       if (t === 1) this.cameraMotion = null;
     }
     this.lastCameraFrame = now;
@@ -1384,8 +1442,16 @@ class TradeAtlas {
 
   localView(place) {
     const country = this.selectedCountry || S.country;
-    const point = place === 'port' ? dockLayout(settlementLayout(country).area).point(.19, .03) : mapXZ(MAP_POSITIONS[country]);
-    const target = { x: point[0], z: point[1], zoom: NEAR_ZOOM };
+    const town = settlementLayout(country);
+    const dock = dockLayout(town.area);
+    const points = {
+      town: mapXZ(MAP_POSITIONS[country]),
+      port: dock.point(.19, .03),
+      warehouse: town.point(-.24, -.12),
+      berth: dock.point(.43, .16),
+    };
+    const [x, z] = points[place];
+    const target = { x, z, zoom: place === 'warehouse' || place === 'berth' ? ATLAS_DETAIL_ZOOM : NEAR_ZOOM };
     if (this.motion.matches) Object.assign(this.camera, target);
     else this.cameraMotion = { started: performance.now(), from: { ...this.camera }, target };
   }
@@ -1406,7 +1472,7 @@ class TradeAtlas {
   changeCamera(action, point) {
     this.following = false;
     this.cameraMotion = null;
-    if (action === 'town' || action === 'port') {
+    if (LOCAL_VIEWS.has(action)) {
       this.localView(action);
       if (this.viewport.getBoundingClientRect().top < $('#status').getBoundingClientRect().bottom) {
         this.viewport.closest('#world').scrollIntoView({ block: 'start' });
@@ -1415,16 +1481,7 @@ class TradeAtlas {
     const camera = this.camera;
     if (action === 'reset') Object.assign(camera, { x: 0, z: 0, zoom: 1, yaw: -.12 });
     if (action === 'left' || action === 'right') camera.yaw += action === 'right' ? .23 : -.23;
-    if (typeof action === 'number') {
-      const previous = camera.zoom;
-      camera.zoom = within(previous * action, .8, 8);
-      if (point && camera.zoom !== previous) {
-        const rect = this.canvas.getBoundingClientRect();
-        const offset = 1 - previous / camera.zoom;
-        this.pan(-(point.x - rect.left - rect.width / 2) * offset,
-          -(point.y - rect.top - rect.height / 2) * offset, previous);
-      }
-    }
+    if (typeof action === 'number') this.zoomAround(action, point);
     this.render();
   }
 
@@ -1433,8 +1490,10 @@ class TradeAtlas {
     this.cameraMotion = null;
     const { yaw } = this.camera;
     const width = this.viewport.clientWidth, height = this.viewport.clientHeight;
-    const worldPerPixel = 2 * Math.max(width < 500 ? 10.3 : 10.9, 5.95 * width / height) / width / zoom;
-    const across = -dx * worldPerPixel, down = -dy * worldPerPixel / Math.sin(this.pitch(width, zoom));
+    if (!width || !height) return;
+    const { halfW, pitch } = this.projection(width, height, zoom);
+    const worldPerPixel = 2 * halfW / width;
+    const across = -dx * worldPerPixel, down = -dy * worldPerPixel / Math.sin(pitch);
     this.camera.x = within(this.camera.x + across * Math.cos(yaw) + down * Math.sin(yaw), -9, 9);
     this.camera.z = within(this.camera.z - across * Math.sin(yaw) + down * Math.cos(yaw), -6, 6);
   }
@@ -1443,6 +1502,7 @@ class TradeAtlas {
     const canvas = this.canvas;
     this.badges = [...this.viewport.querySelectorAll('.atlas-cargo-badge')];
     this.landmarks = [...this.viewport.querySelectorAll('.atlas-landmark')];
+    this.zoomDisplay = $('.atlas-zoom', this.viewport.parentElement);
     this.viewport.addEventListener('wheel', (event) => {
       if (this.disposed) return;
       event.preventDefault();

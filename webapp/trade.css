@@ -615,3 +615,14 @@ h1, h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; }
 @media (prefers-reduced-motion: reduce) {
   [data-act="follow-shipment"] { display: none; }
 }
+
+.atlas-controls :is([data-camera="warehouse"], [data-camera="berth"]) { padding-inline: .6rem; font-size: .83rem; }
+.atlas-zoom {
+  display: inline-grid;
+  min-width: 3.1rem;
+  min-height: 44px;
+  place-items: center;
+  color: #ffefd1;
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+}
