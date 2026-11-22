@@ -492,6 +492,8 @@ function bindHarbor(frame) {
     if (!control || (dragged && view.contains(control) && event.detail)) return;
     const action = control.dataset.harbor;
     if (action === 'home') {
+      if (tradeAtlas) tradeAtlas.following = false;
+      tradeAtlas?.updateFollowControl();
       frame.classList.add('showing-harbor');
       setZoom(1);
       $('.harbor-tools button', frame).focus({ preventScroll: true });
@@ -790,6 +792,7 @@ document.addEventListener('click', (e) => {
   }
   if (el.dataset.act === 'follow-shipment') {
     if (tradeAtlas?.ready && displayedTrade !== null) {
+      openTradeMap();
       tradeAtlas.following = !tradeAtlas.following;
       tradeAtlas.scenic = false;
       if (tradeAtlas.following) {
