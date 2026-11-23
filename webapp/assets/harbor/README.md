@@ -9,8 +9,9 @@ and 34–35k triangles each). The remaining GLBs are the original locally made
 low-poly harbor, vehicle, aircraft, factory and later-era variants from that project.
 
 The renderer is `webapp/js/atlas-3d.js`. Shared geometry/textures are cached, static
-parts are batched by material, models load on demand, pixel density is capped at
-1.35 and rendering is capped at 30 frames/second. Offscreen/hidden maps stop drawing.
+parts are batched by material and models load on demand. The renderer uses at least
+one pixel per CSS pixel and supersamples up to 2× within a two-megapixel budget.
+Rendering is capped at 30 frames/second. Offscreen/hidden maps stop drawing.
 Reduced motion and teacher pause freeze the simulation. A removed room map disposes
 its renderer; the shared model prototypes remain reusable within that page.
 
@@ -84,6 +85,8 @@ approach and use the same camera and coordinates as the world terrain.
 The title and 2D map use `webapp/assets/map/terrain-chart.webp`, an overhead view of the supplied mesh. Set `background` in `webapp/assets/map/layout.json` to another image filename in the same directory.
 
 The 3D map loads `world-terrain-web.glb` (6.55 MB, 158,408 triangles, three 2048 px textures). Set `terrainModel.file` to a replacement GLB. Its origin is the chart center, Y is up and positive Z is south. Horizontal scale is 105, the vertical multiplier is 0.65, and base elevation is -0.875. Sea level is -0.5 in scene units.
+
+In `webapp/assets/map/layout.json`, the optional `terrainModel.detailColor` points to a higher-resolution base-color image with the same UV layout as the GLB. The current image is `materials/world-color-4k.webp`. Replace it alongside the mesh or remove the field to use the embedded texture at every zoom. The separate title and 2D chart is `terrain-chart.webp` (2400 × 2200).
 
 The 1200 by 1100 chart and WebGL share coordinates. A chart unit equals 0.105 scene units. Each country's `position` is the town center, `ground` is surface elevation in scene units, and `label` anchors its name. The dock uses `port` and `portAngle` (radians). A short water segment to `approach` joins the offshore navigation grid. For a new coastline update these placements and `landmasses[].outline` together. The outlines follow the projected mesh at sea level with clearance for navigation.
 

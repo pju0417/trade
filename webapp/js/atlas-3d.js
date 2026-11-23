@@ -71,7 +71,6 @@ export class Atlas3D {
     this.scene = new T.Scene(); this.scene.background = new T.Color('#9ebfc0');
     this.scene.fog = new T.Fog('#89aeb0', 260, 480);
     this.renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'low-power' });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.35));
     this.renderer.outputColorSpace = T.SRGBColorSpace;
     this.renderer.toneMapping = T.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.08;
     this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = T.PCFSoftShadowMap;
@@ -219,6 +218,7 @@ export class Atlas3D {
       this.terrain.traverse(part => {
         if (!part.isMesh) return;
         if (field) this.paintFarmSoil(part, field);
+        if (part.material.map) part.material.map.anisotropy = Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
         part.castShadow = part.receiveShadow = true;
         part.userData.sharedAsset = true;
       });
@@ -265,6 +265,38 @@ export class Atlas3D {
           vec3 soil = vec3(.17, .108, .051) * (.83 + .27 * row + .24 * diffuseColor.g);
           vec3 overview = mix(diffuseColor.rgb, soil, mask * .94);
           diffuseColor.rgb = overview;
+          if (detailBlend > .001) {
+            vec3 n = abs(normalize(landNormal));
+            vec3 w = pow(n,vec3(4.));
+            w /= max(.001,w.x+w.y+w.z);
+            vec3 rock = texture2D(rockTile,landPosition.zy*.27).rgb*w.x
+                      + texture2D(rockTile,landPosition.xz*.27).rgb*w.y
+                      + texture2D(rockTile,landPosition.xy*.27).rgb*w.z;
+            vec3 meadow = texture2D(grassTile, farmXZ*.42).rgb;
+            vec3 fine = mix(rock, meadow, smoothstep(.58,.94,n.y));
+            float grain = dot(fine, vec3(.23,.64,.13));
+            vec3 bedrock = mix(overview,vec3(.17,.16,.14),.40)*(.70+grain*2.1);
+            vec3 land = mix(bedrock,overview*(.64+1.9*grain),smoothstep(.56,.91,n.y));
+            float river = smoothstep(.01,.065,overview.b-overview.r) * smoothstep(.0,.034,overview.b-overview.g);
+            diffuseColor.rgb = mix(overview,land,detailBlend*(1.-river)*(1.-mask)*.85);
+            // Rebuild the upland surface at landscape scale, retaining mapped rivers.
+            vec2 basin = (farmXZ-mineOrigin-vec2(-9.3,3.8))/vec2(19.,16.);
+            float inland = 1.-smoothstep(.81,1.12,length(basin));
+            if (inland > .001) {
+              float soil = texture2D(earthTile, farmXZ*.09).g;
+              float grass = dot(meadow,vec3(.27,.62,.11));
+              float strata = dot(rock,vec3(.27,.62,.11));
+              float rough = smoothstep(.09,.51,1.-n.y) + smoothstep(4.5,7.7,landPosition.y)*.58;
+              vec3 pasture = mix(vec3(.064,.104,.045),vec3(.24,.256,.105),clamp(grass*3.7+soil*.65,0.,1.));
+              vec3 shale = mix(vec3(.059,.067,.066),vec3(.35,.33,.277),clamp(strata*3.5,0.,1.));
+              float weather = dot(texture2D(grassTile,farmXZ*.059).rgb,vec3(.27,.62,.11));
+              vec3 localGround = mix(pasture,shale,clamp(rough+soil*.36+weather*.63,0.,1.));
+              localGround *= .64 + clamp(grass*2.25 + weather*1.3,.0,.93);
+              float frost = smoothstep(5.8,7.7,landPosition.y+soil*2.)*smoothstep(.48,.86,n.y);
+              localGround = mix(localGround,vec3(.68,.70,.66)*(.73+strata),frost*.89);
+              diffuseColor.rgb = mix(diffuseColor.rgb,localGround,detailBlend*inland*(1.-river)*.81);
+            }
+          }
           float mineDistance = distance(farmXZ,mineOrigin);
           if (detailBlend > .001 && mineDistance < 9.) {
             vec3 weights = pow(abs(normalize(landNormal)),vec3(4.));
@@ -274,7 +306,7 @@ export class Atlas3D {
                        + texture2D(rockTile,landPosition.xy*.86).rgb*weights.z;
             vec3 gravel = texture2D(grassTile,landPosition.xz*.8).rgb * vec3(.82,.88,.76);
             vec3 ground = mix(stone * vec3(.77,.83,.87), gravel,weights.y*.82);
-            diffuseColor.rgb = mix(overview,ground,detailBlend*(1.-smoothstep(4.,9.,mineDistance)));
+            diffuseColor.rgb = mix(diffuseColor.rgb,ground,detailBlend*(1.-smoothstep(4.,9.,mineDistance)));
           }
           if (detailBlend > .001 && distance(farmXZ, farmOrigin) < 12.) {
             vec3 turf = texture2D(grassTile, farmXZ * .72).rgb;
@@ -294,7 +326,7 @@ export class Atlas3D {
             float trail = (1. - smoothstep(.12,.25, abs(lane.x - .97 + .19 * lane.y))) *
                           smoothstep(-1.9,-1.7,lane.y) * (1. - smoothstep(-.3,.15,lane.y));
             closeGround = mix(closeGround,loam*1.14,trail);
-            diffuseColor.rgb = mix(overview, mix(closeGround, furrows, mask), detailBlend * local);
+            diffuseColor.rgb = mix(diffuseColor.rgb, mix(closeGround, furrows, mask), detailBlend * local);
           }`);
     };
   }
@@ -612,6 +644,8 @@ export class Atlas3D {
     const aspect = width / height, vertical = Math.max(this.layout.landmasses?.length ? 96 : 112, (this.layout.terrainModel ? 124 : 161) / aspect);
     this.camera.left = -vertical * aspect / 2; this.camera.right = vertical * aspect / 2;
     this.camera.top = vertical / 2; this.camera.bottom = -vertical / 2; this.camera.updateProjectionMatrix();
+    const pixelRatio = Math.max(1,Math.min(Math.max(devicePixelRatio,1.25),2,Math.sqrt(2000000/(width*height))));
+    if (this.renderer.getPixelRatio() !== pixelRatio) this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(width, height); this.dirty = true;
     if (changed) { for (const entry of this.routes.values()) { this.scene.remove(entry.group); this.clear(entry.group); } this.routes.clear(); }
     if (this.state) this.update(this.state, this.tradeData, this.selected, this.showRoutes);
@@ -662,7 +696,22 @@ export class Atlas3D {
     if (!this.dirty && !moving) return;
     if (moving) this.elapsed += dt;
     this.water.material.uniforms.time.value = this.elapsed;
-    if (this.detailBlend) this.detailBlend.value = T.MathUtils.smoothstep(this.camera.zoom, 1.6, 6);
+    if (this.detailBlend) this.detailBlend.value = T.MathUtils.smoothstep(this.camera.zoom, 1.25, 3.4);
+    if (this.camera.zoom > 1.45 && this.terrainMaterials?.length && !this.detailColorRequested &&
+        this.layout.terrainModel.detailColor && this.renderer.capabilities.maxTextureSize >= 4096) {
+      this.detailColorRequested = true;
+      const url = new URL('../assets/map/' + this.layout.terrainModel.detailColor, import.meta.url).href;
+      if (!modelCache.has(url)) modelCache.set(url,new T.TextureLoader().loadAsync(url).catch(error => {
+        modelCache.delete(url); throw error;
+      }));
+      modelCache.get(url).then(texture => {
+        if (this.disposed) return;
+        texture.flipY = false; texture.colorSpace = T.SRGBColorSpace;
+        texture.anisotropy = Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
+        for (const material of this.terrainMaterials) material.map = texture;
+        this.dirty = true;
+      }).catch(() => { /* The embedded terrain map remains available offline. */ });
+    }
     this.water.material.uniforms.nearBlend.value = this.layout.countries.Tropia?.bananaField ?
       T.MathUtils.smoothstep(this.camera.zoom, 2, 6) : 0;
     for (const entry of this.routes.values()) {
