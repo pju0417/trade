@@ -4,6 +4,7 @@ import { GLTFLoader } from '../assets/three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from '../assets/three/addons/utils/BufferGeometryUtils.js';
 import { buildExportYard, equipExportYard, harborTextures, loadExportCargo, loadHarborCoast } from './tropia-port.js';
 import { seaRoute } from './map-navigation.js';
+import { buildMineWorks, equipMinePort, loadMineTerrain } from './mineria-port.js';
 
 // Local, preserved GLBs. Shared geometry/textures are loaded once across room maps.
 const modelCache = new Map();
@@ -111,6 +112,7 @@ export class Atlas3D {
   }
   buildWater() {
     const inlet = this.point(this.layout.countries.Tropia?.port ?? [0, 0]);
+    const mineInlet = this.point(this.layout.countries.Mineria?.port ?? [0, 0]);
     const coast = new T.TextureLoader().load(new URL('../assets/map/materials/coast-distance.png', import.meta.url).href, () => { this.dirty = true; });
     this.coastTexture = coast;
     const ripples = new T.TextureLoader().load(new URL('../assets/map/materials/water-surface.png', import.meta.url).href, () => { this.dirty = true; });
@@ -119,7 +121,8 @@ export class Atlas3D {
     const uniforms = T.UniformsUtils.clone(T.UniformsLib.lights);
     Object.assign(uniforms, {
       time: { value: 0 }, coast: { value: coast }, ripples: { value: ripples },
-      inlet: { value: new T.Vector2(inlet.x, -inlet.z) }, nearBlend: { value: 0 },
+      inlet: { value: new T.Vector2(inlet.x, -inlet.z) },
+      mineInlet: { value: new T.Vector2(mineInlet.x, -mineInlet.z) }, nearBlend: { value: 0 },
       chart: { value: new T.Vector2(this.layout.viewBox[2] * .105, this.layout.viewBox[3] * this.depthScale) },
       coastEnabled: { value: this.layout.terrainModel ? 1 : 0 },
     });
@@ -137,7 +140,7 @@ export class Atlas3D {
         }`,
       fragmentShader: `varying vec2 p;
         uniform sampler2D coast, ripples;
-        uniform vec2 inlet, chart;
+        uniform vec2 inlet, mineInlet, chart;
         uniform float time, coastEnabled, nearBlend;
         uniform bool receiveShadow;
         #include <common>
@@ -146,7 +149,8 @@ export class Atlas3D {
         #include <shadowmask_pars_fragment>
         void main(){
           float offshore = (texture2D(coast, p/chart + .5).r * 255. - 128.) * .0525;
-          float local = nearBlend * (1.-smoothstep(7.,14.,distance(inlet,p)));
+          float mineDistance = distance(mineInlet,p);
+          float local = nearBlend * (1.-smoothstep(7.,14.,min(distance(inlet,p),mineDistance)));
           vec3 broad = texture2D(ripples, p*.008 + time*vec2(.0007,.0003)).rgb;
           float shelf = (1.-smoothstep(.05,4.9,offshore)) * coastEnabled;
           vec3 color = mix(vec3(.012,.056,.096),vec3(.028,.14,.155),shelf);
@@ -160,7 +164,8 @@ export class Atlas3D {
             vec3 reflected = reflect(-eye,normal);
             float shoal = (1.-smoothstep(-.12,2.8,offshore+.30*(broad.r-.5))) * coastEnabled;
             float shadow = getShadowMask();
-            vec3 bay = mix(vec3(.008,.078,.108),vec3(.082,.31,.236),shoal);
+            vec3 shallows = mix(vec3(.082,.31,.236),vec3(.083,.20,.20),1.-smoothstep(7.,14.,mineDistance));
+            vec3 bay = mix(vec3(.008,.078,.108),shallows,shoal);
             bay += vec3(.046,.062,.040)*waves.b*chop.b*shoal;
             bay *= (.80+.36*normal.z+.19*broad.g)*mix(.45,1.,shadow);
             float sky = pow(1.-max(.0,dot(eye,normal)),2.);
@@ -241,11 +246,13 @@ export class Atlas3D {
       shader.uniforms.earthTile = { value: tiles.earth };
       shader.uniforms.rockTile = { value: tiles.rock };
       shader.uniforms.farmOrigin = { value: new T.Vector2(first.x, first.z) };
+      const mine = this.point(this.layout.countries.Mineria?.position ?? [-10000, -10000]);
+      shader.uniforms.mineOrigin = { value: new T.Vector2(mine.x, mine.z) };
       shader.uniforms.farmSpacing = { value: spacing };
       shader.uniforms.farmExtent = { value: new T.Vector2(field.heights[0].length, field.heights.length) };
       shader.vertexShader = 'varying vec3 landNormal, landPosition; varying vec2 farmXZ;\n' + shader.vertexShader.replace('#include <worldpos_vertex>',
         '#include <worldpos_vertex>\nlandNormal = (vec4(normalize(normalMatrix * normal),0.) * viewMatrix).xyz; landPosition = (modelMatrix * vec4(transformed, 1.)).xyz; farmXZ = landPosition.xz;');
-      shader.fragmentShader = 'varying vec3 landNormal, landPosition; uniform sampler2D grassTile, earthTile, rockTile; uniform float detailBlend; varying vec2 farmXZ; uniform vec2 farmOrigin, farmExtent; uniform float farmSpacing;\n' +
+      shader.fragmentShader = 'varying vec3 landNormal, landPosition; uniform sampler2D grassTile, earthTile, rockTile; uniform float detailBlend; varying vec2 farmXZ; uniform vec2 farmOrigin, farmExtent, mineOrigin; uniform float farmSpacing;\n' +
         shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
           vec2 grid = (farmXZ - farmOrigin) / farmSpacing + 0.5;
           vec2 edge = min(grid, farmExtent - grid);
@@ -254,6 +261,17 @@ export class Atlas3D {
           vec3 soil = vec3(.17, .108, .051) * (.83 + .27 * row + .24 * diffuseColor.g);
           vec3 overview = mix(diffuseColor.rgb, soil, mask * .94);
           diffuseColor.rgb = overview;
+          float mineDistance = distance(farmXZ,mineOrigin);
+          if (detailBlend > .001 && mineDistance < 9.) {
+            vec3 weights = pow(abs(normalize(landNormal)),vec3(4.));
+            weights /= max(.0001,dot(weights,vec3(1.)));
+            vec3 stone = texture2D(rockTile,landPosition.zy*.86).rgb*weights.x
+                       + texture2D(rockTile,landPosition.xz*.86).rgb*weights.y
+                       + texture2D(rockTile,landPosition.xy*.86).rgb*weights.z;
+            vec3 gravel = texture2D(grassTile,landPosition.xz*.8).rgb * vec3(.82,.88,.76);
+            vec3 ground = mix(stone * vec3(.77,.83,.87), gravel,weights.y*.82);
+            diffuseColor.rgb = mix(overview,ground,detailBlend*(1.-smoothstep(4.,9.,mineDistance)));
+          }
           if (detailBlend > .001 && distance(farmXZ, farmOrigin) < 12.) {
             vec3 turf = texture2D(grassTile, farmXZ * .72).rgb;
             vec3 loam = texture2D(earthTile, farmXZ * 1.55).rgb;
@@ -345,7 +363,7 @@ export class Atlas3D {
         halo.position.y = 1.41; halo.visible = false; group.add(halo);
       }
       const town = new T.Group(); town.name = 'port-town'; town.scale.setScalar(imported ? .24 : .65); town.position.y = imported ? -.4 : .48; group.add(town);
-      if (!spec.bananaField) {
+      if (!spec.bananaField && !spec.mineWorks) {
         this.box(town, [19, .08, 1.1], [0, 1.73, 3.3], '#c4b589');
         this.box(town, [1.1, .08, 12], [4, 1.74, -.3], '#c4b589');
         for (const [x,z] of [[-8,-2],[-10,2],[8,-2],[10,0]]) this.tree(town, x, z, ['Tropia','Agrea'].includes(key));
@@ -412,6 +430,13 @@ export class Atlas3D {
         entry.port.scale.setScalar(1);
       }
       equipExportYard(this, entry, stage, spec, current);
+    } else if (entry.spec.mineWorks) {
+      if (!entry.mineYard) {
+        entry.mineYard = buildMineWorks(this, entry);
+        entry.mineYard.add(entry.assets);
+        entry.port.scale.setScalar(1);
+      }
+      equipMinePort(this, entry, stage, spec, current);
     } else {
       this.asset(entry.assets, spec.warehouse, 8.5, [-3, 1.8, -.5], Math.PI / 2, current);
       this.asset(entry.assets, spec.truck, 2.7, [3, 1.85, 3.1], 0, current);
@@ -430,7 +455,7 @@ export class Atlas3D {
       entry.orchard.visible = true;
     } else {
       if (entry.orchard) entry.orchard.visible = false;
-      this.industry(entry.assets, profile?.main);
+      if (!(entry.spec.mineWorks && profile?.main === 'ore')) this.industry(entry.assets, profile?.main);
     }
     this.dirty = true;
   }
@@ -507,6 +532,9 @@ export class Atlas3D {
   }
   reset() {
     this.inspectionTilt = 0;
+    this.mineBearing = 0;
+    this.controls.minAzimuthAngle = -.65;
+    this.controls.maxAzimuthAngle = .65;
     this.camera.position.set(0, 145, 108); this.controls.target.set(0, 0, 0); this.camera.zoom = 1; this.camera.updateProjectionMatrix(); this.controls.update(); this.dirty = true;
   }
   zoom(factor) { this.camera.zoom = T.MathUtils.clamp(this.camera.zoom * factor, this.controls.minZoom, this.controls.maxZoom); this.camera.updateProjectionMatrix(); this.dirty = true; }
@@ -572,16 +600,30 @@ export class Atlas3D {
     }
     if (this.dirty) {
       const tilt = T.MathUtils.smoothstep(this.camera.zoom, 2, 11);
-      if (Math.abs(tilt - this.inspectionTilt) > .0001) {
+      const mineria = this.countries.get('Mineria');
+      const focus = this.controls.target;
+      const mineDistance = mineria?.mineYard ? Math.hypot(focus.x-mineria.group.position.x,focus.z-mineria.group.position.z) : Infinity;
+      const bearing = 2.36 * tilt * (1-T.MathUtils.smoothstep(mineDistance,8,26));
+      if (Math.abs(tilt - this.inspectionTilt) > .0001 || Math.abs(bearing - this.mineBearing) > .0001) {
         const delta = tilt - this.inspectionTilt;
         const orbit = new T.Spherical().setFromVector3(this.camera.position.clone().sub(this.controls.target));
         orbit.phi = T.MathUtils.clamp(orbit.phi + .34 * delta, this.controls.minPolarAngle, this.controls.maxPolarAngle);
-        orbit.theta = T.MathUtils.clamp(orbit.theta - .37 * delta, this.controls.minAzimuthAngle, this.controls.maxAzimuthAngle);
+        this.controls.minAzimuthAngle = bearing - .65;
+        this.controls.maxAzimuthAngle = bearing + .65;
+        orbit.theta = T.MathUtils.clamp(orbit.theta - .37 * delta + bearing - this.mineBearing, this.controls.minAzimuthAngle, this.controls.maxAzimuthAngle);
         this.camera.position.copy(this.controls.target).add(new T.Vector3().setFromSpherical(orbit));
         this.inspectionTilt = tilt;
+        this.mineBearing = bearing;
         this.controls.update();
       }
       const tropia = this.countries.get('Tropia');
+      if (mineria?.mineYard) {
+        const anchor = mineria.group.position.clone().project(this.camera);
+        const closeZoom = this.camera.zoom > 1.65;
+        const near = closeZoom && (mineDistance < 12 || (Math.abs(anchor.x) < 2 && Math.abs(anchor.y) < 2));
+        if (near && !mineria.mineDetail) mineria.mineDetail = loadMineTerrain(this, mineria.mineYard, mineria.spec.mineWorks);
+        if (mineria.mineDetail) mineria.mineDetail.visible = closeZoom;
+      }
       if (tropia?.yard) {
         const harbor = tropia.group.position.clone().project(this.camera);
         const detail = this.camera.zoom > 1.65 && Math.abs(harbor.x) < 2.5 && Math.abs(harbor.y) < 2.5;
@@ -597,7 +639,6 @@ export class Atlas3D {
         }
       }
       const extent = Math.max(6, 110 / this.camera.zoom);
-      const focus = this.controls.target;
       this.sun.target.position.copy(focus);
       this.sun.position.set(focus.x - 70, focus.y + 125, focus.z + 55);
       Object.assign(this.sun.shadow.camera, { left: -extent, right: extent, top: extent, bottom: -extent });

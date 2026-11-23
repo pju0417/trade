@@ -59,6 +59,13 @@ close range. The apron and ramp use the cobblestone tile.
 
 ## Replacing the map
 
+Mineria's close-up iron mine uses `props/ore-headframe.glb` and
+`terrain/ore-bench.glb` under `webapp/assets/map/`. Both are original Tripo
+models. Adjust their offsets, horizontal lengths, heights and rotations in
+`countries.Mineria.mineWorks`. Offsets are east, absolute elevation and south
+relative to the town's horizontal center. The ore railway, wagons and chute
+are assembled in `webapp/js/mineria-port.js`.
+
 The close-up terrain at Tropia uses three independent Tripo meshes under
 `webapp/assets/map/terrain/`. Their placements are in `countries.Tropia.nearTerrain`
 in the layout. Each entry specifies its model filename without extension,
