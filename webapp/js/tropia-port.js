@@ -78,6 +78,20 @@ function handcart(atlas, yard, x, z) {
   }
 }
 
+function buildHarborStreet(atlas, yard, paving) {
+  // The office forecourt connects the low quay to the rear of the packing terrace.
+  pavedBlock(yard,.09,-2.18,2.9,1.18,-.51,.25,paving);
+  pavedBlock(yard,-1.48,-1.83,.50,.43,-.30,.25,paving);
+  atlas.asset(yard,'customs-office',1.10,[.72,.254,-2.22],.08,undefined,null,props);
+  atlas.asset(yard,'dock-cottage',.64,[-.94,.254,-2.26],-.12,undefined,null,props);
+  atlas.asset(yard,'dock-cottage',.60,[-.19,.254,-2.43],.12,undefined,null,props);
+  // Steps beside the later air apron keep this access in all three eras.
+  for (let i=0;i<8;i++) {
+    pavedBlock(yard,1.70,-1.92+i*.145,.32,.15,-.14,.31+i*.065,paving);
+  }
+  pavedBlock(yard,1.53,-2.02,.64,.35,-.16,.25,paving);
+}
+
 export function buildExportYard(atlas, entry) {
   const yard = new T.Group();
   yard.name = 'tropia-export-yard';
@@ -111,6 +125,7 @@ export function buildExportYard(atlas, entry) {
     for (const x of [start,(start+end)/2,end]) atlas.box(yard,[.045,.22,.045],[x,.875,1.56],'#725239');
     for (const y of [.845,.93]) span(atlas,yard,[start,y,1.56],[end,y,1.56],.014,'#94704b');
   }
+  buildHarborStreet(atlas, yard, paving);
   entry.grove = plantCoast(yard, entry.spec.groveSites || []);
   return yard;
 }
@@ -146,7 +161,8 @@ export function loadExportCargo(atlas, yard) {
 export function equipExportYard(atlas, entry, stage, models, current) {
   const group = entry.assets;
   atlas.asset(group, models.warehouse, 1.62, [.68, .77, -.3], Math.PI / 2, current);
-  atlas.asset(group, models.truck, .47, [.91, .775, .71], -.12, current);
+  if (stage) atlas.asset(group, models.truck, .47, [.91, .775, .71], -.12, current);
+  else atlas.asset(group, 'banana-lorry', .57, [.91, .775, .71], Math.PI / 2, current, null, props);
   if (stage) atlas.asset(group, 'gantry-crane', .71, [-2.45, .24, -.39], -1.1, current);
   else buildDerrick(atlas, group);
   // The berth runs parallel to the coastline. Its deck meets the lower apron.

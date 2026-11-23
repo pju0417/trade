@@ -36,6 +36,13 @@ and moorings. Zooming over the harbor lowers the camera continuously in the same
 scene. Cargo stacks load on the first approach. The coastal planting uses shared,
 instanced geometry at surveyed sites. The close-up treatment currently covers Tropia.
 
+Three further Tripo Studio assets furnish the customs forecourt and the early
+cargo fleet. The customs office and a pair of timber cottages share a street
+linked to the quay and packing terrace. The banana lorry appears in the steam
+era and yields to the standard diesel and electric trucks as industry advances.
+Their GLB files are in `assets/map/props/` (`customs-office`, `dock-cottage` and
+`banana-lorry`).
+
 The coastal distance image comes from the terrain waterline. If that mesh changes,
 update `materials/coast-distance.png`, the local `groveSites` and the crop ground
 samples in `layout.json`. Grove coordinates are local east, absolute elevation,
@@ -63,7 +70,7 @@ Optional new Tripo GLBs go in `assets/map/props/` and are registered in the layo
 The filename excludes `.glb`; position is in map coordinates, size is the maximum
 horizontal length in 3D units, and rotation is in radians. The staged prompts and
 export checklist are in `assets/map/tripo-brief.md`. Existing terrain remains usable
-with an empty props list; paid model generation was not run.
+with an empty props list.
 
 The 2D button shows the overhead terrain chart and all country/trade interactions.
 If WebGL is unavailable or its context is lost, the same fallback appears
