@@ -69,13 +69,13 @@ export class Atlas3D {
     this.surface.prepend(this.renderer.domElement);
     this.camera = new T.OrthographicCamera(-90, 90, 60, -60, .1, 600);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = false; this.controls.enablePan = false;
-    this.controls.minZoom = .8; this.controls.maxZoom = 3;
+    this.controls.enableDamping = false; this.controls.enablePan = true;
+    this.controls.minZoom = .8; this.controls.maxZoom = 28; this.controls.zoomToCursor = true;
     this.controls.minPolarAngle = .22; this.controls.maxPolarAngle = 1.05;
     this.controls.minAzimuthAngle = -.65; this.controls.maxAzimuthAngle = .65;
     // A touch drag scrolls the classroom page; two fingers control the camera.
     this.controls.touches.ONE = null;
-    this.controls.touches.TWO = T.TOUCH.DOLLY_ROTATE;
+    this.controls.touches.TWO = T.TOUCH.DOLLY_PAN;
     this.renderer.domElement.style.touchAction = 'pan-y';
     this.controls.addEventListener('change', () => { this.dirty = true; });
     this.scene.add(new T.HemisphereLight('#fff4da', '#456757', 1.8));
@@ -304,8 +304,46 @@ export class Atlas3D {
       for (let i = 0; i < 4; i++) this.box(entry.assets, [1, .03, .12], [-1.5 + i * 2, 1.84, -6], '#e5d9b7');
       this.asset(entry.assets, spec.plane, 4, [3, 1.85, -6], 0, current);
     }
-    this.industry(entry.assets, profile?.main);
+    if (profile?.main === 'banana' && entry.spec.bananaField) {
+      if (!entry.orchard) entry.orchard = this.buildBananaField(entry);
+      entry.orchard.visible = true;
+    } else {
+      if (entry.orchard) entry.orchard.visible = false;
+      this.industry(entry.assets, profile?.main);
+    }
     this.dirty = true;
+  }
+  buildBananaField(entry) {
+    const { origin, step, heights } = entry.spec.bananaField;
+    const field = new T.Group();
+    entry.group.add(field);
+    const center = this.point(entry.spec.position, entry.spec.ground);
+    const positions = [], colors = [], indices = [];
+    const width = heights[0].length;
+    const soil = new T.Color();
+    const root = new URL('../assets/map/props/', import.meta.url);
+    heights.forEach((line, row) => line.forEach((height, col) => {
+      const coords = [origin[0] + col * step, origin[1] + row * step];
+      const p = this.point(coords, height + .025).sub(center);
+      positions.push(p.x, p.y, p.z);
+      const ridge = row % 3 === 1;
+      soil.set(ridge ? '#76613f' : '#897447').multiplyScalar(.93 + .12 * Math.sin(row * 13 + col * 17));
+      colors.push(soil.r, soil.g, soil.b);
+      const i = row * width + col;
+      if (row && col) indices.push(i - width - 1, i - 1, i, i - width - 1, i, i - width);
+      if (ridge && col % 3 === 1) {
+        this.asset(field, 'banana-plant', .48 + (col % 4) * .025, p.toArray(), i * 2.4, undefined, null, root);
+      }
+    }));
+    const earth = new T.BufferGeometry();
+    earth.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+    earth.setAttribute('color', new T.Float32BufferAttribute(colors, 3));
+    earth.setIndex(indices);
+    earth.computeVertexNormals();
+    const surface = new T.Mesh(earth, new T.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
+    surface.receiveShadow = true;
+    field.add(surface);
+    return field;
   }
   industry(parent, main) {
     if (main === 'wheat' || main === 'banana') {
@@ -326,7 +364,6 @@ export class Atlas3D {
     for (const [key, entry] of this.countries) {
       this.updateCountry(entry, state.profiles?.[key]);
       entry.group.position.copy(this.point(entry.spec.position, entry.spec.ground ?? 0)); entry.port.position.copy(this.point(entry.spec.port));
-      entry.halo.visible = key === selected || key === state.country;
       entry.halo.material.color.set(key === state.country ? '#f9d474' : '#b4e3ce');
     }
     this.updateRoutes(routes); this.dirty = true;
@@ -367,9 +404,9 @@ export class Atlas3D {
     for (const [key, entry] of this.routes) if (!routes.has(key)) { this.scene.remove(entry.group); this.clear(entry.group); this.routes.delete(key); }
   }
   reset() {
-    this.camera.position.set(0, 145, 108); this.controls.target.set(0, 0, 0); this.camera.zoom = 1; this.controls.update(); this.dirty = true;
+    this.camera.position.set(0, 145, 108); this.controls.target.set(0, 0, 0); this.camera.zoom = 1; this.camera.updateProjectionMatrix(); this.controls.update(); this.dirty = true;
   }
-  zoom(factor) { this.camera.zoom = T.MathUtils.clamp(this.camera.zoom * factor, .8, 3); this.camera.updateProjectionMatrix(); this.dirty = true; }
+  zoom(factor) { this.camera.zoom = T.MathUtils.clamp(this.camera.zoom * factor, this.controls.minZoom, this.controls.maxZoom); this.camera.updateProjectionMatrix(); this.dirty = true; }
   resize() {
     const width = this.surface.clientWidth, height = this.surface.clientHeight; if (!width || !height || this.disposed) return;
     const scale = .105, changed = this.depthScale !== scale; this.depthScale = scale;
@@ -384,9 +421,10 @@ export class Atlas3D {
     this.camera.updateMatrixWorld();
     const positions = new Map();
     for (const [key, entry] of this.countries) {
+      entry.halo.visible = this.camera.zoom < 4 && (key === this.selected || key === this.state?.country);
       const point = this.point(entry.spec.label, 3).project(this.camera);
       const anchor = this.point(entry.spec.position, (entry.spec.ground ?? 0) + 1.5).project(this.camera);
-      positions.set(key, { x: (point.x + 1) * 50, y: (1 - point.y) * 50, anchorX: (anchor.x + 1) * 50, anchorY: (1 - anchor.y) * 50, visible: point.z > -1 && point.z < 1 });
+      positions.set(key, { x: (point.x + 1) * 50, y: (1 - point.y) * 50, anchorX: (anchor.x + 1) * 50, anchorY: (1 - anchor.y) * 50, visible: point.z > -1 && point.z < 1 && Math.abs(anchor.x) <= 1 && Math.abs(anchor.y) <= 1 });
     }
     this.onProject(positions);
   }
