@@ -113,46 +113,71 @@ export class Atlas3D {
     const inlet = this.point(this.layout.countries.Tropia?.port ?? [0, 0]);
     const coast = new T.TextureLoader().load(new URL('../assets/map/materials/coast-distance.png', import.meta.url).href, () => { this.dirty = true; });
     this.coastTexture = coast;
-    this.water = new T.Mesh(new T.PlaneGeometry(750, 750, 1, 1), new T.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 }, coast: { value: coast },
-        inlet: { value: new T.Vector2(inlet.x, -inlet.z) }, nearBlend: { value: 0 },
-        chart: { value: new T.Vector2(this.layout.viewBox[2] * .105, this.layout.viewBox[3] * this.depthScale) },
-        coastEnabled: { value: this.layout.terrainModel ? 1 : 0 },
-      },
-      vertexShader: 'varying vec2 p; void main(){p=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-      fragmentShader: `varying vec2 p; uniform float time, coastEnabled; uniform sampler2D coast; uniform vec2 chart;
-        uniform vec2 inlet; uniform float nearBlend;
-        void main(){float a=sin(p.x*1.5+p.y*.7+time*.7);float b=cos(p.y*1.2-p.x*.2+time*.5);
-        float wave=pow(max(0.,sin(p.x*.13+p.y*2.8+a*.8+time*.4)),16.)*(.5+.5*b);float depth=smoothstep(30.,290.,length(p));
-        vec3 color=mix(vec3(.018,.085,.105),vec3(.056,.15,.18),depth)+wave*.004;
-        float offshore = (texture2D(coast, p / chart + .5).r * 255. - 128.) * .0525;
-        float shallow = (1.-smoothstep(.06, 1.4, offshore)) * coastEnabled;
-        float crest = sin(offshore * 20. - time * .9 + .5*sin(p.x*5.+p.y*3.));
-        float foam = smoothstep(.78,1.,crest) * (1.-smoothstep(.02,.32,offshore)) * smoothstep(-.15,.8,sin(p.x*2.3+p.y*3.+sin(p.y*4.5)));
-        color = mix(color,vec3(.065,.22,.195),shallow * .62);
-        color += shallow * foam * vec3(.07,.11,.085);
-        float ripple = sin(p.x*15.+p.y*31.+sin(p.x*9.-time*.6)+time);
-        color += smoothstep(.93,1.,ripple)*(.5+.5*sin(p.y*5.+p.x*7.))*.009;
-        float local = nearBlend * (1. - smoothstep(7., 14., distance(inlet,p)));
-        if (local > .001) {
-          float swell = sin(p.x*2.3 + p.y*3.5 + .64*sin(p.x*3.-p.y) - time*.65);
-          float bed = sin(p.x*2.2 + sin(p.y*2.6)) * cos(p.y*3.4 + sin(p.x*1.4));
-          float lagoon = 1. - smoothstep(-.10,4.4,offshore + .20*bed);
-          vec3 bay = mix(vec3(.010,.067,.095),vec3(.044,.225,.19),lagoon);
-          bay += lagoon * (.5+.5*bed) * vec3(.019,.036,.019);
-          float breaking = sin(offshore*13. - time*1.05 + .65*swell);
-          float wash = smoothstep(.65,1.,breaking) * (1.-smoothstep(.03,.64,offshore));
-          bay += vec3(.14,.18,.16) * wash * smoothstep(-.42,.72,bed);
-          float smallWave = sin(p.y*27.+p.x*9.+2.4*sin(p.x*3.7+p.y*2.-time*.4)+time*.7);
-          bay += vec3(.036,.046,.045)*pow(max(0.,smallWave),8.)*smoothstep(-.15,.9,swell);
-          color = mix(color,bay,local);
-        }
-        gl_FragColor=vec4(color,1.);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
+    const ripples = new T.TextureLoader().load(new URL('../assets/map/materials/water-surface.png', import.meta.url).href, () => { this.dirty = true; });
+    ripples.wrapS = ripples.wrapT = T.RepeatWrapping;
+    this.rippleTexture = ripples;
+    const uniforms = T.UniformsUtils.clone(T.UniformsLib.lights);
+    Object.assign(uniforms, {
+      time: { value: 0 }, coast: { value: coast }, ripples: { value: ripples },
+      inlet: { value: new T.Vector2(inlet.x, -inlet.z) }, nearBlend: { value: 0 },
+      chart: { value: new T.Vector2(this.layout.viewBox[2] * .105, this.layout.viewBox[3] * this.depthScale) },
+      coastEnabled: { value: this.layout.terrainModel ? 1 : 0 },
+    });
+    this.water = new T.Mesh(new T.PlaneGeometry(750, 750), new T.ShaderMaterial({
+      lights: true, uniforms,
+      vertexShader: `varying vec2 p;
+        #include <common>
+        #include <shadowmap_pars_vertex>
+        void main(){
+          p = position.xy;
+          vec3 transformedNormal = normalMatrix * normal;
+          vec4 worldPosition = modelMatrix * vec4(position,1.);
+          #include <shadowmap_vertex>
+          gl_Position = projectionMatrix * viewMatrix * worldPosition;
+        }`,
+      fragmentShader: `varying vec2 p;
+        uniform sampler2D coast, ripples;
+        uniform vec2 inlet, chart;
+        uniform float time, coastEnabled, nearBlend;
+        uniform bool receiveShadow;
+        #include <common>
+        #include <packing>
+        #include <shadowmap_pars_fragment>
+        #include <shadowmask_pars_fragment>
+        void main(){
+          float offshore = (texture2D(coast, p/chart + .5).r * 255. - 128.) * .0525;
+          float local = nearBlend * (1.-smoothstep(7.,14.,distance(inlet,p)));
+          vec3 broad = texture2D(ripples, p*.008 + time*vec2(.0007,.0003)).rgb;
+          float shelf = (1.-smoothstep(.05,4.9,offshore)) * coastEnabled;
+          vec3 color = mix(vec3(.012,.056,.096),vec3(.028,.14,.155),shelf);
+          color *= .91+.18*broad.g;
+          if(local>.001){
+            vec3 waves = texture2D(ripples,p*.22 + time*vec2(-.011,.006)).rgb;
+            vec3 chop = texture2D(ripples,vec2(-p.y,p.x)*.48 + time*vec2(.012,.008)).rgb;
+            vec2 slope = (waves.rg-.5)*.78 + (chop.gr-.5)*vec2(.28,-.28);
+            vec3 normal = normalize(vec3(-slope.x,1.,slope.y));
+            vec3 eye = normalize(vec3(viewMatrix[0][2],viewMatrix[1][2],viewMatrix[2][2]));
+            vec3 reflected = reflect(-eye,normal);
+            float shoal = (1.-smoothstep(-.12,2.8,offshore+.30*(broad.r-.5))) * coastEnabled;
+            float shadow = getShadowMask();
+            vec3 bay = mix(vec3(.008,.078,.108),vec3(.082,.31,.236),shoal);
+            bay += vec3(.046,.062,.040)*waves.b*chop.b*shoal;
+            bay *= (.80+.36*normal.z+.19*broad.g)*mix(.45,1.,shadow);
+            float sky = pow(1.-max(.0,dot(eye,normal)),2.);
+            bay += vec3(.14,.23,.29)*sky;
+            vec3 sun = normalize(vec3(-70.,125.,55.));
+            bay += vec3(.62,.56,.41)*pow(max(.0,dot(sun,reflected)),65.)*shadow;
+            float surge = offshore + .10*(waves.r+chop.g-1.) + .055*sin(time*1.1+broad.r*9.);
+            float wash = (1.-smoothstep(.035,.20,abs(surge-.09))) * smoothstep(.30,.68,waves.g)*coastEnabled;
+            bay = mix(bay,vec3(.43,.54,.49),wash*.48);
+            color = mix(color,bay,local);
+          }
+          gl_FragColor=vec4(color,1.);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
         }`,
     }));
+    this.water.receiveShadow = true;
     this.water.rotation.x = -Math.PI / 2; this.water.position.y = -.5; this.scene.add(this.water);
   }
   regionShape(points, origin = null) {
@@ -590,7 +615,7 @@ export class Atlas3D {
     this.renderer.domElement.removeEventListener('pointerdown', this.pointerDown); this.renderer.domElement.removeEventListener('pointerup', this.pointerUp); this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
     this.clear(this.scene); for (const material of this.materials.values()) material.dispose();
     for (const material of this.terrainMaterials || []) material.dispose();
-    this.coastTexture?.dispose();
+    this.coastTexture?.dispose(); this.rippleTexture?.dispose();
     this.renderer.dispose(); this.renderer.domElement.remove();
   }
 }
