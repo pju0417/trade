@@ -48,6 +48,16 @@ function loadModel(name, root = assetRoot) {
   return modelCache.get(key);
 }
 
+function loadGeography(url) {
+  if (!modelCache.has(url)) {
+    modelCache.set(url, new GLTFLoader().loadAsync(url).catch(error => {
+      modelCache.delete(url);
+      throw error;
+    }));
+  }
+  return modelCache.get(url);
+}
+
 export class Atlas3D {
   constructor(surface, layout, { onSelect, onProject, onStatus, onFailure }) {
     this.surface = surface; this.layout = layout;
@@ -198,13 +208,7 @@ export class Atlas3D {
     const token = {};
     this.pending.add(token);
     try {
-      if (!modelCache.has(url)) {
-        modelCache.set(url, new GLTFLoader().loadAsync(url).catch(error => {
-          modelCache.delete(url);
-          throw error;
-        }));
-      }
-      const { scene } = await modelCache.get(url);
+      const { scene } = await loadGeography(url);
       if (this.disposed) return;
       this.terrain = scene.clone(true);
       this.terrain.name = 'world-geography';
@@ -416,6 +420,53 @@ export class Atlas3D {
     this.surface.dataset.assets = this.failures.size ? 'partial' : this.pending.size ? 'loading' : 'ready';
     this.onStatus(status);
   }
+  async loadInterior(entry) {
+    const spec = entry.spec.interior;
+    const group = new T.Group();
+    group.name = 'mineria-interior';
+    entry.group.add(group);
+    entry.interior = group;
+    this.pending.add(group);
+    try {
+      const {scene} = await loadGeography(new URL('../assets/map/'+spec.file, import.meta.url).href);
+      if (this.disposed) return;
+      const landscape = scene.clone(true);
+      landscape.traverse(o => {
+        if (o.isMesh) { o.userData.sharedAsset = true; o.receiveShadow = true; }
+      });
+      group.add(landscape);
+      this.districtLabels = spec.places.map(place => {
+        const el = document.createElement('span');
+        el.className = 'district-name';
+        el.hidden = true;
+        el.textContent = place.name;
+        this.surface.append(el);
+        return {el, anchor:this.point(place.position,place.ground + .48)};
+      });
+      this.dirty = true;
+    } catch {
+      if (!this.disposed) this.failures.add(spec.file);
+    } finally {
+      this.pending.delete(group);
+      if (!this.disposed) this.report();
+    }
+  }
+  projectDistricts() {
+    const width = this.surface.clientWidth, height = this.surface.clientHeight;
+    const placed = [];
+    for (const {el,anchor} of this.districtLabels || []) {
+      const p = anchor.clone().project(this.camera);
+      const x = (1+p.x)*width/2, y = (1-p.y)*height/2 - 10;
+      const visible = this.camera.zoom >= 2.6 && p.z > -1 && p.z < 1 &&
+        x > 48 && x < width-48 && y > 18 && y < height-12 &&
+        !placed.some(other => Math.abs(x-other.x)<88 && Math.abs(y-other.y)<21);
+      el.hidden = !visible;
+      if (visible) {
+        el.style.left = x+'px'; el.style.top = y+'px';
+        placed.push({x,y});
+      }
+    }
+  }
   updateCountry(entry, profile) {
     const stage = stageFor(profile), signature = `${stage}:${profile?.main}`;
     if (entry.signature === signature) return;
@@ -538,6 +589,23 @@ export class Atlas3D {
     this.camera.position.set(0, 145, 108); this.controls.target.set(0, 0, 0); this.camera.zoom = 1; this.camera.updateProjectionMatrix(); this.controls.update(); this.dirty = true;
   }
   zoom(factor) { this.camera.zoom = T.MathUtils.clamp(this.camera.zoom * factor, this.controls.minZoom, this.controls.maxZoom); this.camera.updateProjectionMatrix(); this.dirty = true; }
+  frameInterior(key) {
+    const spec = this.countries.get(key)?.spec;
+    if (!spec?.interior) return;
+    const sites = spec.interior.places.map(site => this.point(site.position, site.ground));
+    sites.push(this.point(spec.port));
+    const center = new T.Box3().setFromPoints(sites).getCenter(new T.Vector3());
+    this.reset();
+    this.controls.target.copy(center);
+    this.camera.position.add(center);
+    this.controls.update();
+    this.camera.updateMatrixWorld();
+    const extent = Math.max(...sites.map(site => {
+      const p = site.project(this.camera);
+      return Math.max(Math.abs(p.x),Math.abs(p.y));
+    }));
+    this.zoom(Math.min(5, .72 / Math.max(.01,extent)));
+  }
   resize() {
     const width = this.surface.clientWidth, height = this.surface.clientHeight; if (!width || !height || this.disposed) return;
     const scale = .105, changed = this.depthScale !== scale; this.depthScale = scale;
@@ -568,7 +636,11 @@ export class Atlas3D {
     const targets = [...this.countries.values()].flatMap(c => [c.group, c.port]);
     if (this.terrain) targets.push(this.terrain);
     // The selection ring is an annotation, so only solid geometry can take a hit.
-    const hit = ray.intersectObjects(targets, true).find(h => h.object.visible && h.object.isMesh && h.object.geometry.type !== 'RingGeometry');
+    const hit = ray.intersectObjects(targets, true).find(({object}) => {
+      if (!object.isMesh || object.geometry.type === 'RingGeometry') return false;
+      for (let node = object; node; node = node.parent) if (!node.visible) return false;
+      return true;
+    });
     if (hit && this.terrain && hit.point.y < this.water.position.y) return;
     for (let object = hit?.object; object; object = object.parent) if (object.userData.country) { this.onSelect(object.userData.country); return; }
     if (hit && this.terrain) {
@@ -603,6 +675,9 @@ export class Atlas3D {
       const mineria = this.countries.get('Mineria');
       const focus = this.controls.target;
       const mineDistance = mineria?.mineYard ? Math.hypot(focus.x-mineria.group.position.x,focus.z-mineria.group.position.z) : Infinity;
+      if (mineria?.spec.interior && this.camera.zoom > 1.45 && mineDistance < 62 && !mineria.interior)
+        this.loadInterior(mineria);
+      if (mineria?.interior) mineria.interior.visible = this.camera.zoom > 1.45;
       const bearing = 2.36 * tilt * (1-T.MathUtils.smoothstep(mineDistance,8,26));
       if (Math.abs(tilt - this.inspectionTilt) > .0001 || Math.abs(bearing - this.mineBearing) > .0001) {
         const delta = tilt - this.inspectionTilt;
@@ -644,6 +719,8 @@ export class Atlas3D {
       Object.assign(this.sun.shadow.camera, { left: -extent, right: extent, top: extent, bottom: -extent });
       this.sun.shadow.camera.updateProjectionMatrix();
       this.sun.shadow.normalBias = extent * .00055;
+      this.camera.updateMatrixWorld();
+      this.projectDistricts();
     }
     this.project(); this.renderer.render(this.scene, this.camera); this.dirty = false;
     this.surface.dataset.triangles = this.renderer.info.render.triangles;
@@ -654,6 +731,7 @@ export class Atlas3D {
     this.renderer.setAnimationLoop(null); this.resizeObserver?.disconnect(); this.intersectionObserver?.disconnect();
     this.reducedQuery.removeEventListener('change', this.motionChange); this.controls.dispose();
     this.renderer.domElement.removeEventListener('pointerdown', this.pointerDown); this.renderer.domElement.removeEventListener('pointerup', this.pointerUp); this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
+    for (const {el} of this.districtLabels || []) el.remove();
     this.clear(this.scene); for (const material of this.materials.values()) material.dispose();
     for (const material of this.terrainMaterials || []) material.dispose();
     this.coastTexture?.dispose(); this.rippleTexture?.dispose();

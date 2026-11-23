@@ -66,6 +66,14 @@ models. Adjust their offsets, horizontal lengths, heights and rotations in
 relative to the town's horizontal center. The ore railway, wagons and chute
 are assembled in `webapp/js/mineria-port.js`.
 
+Mineria's inland capital, farming district, northern rail settlement, upland
+mine and southern ironworks share one terrain-aligned mesh. Roads follow the
+height field and a rail line joins the northern settlement to the export yard.
+`countries.Mineria.interior.file` points to the regional GLB (local origin at
+the country's position and ground elevation). The `places` list supplies
+label names, chart coordinates and absolute heights. Its locations and the
+port determine the extent of the country overview.
+
 The close-up terrain at Tropia uses three independent Tripo meshes under
 `webapp/assets/map/terrain/`. Their placements are in `countries.Tropia.nearTerrain`
 in the layout. Each entry specifies its model filename without extension,

@@ -51,6 +51,16 @@
       "approach": [756, 252]
     },
     "Mineria": {
+      "interior": {
+        "file": "terrain/mineria-interior.glb",
+        "places": [
+          {"name":"중앙 분지 · 수도","position":[810,475],"ground":1.8},
+          {"name":"서부 농경지","position":[759,493],"ground":0.78},
+          {"name":"북부 역촌","position":[876,399],"ground":4.73},
+          {"name":"고지 광산","position":[891,456],"ground":5.14},
+          {"name":"남부 제철 지대","position":[846,560],"ground":4.93}
+        ]
+      },
       "mineWorks": {
         "ore-headframe": {"offset":[-1.92,3.28,-1.56],"length":1.38,"height":1.72,"rotation":0.35},
         "ore-bench": {"offset":[-2.01,2.32,0.56],"length":3.6,"height":1.56,"rotation":-0.28}

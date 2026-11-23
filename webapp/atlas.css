@@ -79,3 +79,18 @@ th{background:#163133;color:#e4d3ac}td,th{border-color:#7a89634d}fieldset{border
 @media print{@page{margin:1.5cm}body{background:white!important;color:black!important}.world-map,.title-map,.entry-background{display:none!important}.host-page:has(.pins) #app>:not(.pins){display:none!important}.pins,.pin-sheet,.pins table,.pins td,.pins th{background:white!important;color:black!important;border-color:#bbb!important}.pin-sheet+.pin-sheet{break-before:page}.pin-sheet h3{color:black!important;font-size:24pt}.pin-sheet table{font-size:18pt;width:100%;max-width:none}.pins>button,.pins>h2{display:none!important}}
 
 [data-map-mode='3d'] .harbor-detail .map-connectors { visibility: hidden; }
+
+.district-name {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: #192b27d6;
+  color: #f2e3c2;
+  font: 600 11px/1.35 system-ui, sans-serif;
+  white-space: nowrap;
+}
+[data-map-mode='2d'] .district-name { display: none; }
+[data-map-mode='2d'] .region-view { display: none; }
+.inspector-title .region-view { font-size: .85rem; padding: .4rem .65rem; }

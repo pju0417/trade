@@ -237,8 +237,12 @@ class WorldMap {
     const listings = (s.market || []).filter(o => o.seller === key).sort((a,b) => a.price - b.price);
     const rows = listings.map(o => `<li>${goodIcon(o.good)}<span>${esc(o.label || goods[o.good])}${o.gen > 1 ? ` ${o.gen}세대` : ''} <b>${o.qty}개</b></span><strong>${o.price}G</strong></li>`).join('');
     const canPropose = this.options.onPropose && key !== s.country;
-    const html = `<div class="inspector-title"><h3>${esc(name)}</h3><span>${p?.student ? '학생이 운영해요' : 'AI가 운영해요'}${p?.evaluated === false ? ' · AI 전용' : ''}</span></div><p class="inspector-main">대표 산업 ${esc(s.goods?.[p?.main] || goods[p?.main] || '정보 대기')} · 주력 ${esc(s.goods?.[p?.focus] || goods[p?.focus] || '정보 대기')}</p><ul class="country-listings">${rows || '<li>지금 시장에 내놓은 물건이 없어요.</li>'}</ul>${canPropose ? `<button type="button" class="map-propose" ${s.phase === 'trading' ? '' : 'disabled'}>${s.phase === 'trading' ? `${esc(name)}에 직접 거래 제안` : '거래 단계에서 제안할 수 있어요'}</button>` : ''}`;
+    const regionControl = this.layout.countries[key]?.interior ?
+      `<button type="button" class="region-view">${esc(name)} 국토 보기</button>` : '';
+    const html = `<div class="inspector-title"><h3>${esc(name)}</h3><span>${p?.student ? '학생이 운영해요' : 'AI가 운영해요'}${p?.evaluated === false ? ' · AI 전용' : ''}</span>${regionControl}</div><p class="inspector-main">대표 산업 ${esc(s.goods?.[p?.main] || goods[p?.main] || '정보 대기')} · 주력 ${esc(s.goods?.[p?.focus] || goods[p?.focus] || '정보 대기')}</p><ul class="country-listings">${rows || '<li>지금 시장에 내놓은 물건이 없어요.</li>'}</ul>${canPropose ? `<button type="button" class="map-propose" ${s.phase === 'trading' ? '' : 'disabled'}>${s.phase === 'trading' ? `${esc(name)}에 직접 거래 제안` : '거래 단계에서 제안할 수 있어요'}</button>` : ''}`;
     render(this.inspector, html, {});
+    const region = this.inspector.querySelector('.region-view');
+    if (region) region.onclick = () => this.three?.frameInterior(key);
     const button = this.inspector.querySelector('.map-propose'); if (button) button.onclick = () => this.options.onPropose(key);
   }
 }
