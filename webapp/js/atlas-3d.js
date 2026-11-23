@@ -114,8 +114,8 @@ export class Atlas3D {
       vertexShader: 'varying vec2 p; void main(){p=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
       fragmentShader: `varying vec2 p; uniform float time;
         void main(){float a=sin(p.x*1.5+p.y*.7+time*.7);float b=cos(p.y*1.2-p.x*.2+time*.5);
-        float wave=pow(max(0.,a*b),14.);float depth=smoothstep(30.,290.,length(p));
-        vec3 color=mix(vec3(.025,.13,.17),vec3(.10,.27,.31),depth)+wave*.012;
+        float wave=pow(max(0.,sin(p.x*.13+p.y*2.8+a*.8+time*.4)),16.)*(.5+.5*b);float depth=smoothstep(30.,290.,length(p));
+        vec3 color=mix(vec3(.018,.085,.105),vec3(.056,.15,.18),depth)+wave*.004;
         gl_FragColor=vec4(color,1.);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -130,6 +130,41 @@ export class Atlas3D {
       if (i) shape.lineTo(p.x, -p.z); else shape.moveTo(p.x, -p.z);
     });
     shape.closePath(); return shape;
+  }
+  async loadTerrain(spec) {
+    const url = new URL(spec.file, new URL('../assets/map/', import.meta.url)).href;
+    const token = {};
+    this.pending.add(token);
+    try {
+      if (!modelCache.has(url)) {
+        modelCache.set(url, new GLTFLoader().loadAsync(url).catch(error => {
+          modelCache.delete(url);
+          throw error;
+        }));
+      }
+      const { scene } = await modelCache.get(url);
+      if (this.disposed) return;
+      this.terrain = scene.clone(true);
+      this.terrain.name = 'world-geography';
+      this.terrain.scale.set(spec.scale, spec.scale * spec.relief, spec.scale);
+      this.terrain.position.y = spec.baseY;
+      this.terrain.traverse(part => {
+        if (!part.isMesh) return;
+        part.castShadow = part.receiveShadow = true;
+        part.userData.sharedAsset = true;
+      });
+      this.scene.add(this.terrain);
+      this.terrain.updateMatrixWorld(true);
+      this.dirty = true;
+    } catch {
+      if (!this.disposed) {
+        this.onFailure('세계 지형을 불러오지 못해 2D 지도를 표시해요.');
+        this.dispose();
+      }
+    } finally {
+      this.pending.delete(token);
+      if (!this.disposed) this.report();
+    }
   }
   buildContinents() {
     const geography = new T.Group(); geography.name = 'world-geography'; this.scene.add(geography);
@@ -172,25 +207,40 @@ export class Atlas3D {
     }
   }
   buildCountries() {
-    this.buildContinents();
+    const imported = this.layout.terrainModel;
+    if (imported) {
+      this.loadTerrain(imported);
+      for (const prop of this.layout.props || []) {
+        const position = this.point(prop.position, prop.ground ?? 0);
+        this.asset(this.scene, prop.model, prop.size || 10, position.toArray(), prop.rotation || 0, () => true, null, new URL('../assets/map/props/', import.meta.url));
+      }
+    } else this.buildContinents();
     for (const [key, spec] of Object.entries(this.layout.countries)) {
       const group = new T.Group(); group.userData.country = key; this.scene.add(group);
-      let points = spec.region;
-      if (!points) points = Array.from({ length: 18 }, (_, i) => [spec.position[0] + Math.cos(i / 18 * Math.PI * 2) * 120, spec.position[1] + Math.sin(i / 18 * Math.PI * 2) * 95]);
-      const shape = this.regionShape(points, spec.position);
-      const geometry = new T.ShapeGeometry(shape); geometry.rotateX(-Math.PI / 2);
-      const surface = this.mesh(group, geometry, spec.color || '#8a9b75', 0, 1.36, 0); surface.castShadow = false;
-      const borderPoints = points.map(pair => this.point(pair, 1.5).sub(this.point(spec.position))); borderPoints.push(borderPoints[0]);
-      const border = new T.Line(new T.BufferGeometry().setFromPoints(borderPoints), new T.LineBasicMaterial({ color: '#d2c89b', transparent: true, opacity: .65 })); group.add(border);
-      const halo = new T.Mesh(geometry.clone(), new T.MeshBasicMaterial({ color: '#ebcd7d', transparent: true, opacity: .20, depthWrite: false, side: T.DoubleSide }));
-      halo.position.y = 1.41; halo.visible = false; group.add(halo);
-      const town = new T.Group(); town.name = 'port-town'; town.scale.setScalar(.65); town.position.y = .48; group.add(town);
+      let halo;
+      if (imported) {
+        halo = new T.Mesh(new T.RingGeometry(2.3, 2.55, 48), new T.MeshBasicMaterial({ color: '#f9d474', depthTest: false, transparent: true, opacity: .8 }));
+        halo.rotation.x = -Math.PI / 2;
+        halo.renderOrder = 2;
+        group.add(halo);
+      } else {
+        let points = spec.region;
+        if (!points) points = Array.from({ length: 18 }, (_, i) => [spec.position[0] + Math.cos(i / 18 * Math.PI * 2) * 120, spec.position[1] + Math.sin(i / 18 * Math.PI * 2) * 95]);
+        const shape = this.regionShape(points, spec.position);
+        const geometry = new T.ShapeGeometry(shape); geometry.rotateX(-Math.PI / 2);
+        const surface = this.mesh(group, geometry, spec.color || '#8a9b75', 0, 1.36, 0); surface.castShadow = false;
+        const borderPoints = points.map(pair => this.point(pair, 1.5).sub(this.point(spec.position))); borderPoints.push(borderPoints[0]);
+        const border = new T.Line(new T.BufferGeometry().setFromPoints(borderPoints), new T.LineBasicMaterial({ color: '#d2c89b', transparent: true, opacity: .65 })); group.add(border);
+        halo = new T.Mesh(geometry.clone(), new T.MeshBasicMaterial({ color: '#ebcd7d', transparent: true, opacity: .20, depthWrite: false, side: T.DoubleSide }));
+        halo.position.y = 1.41; halo.visible = false; group.add(halo);
+      }
+      const town = new T.Group(); town.name = 'port-town'; town.scale.setScalar(imported ? .24 : .65); town.position.y = imported ? -.4 : .48; group.add(town);
       this.box(town, [19, .08, 1.1], [0, 1.73, 3.3], '#c4b589');
       this.box(town, [1.1, .08, 12], [4, 1.74, -.3], '#c4b589');
       for (const [x,z] of [[-8,-2],[-10,2],[8,-2],[10,0]]) this.tree(town, x, z, ['Tropia','Agrea'].includes(key));
       for (let i = 0; i < 4; i++) this.house(town, -7 + i * 3.6, 6.3, i % 2 ? '#bd8a59' : '#a56245');
       const assets = new T.Group(); town.add(assets);
-      const port = new T.Group(); port.userData.country = key; port.scale.setScalar(.72); port.rotation.y = spec.portAngle || 0; this.scene.add(port);
+      const port = new T.Group(); port.userData.country = key; port.scale.setScalar(imported ? .46 : .72); port.rotation.y = spec.portAngle || 0; this.scene.add(port);
       this.countries.set(key, { key, group, town, assets, port, halo, spec, signature: '', stage: -1, revision: 0 });
     }
   }
@@ -275,7 +325,7 @@ export class Atlas3D {
     this.state = state; this.selected = selected; this.showRoutes = showRoutes; this.tradeData = routes;
     for (const [key, entry] of this.countries) {
       this.updateCountry(entry, state.profiles?.[key]);
-      entry.group.position.copy(this.point(entry.spec.position)); entry.port.position.copy(this.point(entry.spec.port));
+      entry.group.position.copy(this.point(entry.spec.position, entry.spec.ground ?? 0)); entry.port.position.copy(this.point(entry.spec.port));
       entry.halo.visible = key === selected || key === state.country;
       entry.halo.material.color.set(key === state.country ? '#f9d474' : '#b4e3ce');
     }
@@ -323,7 +373,7 @@ export class Atlas3D {
   resize() {
     const width = this.surface.clientWidth, height = this.surface.clientHeight; if (!width || !height || this.disposed) return;
     const scale = .105, changed = this.depthScale !== scale; this.depthScale = scale;
-    const aspect = width / height, vertical = Math.max(this.layout.landmasses?.length ? 96 : 112, 161 / aspect);
+    const aspect = width / height, vertical = Math.max(this.layout.landmasses?.length ? 96 : 112, (this.layout.terrainModel ? 124 : 161) / aspect);
     this.camera.left = -vertical * aspect / 2; this.camera.right = vertical * aspect / 2;
     this.camera.top = vertical / 2; this.camera.bottom = -vertical / 2; this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height); this.dirty = true;
@@ -335,7 +385,7 @@ export class Atlas3D {
     const positions = new Map();
     for (const [key, entry] of this.countries) {
       const point = this.point(entry.spec.label, 3).project(this.camera);
-      const anchor = this.point(entry.spec.position, 1.5).project(this.camera);
+      const anchor = this.point(entry.spec.position, (entry.spec.ground ?? 0) + 1.5).project(this.camera);
       positions.set(key, { x: (point.x + 1) * 50, y: (1 - point.y) * 50, anchorX: (anchor.x + 1) * 50, anchorY: (1 - anchor.y) * 50, visible: point.z > -1 && point.z < 1 });
     }
     this.onProject(positions);
@@ -344,8 +394,20 @@ export class Atlas3D {
     if (!this.pointerStart || Math.hypot(event.clientX - this.pointerStart[0], event.clientY - this.pointerStart[1]) > 6) return;
     const rect = this.renderer.domElement.getBoundingClientRect();
     const ray = new T.Raycaster(); ray.setFromCamera(new T.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1), this.camera);
-    const hit = ray.intersectObjects([...this.countries.values()].map(c => c.group), true)[0];
+    const targets = [...this.countries.values()].flatMap(c => [c.group, c.port]);
+    if (this.terrain) targets.push(this.terrain);
+    // The selection ring is an annotation, so only solid geometry can take a hit.
+    const hit = ray.intersectObjects(targets, true).find(h => h.object.visible && h.object.isMesh && h.object.geometry.type !== 'RingGeometry');
+    if (hit && this.terrain && hit.point.y < this.water.position.y) return;
     for (let object = hit?.object; object; object = object.parent) if (object.userData.country) { this.onSelect(object.userData.country); return; }
+    if (hit && this.terrain) {
+      // The terrain is a single mesh. Assign land to its nearest country center.
+      const closest = [...this.countries.values()].reduce((best, entry) => {
+        const distance = Math.hypot(hit.point.x - entry.group.position.x, hit.point.z - entry.group.position.z);
+        return distance < best.distance ? { distance, key: entry.key } : best;
+      }, { distance: Infinity });
+      this.onSelect(closest.key);
+    }
   }
   setActive(value) { this.active = value; this.renderer.domElement.hidden = !value; this.dirty = true; }
   frame(time) {

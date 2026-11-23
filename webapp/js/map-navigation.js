@@ -17,7 +17,7 @@ export function isLand(layout, [x, y]) {
 }
 class SeaNavigator {
   constructor(layout) {
-    this.layout = layout; this.cache = new Map(); this.visibility = new Map(); this.step = 24;
+    this.layout = layout; this.cache = new Map(); this.visibility = new Map(); this.step = layout.terrainModel ? 12 : 24;
     const [x, y, width, height] = layout.viewBox;
     this.origin = [x, y]; this.cols = Math.floor(width / this.step) + 1; this.rows = Math.floor(height / this.step) + 1;
     this.water = Array.from({ length: this.cols * this.rows }, (_, i) => {
@@ -72,11 +72,15 @@ class SeaNavigator {
       while (next > i + 1 && !this.clear(points[i], points[next])) next--;
       simplified.push(points[next]); i = next;
     }
-    const path = [from, ...simplified, to]; this.cache.set(key, path); return path;
+    const path = [from, ...simplified, to].filter((p, i, points) => !i || p[0] !== points[i-1][0] || p[1] !== points[i-1][1]); this.cache.set(key, path); return path;
   }
 }
 export function seaRoute(layout, from, to) {
   if (!layout.landmasses?.length) return [from, to];
   if (!navigators.has(layout)) navigators.set(layout, new SeaNavigator(layout));
-  return navigators.get(layout).route(from, to);
+  const countries = Object.values(layout.countries || {});
+  const start = countries.find(c => c.port === from)?.approach || from;
+  const end = countries.find(c => c.port === to)?.approach || to;
+  const offshore = navigators.get(layout).route(start, end);
+  return [from, ...offshore, to].filter((p, i, points) => !i || p[0] !== points[i-1][0] || p[1] !== points[i-1][1]);
 }

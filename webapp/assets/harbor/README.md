@@ -27,22 +27,13 @@ transport and the Python engine are unchanged. Moving route vessels use the ligh
 diesel model in early eras and the container vessel in the modern era; original
 steam freighters are moored in all early-era ports.
 
-Country centers and ports still come from `webapp/assets/map/layout.json`.
-`position` locates the country's town, `port` locates its dock, and `label` anchors
-the HTML country button. Coordinates use the JSON `viewBox`, and remain editable
-without changing the engine. The SVG `background` is used by the title and 2D
-fallback; changing that image does not replace the actual 3D terrain geometry.
+## Replacing the map
 
-The current world uses two connected continental landmasses, three sovereign
-islands and five small islets. `landmasses[].outline` contains the shared coastline;
-each country's `region` polygon specifies its territory. Neighboring countries
-reuse exactly the same border vertices, so they do not become separate island
-pedestals. `color` tints the territory and `portAngle` rotates the dock in radians.
-`terrain` supplies ridge/forest/river paths. Geography keeps the same scale and
-coordinates across screen sizes; only the camera and label callouts adapt.
+The title and 2D map use `webapp/assets/map/terrain-chart.webp`, an overhead view of the supplied mesh. Set `background` in `webapp/assets/map/layout.json` to another image filename in the same directory.
 
-Sea routes use `js/map-navigation.js` to find water paths around the shared
-coastlines. This changes the drawn route only, not trade rules or delivery times.
+The 3D map loads `world-terrain-web.glb` (6.55 MB, 158,408 triangles, three 2048 px textures). Set `terrainModel.file` to a replacement GLB. Its origin is the chart center, Y is up and positive Z is south. Horizontal scale is 105, the vertical multiplier is 0.65, and base elevation is -0.875. Sea level is -0.5 in scene units.
+
+The 1200 by 1100 chart and WebGL share coordinates. A chart unit equals 0.105 scene units. Each country's `position` is the town center, `ground` is surface elevation in scene units, and `label` anchors its name. The dock uses `port` and `portAngle` (radians). A short water segment to `approach` joins the offshore navigation grid. For a new coastline update these placements and `landmasses[].outline` together. The outlines follow the projected mesh at sea level with clearance for navigation.
 
 Optional new Tripo GLBs go in `assets/map/props/` and are registered in the layout's
 `props` list, e.g. `{"model":"mountain-ridge","position":[1100,440],"size":18,"rotation":0.4}`.
@@ -51,7 +42,7 @@ horizontal length in 3D units, and rotation is in radians. The staged prompts an
 export checklist are in `assets/map/tripo-brief.md`. Existing terrain remains usable
 with an empty props list; paid model generation was not run.
 
-The 2D button preserves the original SVG map and all country/trade interactions.
+The 2D button shows the overhead terrain chart and all country/trade interactions.
 If WebGL is unavailable or its context is lost, the same fallback appears
 automatically. The 3D button can retry after context loss.
 
