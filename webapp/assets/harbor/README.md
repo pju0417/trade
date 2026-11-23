@@ -59,6 +59,13 @@ close range. The apron and ramp use the cobblestone tile.
 
 ## Replacing the map
 
+The close-up terrain at Tropia uses three independent Tripo meshes under
+`webapp/assets/map/terrain/`. Their placements are in `countries.Tropia.nearTerrain`
+in the layout. Each entry specifies its model filename without extension,
+horizontal length, height, Y rotation in radians, and an [east, elevation, south]
+offset from the town's horizontal center at world elevation zero. Models load on
+approach and use the same camera and coordinates as the world terrain.
+
 The title and 2D map use `webapp/assets/map/terrain-chart.webp`, an overhead view of the supplied mesh. Set `background` in `webapp/assets/map/layout.json` to another image filename in the same directory.
 
 The 3D map loads `world-terrain-web.glb` (6.55 MB, 158,408 triangles, three 2048 px textures). Set `terrainModel.file` to a replacement GLB. Its origin is the chart center, Y is up and positive Z is south. Horizontal scale is 105, the vertical multiplier is 0.65, and base elevation is -0.875. Sea level is -0.5 in scene units.

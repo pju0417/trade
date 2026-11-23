@@ -2,7 +2,7 @@ import * as T from '../assets/three/three.module.js';
 import { OrbitControls } from '../assets/three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from '../assets/three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from '../assets/three/addons/utils/BufferGeometryUtils.js';
-import { buildExportYard, equipExportYard, harborTextures, loadExportCargo } from './tropia-port.js';
+import { buildExportYard, equipExportYard, harborTextures, loadExportCargo, loadHarborCoast } from './tropia-port.js';
 import { seaRoute } from './map-navigation.js';
 
 // Local, preserved GLBs. Shared geometry/textures are loaded once across room maps.
@@ -110,16 +110,19 @@ export class Atlas3D {
     return new T.Vector3((pair[0] - ox - width / 2) * .105, height, (pair[1] - oy - depth / 2) * this.depthScale);
   }
   buildWater() {
+    const inlet = this.point(this.layout.countries.Tropia?.port ?? [0, 0]);
     const coast = new T.TextureLoader().load(new URL('../assets/map/materials/coast-distance.png', import.meta.url).href, () => { this.dirty = true; });
     this.coastTexture = coast;
     this.water = new T.Mesh(new T.PlaneGeometry(750, 750, 1, 1), new T.ShaderMaterial({
       uniforms: {
         time: { value: 0 }, coast: { value: coast },
+        inlet: { value: new T.Vector2(inlet.x, -inlet.z) }, nearBlend: { value: 0 },
         chart: { value: new T.Vector2(this.layout.viewBox[2] * .105, this.layout.viewBox[3] * this.depthScale) },
         coastEnabled: { value: this.layout.terrainModel ? 1 : 0 },
       },
       vertexShader: 'varying vec2 p; void main(){p=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
       fragmentShader: `varying vec2 p; uniform float time, coastEnabled; uniform sampler2D coast; uniform vec2 chart;
+        uniform vec2 inlet; uniform float nearBlend;
         void main(){float a=sin(p.x*1.5+p.y*.7+time*.7);float b=cos(p.y*1.2-p.x*.2+time*.5);
         float wave=pow(max(0.,sin(p.x*.13+p.y*2.8+a*.8+time*.4)),16.)*(.5+.5*b);float depth=smoothstep(30.,290.,length(p));
         vec3 color=mix(vec3(.018,.085,.105),vec3(.056,.15,.18),depth)+wave*.004;
@@ -131,6 +134,20 @@ export class Atlas3D {
         color += shallow * foam * vec3(.07,.11,.085);
         float ripple = sin(p.x*15.+p.y*31.+sin(p.x*9.-time*.6)+time);
         color += smoothstep(.93,1.,ripple)*(.5+.5*sin(p.y*5.+p.x*7.))*.009;
+        float local = nearBlend * (1. - smoothstep(7., 14., distance(inlet,p)));
+        if (local > .001) {
+          float swell = sin(p.x*2.3 + p.y*3.5 + .64*sin(p.x*3.-p.y) - time*.65);
+          float bed = sin(p.x*2.2 + sin(p.y*2.6)) * cos(p.y*3.4 + sin(p.x*1.4));
+          float lagoon = 1. - smoothstep(-.10,4.4,offshore + .20*bed);
+          vec3 bay = mix(vec3(.010,.067,.095),vec3(.044,.225,.19),lagoon);
+          bay += lagoon * (.5+.5*bed) * vec3(.019,.036,.019);
+          float breaking = sin(offshore*13. - time*1.05 + .65*swell);
+          float wash = smoothstep(.65,1.,breaking) * (1.-smoothstep(.03,.64,offshore));
+          bay += vec3(.14,.18,.16) * wash * smoothstep(-.42,.72,bed);
+          float smallWave = sin(p.y*27.+p.x*9.+2.4*sin(p.x*3.7+p.y*2.-time*.4)+time*.7);
+          bay += vec3(.036,.046,.045)*pow(max(0.,smallWave),8.)*smoothstep(-.15,.9,swell);
+          color = mix(color,bay,local);
+        }
         gl_FragColor=vec4(color,1.);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -521,6 +538,8 @@ export class Atlas3D {
     if (moving) this.elapsed += dt;
     this.water.material.uniforms.time.value = this.elapsed;
     if (this.detailBlend) this.detailBlend.value = T.MathUtils.smoothstep(this.camera.zoom, 1.6, 6);
+    this.water.material.uniforms.nearBlend.value = this.layout.countries.Tropia?.bananaField ?
+      T.MathUtils.smoothstep(this.camera.zoom, 2, 6) : 0;
     for (const entry of this.routes.values()) {
       const t = ((this.elapsed / 27 + entry.phase) % 1 + 1) % 1;
       entry.vessel.position.copy(entry.curve.getPoint(t));
@@ -544,6 +563,13 @@ export class Atlas3D {
         tropia.grove.visible = detail;
         if (detail && !tropia.cargo) tropia.cargo = loadExportCargo(this, tropia.yard);
         if (tropia.cargo) tropia.cargo.visible = detail;
+        if (detail && tropia.spec.nearTerrain?.length && !tropia.coast)
+          tropia.coast = loadHarborCoast(this, tropia.yard, tropia.spec.nearTerrain);
+        if (tropia.coast) {
+          const relief = T.MathUtils.smoothstep(this.camera.zoom, 1.65, 4.5);
+          tropia.coast.visible = detail;
+          tropia.coast.position.y = (relief - 1) * 2;
+        }
       }
       const extent = Math.max(6, 110 / this.camera.zoom);
       const focus = this.controls.target;

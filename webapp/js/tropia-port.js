@@ -158,6 +158,18 @@ export function loadExportCargo(atlas, yard) {
   return group;
 }
 
+// Local terrain pieces share the quay's world coordinates at every camera angle.
+export function loadHarborCoast(atlas, yard, pieces) {
+  const coast = new T.Group();
+  coast.name = 'tropia-near-coast';
+  yard.add(coast);
+  const terrain = new URL('../assets/map/terrain/', import.meta.url);
+  for (const {model, offset, length, height, rotation} of pieces) {
+    atlas.asset(coast, model, length, offset, rotation, undefined, height, terrain);
+  }
+  return coast;
+}
+
 export function equipExportYard(atlas, entry, stage, models, current) {
   const group = entry.assets;
   atlas.asset(group, models.warehouse, 1.62, [.68, .77, -.3], Math.PI / 2, current);
