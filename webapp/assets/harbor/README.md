@@ -27,6 +27,29 @@ transport and the Python engine are unchanged. Moving route vessels use the ligh
 diesel model in early eras and the container vessel in the modern era; original
 steam freighters are moored in all early-era ports.
 
+## Tropia export harbor
+
+The banana plot, packing shed and outbound crates use the supplied Tripo models in
+`webapp/assets/map/props/`. The source GLBs stay outside the web bundle. The yard
+spans two elevations and includes a paved loading terrace, a ramp, dock equipment
+and moorings. Zooming over the harbor lowers the camera continuously in the same
+scene. Cargo stacks load on the first approach. The coastal planting uses shared,
+instanced geometry at surveyed sites. The close-up treatment currently covers Tropia.
+
+The coastal distance image comes from the terrain waterline. If that mesh changes,
+update `materials/coast-distance.png`, the local `groveSites` and the crop ground
+samples in `layout.json`. Grove coordinates are local east, absolute elevation,
+and local south in scene units relative to the town's horizontal origin.
+
+Ground tiles are local WebP conversions of CC0 photographs from Poly Haven.
+The terrain blends the overhead texture with repeating soil, grass and rock at
+close range. The apron and ramp use the cobblestone tile.
+
+- [Brown Mud](https://polyhaven.com/a/brown_mud)
+- [Aerial Grass Rock](https://polyhaven.com/a/aerial_grass_rock)
+- [Rock Face 03](https://polyhaven.com/a/rock_face_03)
+- [Cobblestone Floor 01](https://polyhaven.com/a/cobblestone_floor_01)
+
 ## Replacing the map
 
 The title and 2D map use `webapp/assets/map/terrain-chart.webp`, an overhead view of the supplied mesh. Set `background` in `webapp/assets/map/layout.json` to another image filename in the same directory.

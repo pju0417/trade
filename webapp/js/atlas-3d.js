@@ -2,6 +2,7 @@ import * as T from '../assets/three/three.module.js';
 import { OrbitControls } from '../assets/three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from '../assets/three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from '../assets/three/addons/utils/BufferGeometryUtils.js';
+import { buildExportYard, equipExportYard, harborTextures, loadExportCargo } from './tropia-port.js';
 import { seaRoute } from './map-navigation.js';
 
 // Local, preserved GLBs. Shared geometry/textures are loaded once across room maps.
@@ -69,7 +70,7 @@ export class Atlas3D {
     this.surface.prepend(this.renderer.domElement);
     this.camera = new T.OrthographicCamera(-90, 90, 60, -60, .1, 600);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = false; this.controls.enablePan = true;
+    this.controls.screenSpacePanning = false; this.controls.enableDamping = false; this.controls.enablePan = true;
     this.controls.minZoom = .8; this.controls.maxZoom = 28; this.controls.zoomToCursor = true;
     this.controls.minPolarAngle = .22; this.controls.maxPolarAngle = 1.05;
     this.controls.minAzimuthAngle = -.65; this.controls.maxAzimuthAngle = .65;
@@ -81,7 +82,7 @@ export class Atlas3D {
     this.scene.add(new T.HemisphereLight('#fff4da', '#456757', 1.8));
     const sun = new T.DirectionalLight('#ffe8ba', 2.6); sun.position.set(-70, 125, 55); sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -100, right: 100, top: 100, bottom: -100, near: 1, far: 280 });
-    sun.shadow.bias = -.001; sun.shadow.normalBias = .15; this.scene.add(sun);
+    sun.shadow.bias = -.00035; sun.shadow.normalBias = .06; this.sun = sun; this.scene.add(sun, sun.target);
     this.buildWater(); this.buildCountries(); this.reset();
     this.resizeObserver = new ResizeObserver(() => this.resize()); this.resizeObserver.observe(surface);
     this.intersectionObserver = new IntersectionObserver(([e]) => { this.visible = e.isIntersecting; this.dirty = true; }); this.intersectionObserver.observe(surface);
@@ -109,13 +110,27 @@ export class Atlas3D {
     return new T.Vector3((pair[0] - ox - width / 2) * .105, height, (pair[1] - oy - depth / 2) * this.depthScale);
   }
   buildWater() {
+    const coast = new T.TextureLoader().load(new URL('../assets/map/materials/coast-distance.png', import.meta.url).href, () => { this.dirty = true; });
+    this.coastTexture = coast;
     this.water = new T.Mesh(new T.PlaneGeometry(750, 750, 1, 1), new T.ShaderMaterial({
-      uniforms: { time: { value: 0 } },
+      uniforms: {
+        time: { value: 0 }, coast: { value: coast },
+        chart: { value: new T.Vector2(this.layout.viewBox[2] * .105, this.layout.viewBox[3] * this.depthScale) },
+        coastEnabled: { value: this.layout.terrainModel ? 1 : 0 },
+      },
       vertexShader: 'varying vec2 p; void main(){p=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-      fragmentShader: `varying vec2 p; uniform float time;
+      fragmentShader: `varying vec2 p; uniform float time, coastEnabled; uniform sampler2D coast; uniform vec2 chart;
         void main(){float a=sin(p.x*1.5+p.y*.7+time*.7);float b=cos(p.y*1.2-p.x*.2+time*.5);
         float wave=pow(max(0.,sin(p.x*.13+p.y*2.8+a*.8+time*.4)),16.)*(.5+.5*b);float depth=smoothstep(30.,290.,length(p));
         vec3 color=mix(vec3(.018,.085,.105),vec3(.056,.15,.18),depth)+wave*.004;
+        float offshore = (texture2D(coast, p / chart + .5).r * 255. - 128.) * .0525;
+        float shallow = (1.-smoothstep(.06, 1.4, offshore)) * coastEnabled;
+        float crest = sin(offshore * 20. - time * .9 + .5*sin(p.x*5.+p.y*3.));
+        float foam = smoothstep(.78,1.,crest) * (1.-smoothstep(.02,.32,offshore)) * smoothstep(-.15,.8,sin(p.x*2.3+p.y*3.+sin(p.y*4.5)));
+        color = mix(color,vec3(.065,.22,.195),shallow * .62);
+        color += shallow * foam * vec3(.07,.11,.085);
+        float ripple = sin(p.x*15.+p.y*31.+sin(p.x*9.-time*.6)+time);
+        color += smoothstep(.93,1.,ripple)*(.5+.5*sin(p.y*5.+p.x*7.))*.009;
         gl_FragColor=vec4(color,1.);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -176,20 +191,47 @@ export class Atlas3D {
     const material = part.material.clone();
     part.material = material;
     this.terrainMaterials.push(material);
+    const tiles = harborTextures();
+    this.detailBlend = { value: 0 };
     material.onBeforeCompile = shader => {
+      shader.uniforms.detailBlend = this.detailBlend;
+      shader.uniforms.grassTile = { value: tiles.grass };
+      shader.uniforms.earthTile = { value: tiles.earth };
+      shader.uniforms.rockTile = { value: tiles.rock };
       shader.uniforms.farmOrigin = { value: new T.Vector2(first.x, first.z) };
       shader.uniforms.farmSpacing = { value: spacing };
       shader.uniforms.farmExtent = { value: new T.Vector2(field.heights[0].length, field.heights.length) };
-      shader.vertexShader = 'varying vec2 farmXZ;\n' + shader.vertexShader.replace('#include <worldpos_vertex>',
-        '#include <worldpos_vertex>\nfarmXZ = (modelMatrix * vec4(transformed, 1.)).xz;');
-      shader.fragmentShader = 'varying vec2 farmXZ; uniform vec2 farmOrigin, farmExtent; uniform float farmSpacing;\n' +
+      shader.vertexShader = 'varying vec3 landNormal, landPosition; varying vec2 farmXZ;\n' + shader.vertexShader.replace('#include <worldpos_vertex>',
+        '#include <worldpos_vertex>\nlandNormal = (vec4(normalize(normalMatrix * normal),0.) * viewMatrix).xyz; landPosition = (modelMatrix * vec4(transformed, 1.)).xyz; farmXZ = landPosition.xz;');
+      shader.fragmentShader = 'varying vec3 landNormal, landPosition; uniform sampler2D grassTile, earthTile, rockTile; uniform float detailBlend; varying vec2 farmXZ; uniform vec2 farmOrigin, farmExtent; uniform float farmSpacing;\n' +
         shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
           vec2 grid = (farmXZ - farmOrigin) / farmSpacing + 0.5;
           vec2 edge = min(grid, farmExtent - grid);
           float mask = smoothstep(0., .24, min(edge.x, edge.y));
           float row = .5 + .5 * cos(grid.y * 6.283185);
           vec3 soil = vec3(.17, .108, .051) * (.83 + .27 * row + .24 * diffuseColor.g);
-          diffuseColor.rgb = mix(diffuseColor.rgb, soil, mask * .94);`);
+          vec3 overview = mix(diffuseColor.rgb, soil, mask * .94);
+          diffuseColor.rgb = overview;
+          if (detailBlend > .001 && distance(farmXZ, farmOrigin) < 12.) {
+            vec3 turf = texture2D(grassTile, farmXZ * .72).rgb;
+            vec3 loam = texture2D(earthTile, farmXZ * 1.55).rgb;
+            float fertile = smoothstep(-.06,.19,overview.g-overview.r*.79);
+            vec3 n = abs(normalize(landNormal));
+            vec3 weights = pow(n,vec3(4.)); weights /= max(.0001,dot(weights,vec3(1.)));
+            vec3 cliff = texture2D(rockTile,landPosition.zy*.79).rgb*weights.x
+              + texture2D(rockTile,landPosition.xz*.79).rgb*weights.y
+              + texture2D(rockTile,landPosition.xy*.79).rgb*weights.z;
+            vec3 closeGround = turf * mix(vec3(.77,1.04,.67),vec3(.44,1.09,.58),fertile);
+            closeGround = mix(cliff * vec3(.86,.94,1.), closeGround, smoothstep(.48,.89,n.y));
+            closeGround *= mix(.60,1.,smoothstep(-.44,-.10,landPosition.y));
+            vec3 furrows = loam * vec3(1.48,1.14,.84) * (.75 + .33 * row);
+            float local = 1. - smoothstep(6.,12., distance(farmXZ, farmOrigin));
+            vec2 lane = farmXZ - farmOrigin;
+            float trail = (1. - smoothstep(.12,.25, abs(lane.x - .97 + .19 * lane.y))) *
+                          smoothstep(-1.9,-1.7,lane.y) * (1. - smoothstep(-.3,.15,lane.y));
+            closeGround = mix(closeGround,loam*1.14,trail);
+            diffuseColor.rgb = mix(overview, mix(closeGround, furrows, mask), detailBlend * local);
+          }`);
     };
   }
   buildContinents() {
@@ -261,10 +303,12 @@ export class Atlas3D {
         halo.position.y = 1.41; halo.visible = false; group.add(halo);
       }
       const town = new T.Group(); town.name = 'port-town'; town.scale.setScalar(imported ? .24 : .65); town.position.y = imported ? -.4 : .48; group.add(town);
-      this.box(town, [19, .08, 1.1], [0, 1.73, 3.3], '#c4b589');
-      this.box(town, [1.1, .08, 12], [4, 1.74, -.3], '#c4b589');
-      for (const [x,z] of [[-8,-2],[-10,2],[8,-2],[10,0]]) this.tree(town, x, z, ['Tropia','Agrea'].includes(key));
-      for (let i = 0; i < 4; i++) this.house(town, -7 + i * 3.6, 6.3, i % 2 ? '#bd8a59' : '#a56245');
+      if (!spec.bananaField) {
+        this.box(town, [19, .08, 1.1], [0, 1.73, 3.3], '#c4b589');
+        this.box(town, [1.1, .08, 12], [4, 1.74, -.3], '#c4b589');
+        for (const [x,z] of [[-8,-2],[-10,2],[8,-2],[10,0]]) this.tree(town, x, z, ['Tropia','Agrea'].includes(key));
+        for (let i = 0; i < 4; i++) this.house(town, -7 + i * 3.6, 6.3, i % 2 ? '#bd8a59' : '#a56245');
+      }
       const assets = new T.Group(); town.add(assets);
       const port = new T.Group(); port.userData.country = key; port.scale.setScalar(imported ? .46 : .72); port.rotation.y = spec.portAngle || 0; this.scene.add(port);
       this.countries.set(key, { key, group, town, assets, port, halo, spec, signature: '', stage: -1, revision: 0 });
@@ -319,16 +363,25 @@ export class Atlas3D {
     const revision = entry.revision, current = () => entry.revision === revision;
     this.clear(entry.assets); this.clear(entry.port);
     const spec = stages[stage];
-    this.asset(entry.assets, spec.warehouse, 8.5, [-3, 1.8, -.5], Math.PI / 2, current);
-    this.asset(entry.assets, spec.truck, 2.7, [3, 1.85, 3.1], 0, current);
-    this.asset(entry.assets, stage ? 'gantry-crane' : 'harbor-crane', 4.2, [9.8, 1.75, 4], -.5, current);
-    this.asset(entry.port, spec.dock, 7.4, [0, -.1, 0], 0, current, 1.25);
-    this.asset(entry.port, spec.ship, 7.8, [4, -.15, 2], -.15, current, stage ? null : 2.8);
-    if (stage) this.asset(entry.assets, 'factory', 6, [-5, 1.8, -5.5], .2, current);
-    if (spec.plane) {
-      this.box(entry.assets, [9.5, .08, 2.5], [1.5, 1.78, -6], '#6e7c6d');
-      for (let i = 0; i < 4; i++) this.box(entry.assets, [1, .03, .12], [-1.5 + i * 2, 1.84, -6], '#e5d9b7');
-      this.asset(entry.assets, spec.plane, 4, [3, 1.85, -6], 0, current);
+    if (entry.spec.bananaField) {
+      if (!entry.yard) {
+        entry.yard = buildExportYard(this, entry);
+        entry.yard.add(entry.assets);
+        entry.port.scale.setScalar(1);
+      }
+      equipExportYard(this, entry, stage, spec, current);
+    } else {
+      this.asset(entry.assets, spec.warehouse, 8.5, [-3, 1.8, -.5], Math.PI / 2, current);
+      this.asset(entry.assets, spec.truck, 2.7, [3, 1.85, 3.1], 0, current);
+      this.asset(entry.assets, stage ? 'gantry-crane' : 'harbor-crane', 4.2, [9.8, 1.75, 4], -.5, current);
+      this.asset(entry.port, spec.dock, 7.4, [0, -.1, 0], 0, current, 1.25);
+      this.asset(entry.port, spec.ship, 7.8, [4, -.15, 2], -.15, current, stage ? null : 2.8);
+      if (stage) this.asset(entry.assets, 'factory', 6, [-5, 1.8, -5.5], .2, current);
+      if (spec.plane) {
+        this.box(entry.assets, [9.5, .08, 2.5], [1.5, 1.78, -6], '#6e7c6d');
+        for (let i = 0; i < 4; i++) this.box(entry.assets, [1, .03, .12], [-1.5 + i * 2, 1.84, -6], '#e5d9b7');
+        this.asset(entry.assets, spec.plane, 4, [3, 1.85, -6], 0, current);
+      }
     }
     if (profile?.main === 'banana' && entry.spec.bananaField) {
       if (!entry.orchard) entry.orchard = this.buildBananaField(entry);
@@ -411,6 +464,7 @@ export class Atlas3D {
     for (const [key, entry] of this.routes) if (!routes.has(key)) { this.scene.remove(entry.group); this.clear(entry.group); this.routes.delete(key); }
   }
   reset() {
+    this.inspectionTilt = 0;
     this.camera.position.set(0, 145, 108); this.controls.target.set(0, 0, 0); this.camera.zoom = 1; this.camera.updateProjectionMatrix(); this.controls.update(); this.dirty = true;
   }
   zoom(factor) { this.camera.zoom = T.MathUtils.clamp(this.camera.zoom * factor, this.controls.minZoom, this.controls.maxZoom); this.camera.updateProjectionMatrix(); this.dirty = true; }
@@ -426,12 +480,14 @@ export class Atlas3D {
   }
   project() {
     this.camera.updateMatrixWorld();
+    const close = this.camera.zoom >= 8;
+    if (this.surface.classList.contains('harbor-detail') !== close) this.surface.classList.toggle('harbor-detail', close);
     const positions = new Map();
     for (const [key, entry] of this.countries) {
       entry.halo.visible = this.camera.zoom < 4 && (key === this.selected || key === this.state?.country);
       const point = this.point(entry.spec.label, 3).project(this.camera);
       const anchor = this.point(entry.spec.position, (entry.spec.ground ?? 0) + 1.5).project(this.camera);
-      positions.set(key, { x: (point.x + 1) * 50, y: (1 - point.y) * 50, anchorX: (anchor.x + 1) * 50, anchorY: (1 - anchor.y) * 50, visible: point.z > -1 && point.z < 1 && Math.abs(anchor.x) <= 1 && Math.abs(anchor.y) <= 1 });
+      positions.set(key, { x: close ? 0 : (point.x + 1) * 50, y: close ? 0 : (1 - point.y) * 50, anchorX: (anchor.x + 1) * 50, anchorY: (1 - anchor.y) * 50, visible: point.z > -1 && point.z < 1 && Math.abs(anchor.x) <= 1 && Math.abs(anchor.y) <= 1 });
     }
     this.onProject(positions);
   }
@@ -464,10 +520,38 @@ export class Atlas3D {
     if (!this.dirty && !moving) return;
     if (moving) this.elapsed += dt;
     this.water.material.uniforms.time.value = this.elapsed;
+    if (this.detailBlend) this.detailBlend.value = T.MathUtils.smoothstep(this.camera.zoom, 1.6, 6);
     for (const entry of this.routes.values()) {
       const t = ((this.elapsed / 27 + entry.phase) % 1 + 1) % 1;
       entry.vessel.position.copy(entry.curve.getPoint(t));
       const tangent = entry.curve.getTangent(t); entry.vessel.rotation.y = -Math.atan2(tangent.z, tangent.x);
+    }
+    if (this.dirty) {
+      const tilt = T.MathUtils.smoothstep(this.camera.zoom, 2, 11);
+      if (Math.abs(tilt - this.inspectionTilt) > .0001) {
+        const delta = tilt - this.inspectionTilt;
+        const orbit = new T.Spherical().setFromVector3(this.camera.position.clone().sub(this.controls.target));
+        orbit.phi = T.MathUtils.clamp(orbit.phi + .34 * delta, this.controls.minPolarAngle, this.controls.maxPolarAngle);
+        orbit.theta = T.MathUtils.clamp(orbit.theta - .37 * delta, this.controls.minAzimuthAngle, this.controls.maxAzimuthAngle);
+        this.camera.position.copy(this.controls.target).add(new T.Vector3().setFromSpherical(orbit));
+        this.inspectionTilt = tilt;
+        this.controls.update();
+      }
+      const tropia = this.countries.get('Tropia');
+      if (tropia?.yard) {
+        const harbor = tropia.group.position.clone().project(this.camera);
+        const detail = this.camera.zoom > 1.65 && Math.abs(harbor.x) < 2.5 && Math.abs(harbor.y) < 2.5;
+        tropia.grove.visible = detail;
+        if (detail && !tropia.cargo) tropia.cargo = loadExportCargo(this, tropia.yard);
+        if (tropia.cargo) tropia.cargo.visible = detail;
+      }
+      const extent = Math.max(6, 110 / this.camera.zoom);
+      const focus = this.controls.target;
+      this.sun.target.position.copy(focus);
+      this.sun.position.set(focus.x - 70, focus.y + 125, focus.z + 55);
+      Object.assign(this.sun.shadow.camera, { left: -extent, right: extent, top: extent, bottom: -extent });
+      this.sun.shadow.camera.updateProjectionMatrix();
+      this.sun.shadow.normalBias = extent * .00055;
     }
     this.project(); this.renderer.render(this.scene, this.camera); this.dirty = false;
     this.surface.dataset.triangles = this.renderer.info.render.triangles;
@@ -480,6 +564,7 @@ export class Atlas3D {
     this.renderer.domElement.removeEventListener('pointerdown', this.pointerDown); this.renderer.domElement.removeEventListener('pointerup', this.pointerUp); this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
     this.clear(this.scene); for (const material of this.materials.values()) material.dispose();
     for (const material of this.terrainMaterials || []) material.dispose();
+    this.coastTexture?.dispose();
     this.renderer.dispose(); this.renderer.domElement.remove();
   }
 }

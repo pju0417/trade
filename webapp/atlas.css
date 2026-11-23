@@ -77,3 +77,5 @@ th{background:#163133;color:#e4d3ac}td,th{border-color:#7a89634d}fieldset{border
 .world-map[data-geography="continents"][data-map-mode="3d"] .map-surface{height:clamp(460px,36vw,600px);min-height:460px}.teacher-world-map[data-geography="continents"][data-map-mode="3d"] .map-surface{height:650px;min-height:570px}
 @media(max-width:480px){.world-map[data-geography="continents"][data-map-mode="3d"] .map-surface{height:390px;min-height:390px}}
 @media print{@page{margin:1.5cm}body{background:white!important;color:black!important}.world-map,.title-map,.entry-background{display:none!important}.host-page:has(.pins) #app>:not(.pins){display:none!important}.pins,.pin-sheet,.pins table,.pins td,.pins th{background:white!important;color:black!important;border-color:#bbb!important}.pin-sheet+.pin-sheet{break-before:page}.pin-sheet h3{color:black!important;font-size:24pt}.pin-sheet table{font-size:18pt;width:100%;max-width:none}.pins>button,.pins>h2{display:none!important}}
+
+[data-map-mode='3d'] .harbor-detail .map-connectors { visibility: hidden; }
