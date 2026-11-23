@@ -148,8 +148,11 @@ export class Atlas3D {
       this.terrain.name = 'world-geography';
       this.terrain.scale.set(spec.scale, spec.scale * spec.relief, spec.scale);
       this.terrain.position.y = spec.baseY;
+      this.terrainMaterials = [];
+      const field = this.layout.countries.Tropia?.bananaField;
       this.terrain.traverse(part => {
         if (!part.isMesh) return;
+        if (field) this.paintFarmSoil(part, field);
         part.castShadow = part.receiveShadow = true;
         part.userData.sharedAsset = true;
       });
@@ -165,6 +168,29 @@ export class Atlas3D {
       this.pending.delete(token);
       if (!this.disposed) this.report();
     }
+  }
+  paintFarmSoil(part, field) {
+    // Tint the terrain itself so tilled rows follow its exact slopes at every zoom.
+    const first = this.point(field.origin);
+    const spacing = field.spacing * .105;
+    const material = part.material.clone();
+    part.material = material;
+    this.terrainMaterials.push(material);
+    material.onBeforeCompile = shader => {
+      shader.uniforms.farmOrigin = { value: new T.Vector2(first.x, first.z) };
+      shader.uniforms.farmSpacing = { value: spacing };
+      shader.uniforms.farmExtent = { value: new T.Vector2(field.heights[0].length, field.heights.length) };
+      shader.vertexShader = 'varying vec2 farmXZ;\n' + shader.vertexShader.replace('#include <worldpos_vertex>',
+        '#include <worldpos_vertex>\nfarmXZ = (modelMatrix * vec4(transformed, 1.)).xz;');
+      shader.fragmentShader = 'varying vec2 farmXZ; uniform vec2 farmOrigin, farmExtent; uniform float farmSpacing;\n' +
+        shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+          vec2 grid = (farmXZ - farmOrigin) / farmSpacing + 0.5;
+          vec2 edge = min(grid, farmExtent - grid);
+          float mask = smoothstep(0., .24, min(edge.x, edge.y));
+          float row = .5 + .5 * cos(grid.y * 6.283185);
+          vec3 soil = vec3(.17, .108, .051) * (.83 + .27 * row + .24 * diffuseColor.g);
+          diffuseColor.rgb = mix(diffuseColor.rgb, soil, mask * .94);`);
+    };
   }
   buildContinents() {
     const geography = new T.Group(); geography.name = 'world-geography'; this.scene.add(geography);
@@ -314,35 +340,16 @@ export class Atlas3D {
     this.dirty = true;
   }
   buildBananaField(entry) {
-    const { origin, step, heights } = entry.spec.bananaField;
+    const { origin, spacing, heights } = entry.spec.bananaField;
     const field = new T.Group();
     entry.group.add(field);
     const center = this.point(entry.spec.position, entry.spec.ground);
-    const positions = [], colors = [], indices = [];
-    const width = heights[0].length;
-    const soil = new T.Color();
     const root = new URL('../assets/map/props/', import.meta.url);
     heights.forEach((line, row) => line.forEach((height, col) => {
-      const coords = [origin[0] + col * step, origin[1] + row * step];
-      const p = this.point(coords, height + .025).sub(center);
-      positions.push(p.x, p.y, p.z);
-      const ridge = row % 3 === 1;
-      soil.set(ridge ? '#76613f' : '#897447').multiplyScalar(.93 + .12 * Math.sin(row * 13 + col * 17));
-      colors.push(soil.r, soil.g, soil.b);
-      const i = row * width + col;
-      if (row && col) indices.push(i - width - 1, i - 1, i, i - width - 1, i, i - width);
-      if (ridge && col % 3 === 1) {
-        this.asset(field, 'banana-plant', .48 + (col % 4) * .025, p.toArray(), i * 2.4, undefined, null, root);
-      }
+      const coords = [origin[0] + col * spacing, origin[1] + row * spacing];
+      const p = this.point(coords, height).sub(center);
+      this.asset(field, 'banana-plant', .48 + col * .025, p.toArray(), (row * line.length + col) * 2.4, undefined, null, root);
     }));
-    const earth = new T.BufferGeometry();
-    earth.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
-    earth.setAttribute('color', new T.Float32BufferAttribute(colors, 3));
-    earth.setIndex(indices);
-    earth.computeVertexNormals();
-    const surface = new T.Mesh(earth, new T.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
-    surface.receiveShadow = true;
-    field.add(surface);
     return field;
   }
   industry(parent, main) {
@@ -472,6 +479,7 @@ export class Atlas3D {
     this.reducedQuery.removeEventListener('change', this.motionChange); this.controls.dispose();
     this.renderer.domElement.removeEventListener('pointerdown', this.pointerDown); this.renderer.domElement.removeEventListener('pointerup', this.pointerUp); this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
     this.clear(this.scene); for (const material of this.materials.values()) material.dispose();
+    for (const material of this.terrainMaterials || []) material.dispose();
     this.renderer.dispose(); this.renderer.domElement.remove();
   }
 }
