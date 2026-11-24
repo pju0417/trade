@@ -111,3 +111,17 @@ await cls.finish({ clearServer: true })        // 수업 끝내기(서버의 방
 - `online`: 그 방에 지금 접속한 학생 기기의 나라 목록(같은 나라가 여러 번이면 모둠 기기 수)
 
 교사 화면을 닫거나 새로고침해도 방마다 행동 기록이 브라우저에 저장되어 있어 `restore`로 똑같이 이어진다.
+
+## 세계 지도 (`webapp/map/`)
+
+9개국 가상 세계 지도 부품. 상태를 그리기만 한다. 자세한 것은 `webapp/map/README.md`.
+
+```js
+// <script src="map/vendor/three.min.js"></script> 를 먼저 넣는다
+import { createWorldMap } from './map/world-map.js';
+const map = createWorldMap(element, THREE, { me: 'Tropia', panel: false });
+me.onState((state) => map.update(state));   // names, country, profiles, world_trades, round, phase_label을 쓴다
+```
+
+- `profiles[나라].levels`에 따라 산업 건물 수가, `world_trades`에 따라 이번 라운드 무역로가 바뀐다.
+- `map.flyToNation('Oilia')`, `map.selectNation('Oilia')`, `opts.onSelect(나라)`로 다른 화면과 연결한다.

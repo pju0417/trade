@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>무역 게임 세계 지도</title>
+<link rel="icon" href="data:,">
+<style>html,body{margin:0;height:100%;background:#cfe0ea;overflow:hidden;overscroll-behavior:none;}#map{position:fixed;inset:0;}</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script type="module">
+  import { createWorldMap } from './world-map.js';
+  var Q = new URLSearchParams(location.search);
+  window.worldMap = createWorldMap(document.getElementById('map'), THREE, {
+    demo: !Q.has('nodemo'), me: Q.get('me') || null, panel: Q.get('panel') !== '0',
+    GLTFLoader: THREE.GLTFLoader, preserve: Q.has('test'), demoInterval: Q.has('test') ? 600000 : 8000
+  });
+</script>
+</body>
+</html>
