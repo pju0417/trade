@@ -94,3 +94,9 @@ th{background:#163133;color:#e4d3ac}td,th{border-color:#7a89634d}fieldset{border
 [data-map-mode='2d'] .district-name { display: none; }
 [data-map-mode='2d'] .region-view { display: none; }
 .inspector-title .region-view { font-size: .85rem; padding: .4rem .65rem; }
+/* 세계 지도 엔진(world-engine.js): 나라 이름·확대 버튼·나라 목록을 엔진이 직접 그린다 */
+.world-engine-host{position:absolute;inset:0;z-index:1}.world-engine-host[hidden]{display:none}
+.world-map.world-engine .atlas-view-modes,.world-map.world-engine .atlas-camera,.world-map.world-engine .atlas-gesture{display:none}
+.world-map.world-engine[data-map-mode="3d"] .map-labels,.world-map.world-engine[data-map-mode="3d"] .map-connectors{display:none}
+.world-map.world-engine[data-map-mode="3d"] .map-surface{background:#cfe0ea}
+.world-map.world-engine .map-legend>span:not(.route-total){display:none}.world-map.world-engine .map-legend .route-total{margin-left:0}

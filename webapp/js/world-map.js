@@ -66,7 +66,7 @@ class WorldMap {
       <div class="country-inspector" aria-live="polite"></div><details class="route-log"><summary>이번 라운드 무역로 설명</summary><ul></ul></details>`;
     this.surface = element.querySelector('.map-surface'); this.routes = element.querySelector('.trade-routes');
     this.labelObserver = new ResizeObserver(() => {
-      if (!element.isConnected) { this.labelObserver.disconnect(); return; }
+      if (!element.isConnected) { this.labelObserver.disconnect(); this.world?.dispose(); this.world = null; return; }
       if (this.layout && this.mode === '2d') this.place2DLabels();
     }); this.labelObserver.observe(this.surface);
     this.inspector = element.querySelector('.country-inspector');
@@ -81,13 +81,14 @@ class WorldMap {
       if (this.want3D) this.start3D(); else this.setMode('2d');
     };
     for (const button of element.querySelectorAll('[data-camera]')) button.onclick = () => {
-      if (button.dataset.camera === 'reset') this.three?.reset(); else this.three?.zoom(button.dataset.camera === 'in' ? 1.2 : 1 / 1.2);
+      const w = this.world; if (!w) return;
+      if (button.dataset.camera === 'reset') w.flyTo(w.home[0], w.home[1], w.home[2]); else { const v = w.getState(); w.flyTo(v.x, v.z, v.dist * (button.dataset.camera === 'in' ? .5 : 2), .5); }
     };
     getLayout().then(layout => { this.layout = layout; this.build(); if (this.state) this.update(this.state); if (this.want3D) this.start3D(); }).catch(err => { text(element.querySelector('.map-loading'), err.message); });
   }
   setMode(mode) {
     this.mode = mode; this.element.dataset.mapMode = mode;
-    this.three?.setActive(mode === '3d');
+    if (this.worldHost) this.worldHost.hidden = mode !== '3d';
     for (const button of this.element.querySelectorAll('[data-map-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mapMode === mode));
     if (mode === '2d') {
       this.place2DLabels();
@@ -130,20 +131,23 @@ class WorldMap {
   }
   async start3D() {
     if (!this.layout || this.loading3D) return;
-    if (this.three && !this.three.disposed) { this.setMode('3d'); this.update(this.state); return; }
+    if (this.world) { this.setMode('3d'); this.update(this.state); return; }
     this.loading3D = true;
     const status = this.element.querySelector('.atlas-model-status'); text(status, '3D 지도를 준비해요');
     try {
-      const { Atlas3D } = await import('./atlas-3d.js');
+      // 세계 지도는 world-engine.js(데모와 같은 엔진)가 그린다. 나라 이름·항구·무역로·안내 카드는 엔진이 직접 표시한다.
+      const { createWorld } = await import('./world-engine.js');
       if (!this.element.isConnected || !this.want3D) return;
-      this.three = new Atlas3D(this.surface, this.layout, {
-        onSelect: key => { this.selected = key; this.update(this.state); },
-        onProject: positions => this.placeLabels(positions),
-        onStatus: message => text(status, message),
-        onFailure: message => { this.setMode('2d'); text(status, message); },
+      const host = this.worldHost = document.createElement('div'); host.className = 'world-engine-host'; this.surface.append(host);
+      const world = await createWorld(host, {
+        panel: false, political: false, me: this.state?.country || null,
+        onSelect: key => { if (this.selected !== key) { this.selected = key; this.update(this.state); } },
       });
+      if (!this.element.isConnected) { world.dispose(); return; }
+      this.world = world; this.element.classList.add('world-engine');
+      text(status, '세계 지도 준비 완료');
       this.setMode('3d'); this.update(this.state);
-    } catch { this.setMode('2d'); text(status, '이 기기에서는 2D 지도로 표시해요. 나라 선택과 거래 기능은 그대로 사용할 수 있어요.'); }
+    } catch { this.worldHost?.remove(); this.worldHost = null; this.setMode('2d'); text(status, '이 기기에서는 2D 지도로 표시해요. 나라 선택과 거래 기능은 그대로 사용할 수 있어요.'); }
     finally { this.loading3D = false; }
   }
   build() {
@@ -193,7 +197,7 @@ class WorldMap {
       if (halo.getAttribute('class') !== className) halo.setAttribute('class', className);
     }
     this.updateRoutes(state.world_trades || []);
-    this.three?.update(state, tradeRoutes(state.world_trades || []), this.selected, this.showRoutes);
+    if (this.world) { this.world.update(state); this.world.setRoutesVisible(this.showRoutes); }
     this.updateInspector();
     if (this.mode === '2d') this.place2DLabels();
   }
@@ -242,7 +246,7 @@ class WorldMap {
     const html = `<div class="inspector-title"><h3>${esc(name)}</h3><span>${p?.student ? '학생이 운영해요' : 'AI가 운영해요'}${p?.evaluated === false ? ' · AI 전용' : ''}</span>${regionControl}</div><p class="inspector-main">대표 산업 ${esc(s.goods?.[p?.main] || goods[p?.main] || '정보 대기')} · 주력 ${esc(s.goods?.[p?.focus] || goods[p?.focus] || '정보 대기')}</p><ul class="country-listings">${rows || '<li>지금 시장에 내놓은 물건이 없어요.</li>'}</ul>${canPropose ? `<button type="button" class="map-propose" ${s.phase === 'trading' ? '' : 'disabled'}>${s.phase === 'trading' ? `${esc(name)}에 직접 거래 제안` : '거래 단계에서 제안할 수 있어요'}</button>` : ''}`;
     render(this.inspector, html, {});
     const region = this.inspector.querySelector('.region-view');
-    if (region) region.onclick = () => this.three?.frameInterior(key);
+    if (region) region.onclick = () => this.world?.flyToNation(key);
     const button = this.inspector.querySelector('.map-propose'); if (button) button.onclick = () => this.options.onPropose(key);
   }
 }
