@@ -39,7 +39,7 @@
 1. 학생 3명 시범 수업으로 이해도·진행 시간 확인하기(`docs/student_rules_summary.md`, `docs/teacher_guide.md` 사용)
 2. 시범 수업 뒤 수출 목표 숫자 다시 보기(지금은 잠정). 학생 7명 이상이면 추가 3개국 목표도 정하기
 3. 웹앱: 기능 구현과 검증 완료(`webapp/README.md`). 여러 방·서버(Firebase 프로젝트)·진행 방식(교사/준비 완료/시간 제한) 지원. 주소 `https://pju0417.github.io/trade/webapp/`, 1서버 연결 확인. 남은 것은 디자인(GPT), 학교 기기·여러 기기 동시 접속 시험, 서버 추가(`webapp/FIREBASE_SETUP.md`)
-4. 세계 지도(`webapp/map/`): 9개국 가상 세계·3단계 확대·게임 상태 연결까지 완료(2026-11-24, 헤드리스 크롬 검사 13개 통과). 데모 `https://pju0417.github.io/trade/webapp/map/`. 남은 것은 실제 iPad·크롬북 확인, Tripo 모델로 임시 모델 바꾸기, 학생·교사 화면에 붙이기
+4. 세계 지도(`webapp/map/`): 9개국 가상 세계·3단계 확대·수도와 마을·게임 상태 연결까지 완료(2026-11-24, 헤드리스 크롬 검사 15개 통과). 지도 디자인은 Claude가 맡는다. 데모 `https://pju0417.github.io/trade/webapp/map/`. 남은 것은 실제 iPad·크롬북 확인, Tripo 모델로 임시 모델 바꾸기, 학생·교사 화면에 붙이기
 
 ## 실행 방법
 

@@ -2,6 +2,7 @@
 
 저장소를 HTTP로 띄우고 webapp/map/index.html을 연다.
   1) 확대 단계별 스크린샷(세계·대륙·항구 9곳)
+  1-1) 나라마다 수도·마을, 건물 수
   2) 게임 상태 넣기(update: profiles·world_trades·country) → 무역로 수·산업 건물 수 확인
   3) 나라 클릭 → 나라 카드, 드래그·휠, 항구 버튼 → 날아가기
   4) 작은 GLB를 만들어 불러오기 → 등대 자리에 배치
@@ -81,6 +82,14 @@ with sync_playwright() as p:
         pg.screenshot(path=os.path.join(OUT, name + '.png'))
         return pg.evaluate('worldMap.getState()')
 
+    st0 = pg.evaluate('worldMap.settlements')
+    caps = [x for x in st0 if x['capital']]
+    check('도시: 나라마다 수도 1곳 + 마을 2곳 이상', len(caps) == 9 and all(sum(1 for x in st0 if x['nation'] == n['key'] and not x['capital']) >= 2 for n in nations), f'수도 {len(caps)}, 전체 {len(st0)}')
+    for c in caps:
+        if c['nation'] in ('Technia', 'Oilia', 'Tropia', 'Ferria'):
+            shot('3-capital-' + c['nation'], c['x'], c['z'] + 2.5, 5, 1200)
+    st_c = pg.evaluate('worldMap.getState()')
+    check('도시 건물 1000채 이상', st_c['buildings'] > 1000, f"buildings={st_c['buildings']}")
     s = shot('1-world', -10, 2, 185)
     check('세계 보기에 데모 무역로', s['routes'] > 0, f"routes={s['routes']}")
     shot('2-continent', -40, -22, 26)

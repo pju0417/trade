@@ -60,7 +60,7 @@ function createWorldMap(container, THREE, opts) {
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   // ───────────────────────── 세계 만들기 (항상 같은 모양) ─────────────────────────
-  var N = NATIONS.length, F = new Float32Array(FW * FH), ID = new Int8Array(FW * FH), HG = new Float32Array(FW * FH), FOR = new Float32Array(FW * FH), CON = new Uint8Array(FW * FH);
+  var N = NATIONS.length, FLD = new Float32Array(FW * FH), F = new Float32Array(FW * FH), ID = new Int8Array(FW * FH), HG = new Float32Array(FW * FH), FOR = new Float32Array(FW * FH), CON = new Uint8Array(FW * FH);
   var natData = new Uint8Array(FW * FH * 4), polData = new Uint8Array(FW * FH * 4);
   var cSum = NATIONS.map(function () { return [0, 0, 0]; });
   (function generate() {
@@ -99,12 +99,7 @@ function createWorldMap(container, THREE, opts) {
           // 자연색
           c = [0, 0, 0]; for (k = 0; k < BIOMES.length; k++) { var bc = BIO[BIOMES[k]].c; c[0] += bc[0] * bAmt[k]; c[1] += bc[1] * bAmt[k]; c[2] += bc[2] * bAmt[k]; }
           var pl = bAmt[1];
-          pl = sstep(0.3, 0.75, pl);
-          if (pl > 0.01) {
-            var ax = (x * 0.8 + z * 0.35) / 2.2, az = (z * 0.8 - x * 0.35) / 1.6, fx = Math.floor(ax), fz = Math.floor(az), hv = hash2(fx, fz, 77);
-            var fc = hv < 0.4 ? [0.88, 0.75, 0.36] : hv < 0.7 ? [0.55, 0.67, 0.3] : hv < 0.88 ? [0.67, 0.53, 0.34] : [0.93, 0.84, 0.52];
-            c = mixc(c, fc, pl * 0.7);
-          }
+          FLD[idx] = sstep(0.3, 0.75, pl) * 0.8;
           if (bAmt[3] > 0.05) { var s = Math.sin(x * 0.9 + z * 0.4 + fbm3(x * 0.2, z * 0.2, 8) * 6); var m = 1 + s * 0.06 * bAmt[3]; c = [c[0] * m, c[1] * m, c[2] * m]; }
           if (bAmt[4] > 0.05) c = mixc(c, [0.14, 0.36, 0.15], bAmt[4] * sstep(0.45, 0.6, fbm3(x * 0.3, z * 0.3, 9)) * 0.6);
           if (bAmt[5] > 0.05) c = mixc(c, [0.6, 0.31, 0.18], bAmt[5] * sstep(0.55, 0.72, vnoise(x * 1.3, z * 1.3, 10)) * 0.6);
@@ -119,7 +114,7 @@ function createWorldMap(container, THREE, opts) {
           var pc = POLC[bi]; polData[o] = pc[0] * 255; polData[o + 1] = pc[1] * 255; polData[o + 2] = pc[2] * 255; polData[o + 3] = (bi + 1) * 20;
         }
         HG[idx] = h;
-        natData[o] = clamp(c[0] * 255, 0, 255); natData[o + 1] = clamp(c[1] * 255, 0, 255); natData[o + 2] = clamp(c[2] * 255, 0, 255); natData[o + 3] = 255;
+        natData[o] = clamp(c[0] * 255, 0, 255); natData[o + 1] = clamp(c[1] * 255, 0, 255); natData[o + 2] = clamp(c[2] * 255, 0, 255);
       }
     }
   })();
@@ -162,6 +157,128 @@ function createWorldMap(container, THREE, opts) {
     }
   });
 
+  // ───────────────────────── 도시·마을 (수도 1곳 + 마을 2~3곳, 길, 밭) ─────────────────────────
+  var STYLES = {
+    temperate: { walls: ['#f3ece0', '#e8dcc6', '#f6f1e7', '#e2d3bd'], roofs: ['#c0583a', '#a8462f', '#5b6f82', '#8a5a44'], house: 'gable', farm: [[0.86, 0.74, 0.36], [0.55, 0.67, 0.3], [0.67, 0.53, 0.34], [0.47, 0.6, 0.28]], farmW: 2.6 },
+    plains:    { walls: ['#f4efe4', '#e9dfcb', '#b5523b', '#f4efe4'], roofs: ['#6d4c41', '#8a5a44', '#5d6d7e'], house: 'gable', farm: [[0.86, 0.74, 0.36], [0.55, 0.67, 0.3], [0.67, 0.53, 0.34], [0.93, 0.84, 0.52]], farmW: 3.2 },
+    boreal:    { walls: ['#7b5a43', '#8d6e58', '#6b4f3a', '#c9b9a6'], roofs: ['#3e4f45', '#4a4a4a', '#5b6f5f'], house: 'gable', farm: [[0.5, 0.6, 0.35], [0.62, 0.66, 0.4]], farmW: 1.4 },
+    desert:    { walls: ['#e8d5ae', '#ddc597', '#f0e2c4', '#d6b98a'], roofs: ['#e8d5ae'], house: 'flat', farm: [[0.42, 0.58, 0.27], [0.52, 0.64, 0.3]], farmW: 1.1 },
+    tropical:  { walls: ['#f7c8b4', '#f6e3a1', '#a8e0d2', '#f4f1e8', '#c8e6a6'], roofs: ['#c96a3d', '#b5523b', '#d9a066'], house: 'gable', hut: true, farm: [[0.2, 0.42, 0.18], [0.3, 0.5, 0.22], [0.55, 0.62, 0.3]], farmW: 2.0 },
+    outback:   { walls: ['#f1e6d6', '#e2c9a6', '#d8b48c'], roofs: ['#9aa3a8', '#7f8a90', '#b0b8bc'], house: 'gable', farm: null, farmW: 0 },
+    island:    { walls: ['#ffffff', '#f4f6f7', '#eaf2f8'], roofs: ['#2e86c1', '#3498db', '#1f618d'], house: 'flat', farm: [[0.5, 0.66, 0.34], [0.62, 0.7, 0.4]], farmW: 1.2 }
+  };
+  var MODERN = { Technia: 1, Novia: 0.9, Oilia: 0.75, Mechania: 0.6, Grainia: 0.2, Mineria: 0.3, Ferria: 0.15, Tropia: 0.3, Agrea: 0.25 };
+  var GLASS = ['#7fb3d5', '#a9cce3', '#85929e', '#d6eaf8', '#5d6d7e', '#aab7b8'];
+  var BLD = { wall: [], roof: [], dome: [], cone: [], cyl: [] }, ROADS = [], SETTLE = [];
+  function farFromSettle(x, z, gap) { for (var k = 0; k < SETTLE.length; k++) { var s = SETTLE[k]; if (Math.hypot(x - s.x, z - s.z) < s.R + gap) return false; } return true; }
+  function siteOK(x, z, R) {
+    if (landAt(x, z) < 0.1) return false; var h0 = heightAt(x, z); if (h0 > 0.5) return false;
+    for (var a = 0; a < 8; a++) { var px = x + Math.cos(a * 0.785) * R, pz = z + Math.sin(a * 0.785) * R; if (landAt(px, pz) < 0.03 || Math.abs(heightAt(px, pz) - h0) > 0.4) return false; }
+    return true;
+  }
+  NATIONS.forEach(function (n) {
+    var r = rng32(n.i * 31337 + 3), best = null, bs = 1e9, R = n.cells > 9000 ? 2.4 : 1.8, t, x, z;
+    for (t = 0; t < 3000; t++) {
+      x = n.cx + (r() * 2 - 1) * n.r * 0.75; z = n.cz + (r() * 2 - 1) * n.r * 0.75;
+      if (nationAt(x, z) !== n.i || !siteOK(x, z, R)) continue;
+      var dp = Math.hypot(x - n.port.x, z - n.port.z); if (dp < R + 4.5) continue;
+      var sc = Math.hypot(x - n.cx, z - n.cz) + heightAt(x, z) * 6 + Math.max(0, dp - 14) * 0.3;
+      if (sc < bs) { bs = sc; best = [x, z]; }
+    }
+    if (best) SETTLE.push({ n: n, x: best[0], z: best[1], R: R, capital: true });
+    var want = n.cells > 9000 ? 3 : 2, made = 0;
+    for (t = 0; t < 6000 && made < want; t++) {
+      x = n.cx + (r() * 2 - 1) * n.r * 1.1; z = n.cz + (r() * 2 - 1) * n.r * 1.1;
+      var tr = 0.85 + r() * 0.4;
+      if (nationAt(x, z) !== n.i || !siteOK(x, z, tr) || !farFromSettle(x, z, 5.5) || Math.hypot(x - n.port.x, z - n.port.z) < 5) continue;
+      SETTLE.push({ n: n, x: x, z: z, R: tr, capital: false }); made++;
+    }
+  });
+  // 길: 수도↔항구, 마을↔가장 가까운 수도·항구·마을(같은 나라)
+  function clearForest(x, z, rad) { var c = Math.ceil(rad / CELL); var i0 = Math.floor((x + WX) / CELL), j0 = Math.floor((z + WZ) / CELL); for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) { var i = i0 + di, j = j0 + dj; if (i >= 0 && j >= 0 && i < FW && j < FH) FOR[j * FW + i] = 0; } }
+  function makeRoad(ax, az, bx, bz, w, seed) {
+    var L = Math.hypot(bx - ax, bz - az); if (L < 0.3) return false;
+    var cnt = Math.max(2, Math.ceil(L / 0.3)), px = -(bz - az) / L, pz = (bx - ax) / L, pts = [];
+    for (var i = 0; i <= cnt; i++) {
+      var t = i / cnt, wob = Math.sin(t * Math.PI) * (vnoise(t * 3, seed, 21) - 0.5) * Math.min(L * 0.3, 4);
+      var x = ax + (bx - ax) * t + px * wob, z = az + (bz - az) * t + pz * wob;
+      if (landAt(x, z) < 0.015) return false;
+      pts.push([x, z]);
+    }
+    pts.forEach(function (p) { clearForest(p[0], p[1], 0.3); });
+    ROADS.push({ pts: pts, w: w }); return true;
+  }
+  NATIONS.forEach(function (n) {
+    var mine = SETTLE.filter(function (s) { return s.n === n; }), cap = mine.filter(function (s) { return s.capital; })[0], pq = { x: n.port.x - n.port.sx * 0.75, z: n.port.z - n.port.sz * 0.75 };
+    var nodes = [pq]; if (cap) { makeRoad(cap.x, cap.z, pq.x, pq.z, 0.075, n.i * 10); nodes.push(cap); }
+    mine.forEach(function (s, k) {
+      if (s.capital) return;
+      var order = nodes.slice().sort(function (a, b) { return Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z); });
+      for (var q = 0; q < order.length; q++) if (makeRoad(s.x, s.z, order[q].x, order[q].z, 0.06, n.i * 10 + k + 1)) break;
+      nodes.push(s);
+    });
+  });
+  // 도시 바닥·밭을 자연색 텍스처에 칠하고 숲을 치운다
+  SETTLE.forEach(function (s, si) {
+    var st = STYLES[s.n.biome], farm = st.farm ? s.R + st.farmW * (s.capital ? 1.2 : 0.8) : s.R, ang = si * 0.7, ca = Math.cos(ang), sa = Math.sin(ang);
+    var c = Math.ceil(farm / CELL), i0 = Math.floor((s.x + WX) / CELL), j0 = Math.floor((s.z + WZ) / CELL);
+    for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) {
+      var i = i0 + di, j = j0 + dj; if (i < 0 || j < 0 || i >= FW || j >= FH) continue;
+      var idx = j * FW + i; if (F[idx] <= 0.02) continue;
+      var dx = di * CELL, dz = dj * CELL, d = Math.hypot(dx, dz) + (vnoise(i * 0.3, j * 0.3, 30 + si) - 0.5) * 0.8; if (d > farm) continue;
+      var o = idx * 4, col, w;
+      if (d < s.R * 0.95) { col = [0.64, 0.61, 0.55]; w = 0.55; FOR[idx] = 0; }
+      else {
+        if (!st.farm) continue; FLD[idx] = Math.max(FLD[idx], 0.85 * (1 - sstep(farm - 0.9, farm, d))); FOR[idx] *= 0.15; continue;
+      }
+      natData[o] = lerp(natData[o], col[0] * 255, w); natData[o + 1] = lerp(natData[o + 1], col[1] * 255, w); natData[o + 2] = lerp(natData[o + 2], col[2] * 255, w);
+    }
+  });
+  // 건물 목록 (x, y, z, 너비, 높이, 깊이, 회전, r, g, b)
+  function pick(a, r) { return a[Math.floor(r() * a.length)]; }
+  function addB(type, x, y, z, sx, sy, sz, ry, col) { var c = Array.isArray(col) ? col : hexRGB(col); BLD[type].push(x, y, z, sx, sy, sz, ry, c[0], c[1], c[2]); }
+  function house(st, x, z, ry, r, capital) {
+    var y = heightAt(x, z) - 0.03, w = 0.07 + r() * 0.04, d = 0.06 + r() * 0.035, h = 0.05 + r() * 0.04 + 0.03;
+    if (st.hut && !capital && r() < 0.75) { addB('cyl', x, y, z, w * 0.5, h, w * 0.5, 0, pick(st.walls, r)); addB('cone', x, y + h, z, w * 0.72, h * 0.9, w * 0.72, 0, [0.72, 0.6, 0.38]); return; }
+    addB('wall', x, y, z, w, h, d, ry, pick(st.walls, r));
+    if (st.house === 'gable') addB('roof', x, y + h, z, w * 1.1, h * 0.5, d * 1.08, ry, pick(st.roofs, r));
+    else if (r() < 0.15) addB('dome', x, y + h, z, w * 0.3, w * 0.3, w * 0.3, 0, [0.96, 0.95, 0.92]);
+  }
+  SETTLE.forEach(function (s, si) {
+    var r = rng32(si * 7907 + 11), st = STYLES[s.n.biome], mod = MODERN[s.n.key] || 0.2, h0 = heightAt(s.x, s.z), ang = r() * Math.PI, ca = Math.cos(ang), sa = Math.sin(ang), nc = hexRGB(s.n.color);
+    s.ang = ang;
+    if (s.capital) {
+      var P = 0.15, nn = Math.ceil(s.R / P);
+      for (var i = -nn; i <= nn; i++) for (var j = -nn; j <= nn; j++) {
+        if (i % 5 === 0 || j % 5 === 0) continue;
+        var lx = i * P + (r() - 0.5) * 0.03, lz = j * P + (r() - 0.5) * 0.03, d = Math.hypot(lx, lz) / s.R;
+        if (d > 1 || d < 0.13 || r() > 1 - d * d * 0.75) continue;
+        var x = s.x + lx * ca - lz * sa, z = s.z + lx * sa + lz * ca;
+        if (landAt(x, z) < 0.03 || Math.abs(heightAt(x, z) - h0) > 0.4) continue;
+        var y = heightAt(x, z) - 0.03;
+        if (d < 0.45 && r() < mod * (1 - d * 1.6)) { var tw = 0.08 + r() * 0.05, th = (0.18 + r() * 0.45) * mod * (1 - d) + 0.14; addB('wall', x, y, z, tw, th, tw, ang, pick(GLASS, r)); addB('wall', x, y + th, z, tw * 1.05, 0.014, tw * 1.05, ang, [0.92, 0.94, 0.96]); }
+        else if (d < 0.6 && r() < 0.4) { addB('wall', x, y, z, 0.1 + r() * 0.04, 0.12 + r() * 0.06, 0.09 + r() * 0.03, ang, pick(st.walls, r)); }
+        else house(st, x, z, ang + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
+      }
+      // 시청(지붕이 나라 색) + 깃발
+      addB('wall', s.x, h0 - 0.03, s.z, 0.26, 0.15, 0.2, ang, [0.96, 0.94, 0.88]); addB('dome', s.x, h0 + 0.12, s.z, 0.08, 0.08, 0.08, 0, nc);
+      var fx = s.x + 0.2 * ca, fz = s.z + 0.2 * sa; addB('cyl', fx, h0, fz, 0.005, 0.32, 0.005, 0, [0.35, 0.35, 0.35]); addB('wall', fx + 0.035, h0 + 0.26, fz, 0.07, 0.045, 0.005, 0, nc);
+      ROADS.push({ pts: [[s.x - s.R * ca, s.z - s.R * sa], [s.x + s.R * ca, s.z + s.R * sa]], w: 0.1 }); ROADS.push({ pts: [[s.x + s.R * sa, s.z - s.R * ca], [s.x - s.R * sa, s.z + s.R * ca]], w: 0.1 });
+      ROADS.push({ disc: [s.x, s.z, 0.34] });
+    } else {
+      var cnt = Math.round(22 + s.R * 38);
+      for (var k = 0; k < cnt * 3 && cnt > 0; k++) {
+        var onStreet = r() < 0.55, rad = s.R * Math.sqrt(r()), a2 = r() * Math.PI * 2, ox, oz;
+        if (onStreet) { var along = (r() * 2 - 1) * s.R, side = (r() < 0.5 ? -1 : 1) * (0.09 + r() * 0.05); ox = along * ca - side * sa; oz = along * sa + side * ca; }
+        else { ox = Math.cos(a2) * rad; oz = Math.sin(a2) * rad; if (Math.hypot(ox, oz) < 0.12) continue; }
+        var x2 = s.x + ox, z2 = s.z + oz; if (landAt(x2, z2) < 0.03 || Math.abs(heightAt(x2, z2) - h0) > 0.35) continue;
+        house(st, x2, z2, onStreet ? ang : r() * Math.PI, r, false); cnt--;
+      }
+      addB('wall', s.x, h0 - 0.03, s.z, 0.12, 0.1, 0.1, ang, [0.95, 0.93, 0.88]); addB('roof', s.x, h0 + 0.07, s.z, 0.13, 0.06, 0.11, ang, nc);
+      ROADS.push({ pts: [[s.x - s.R * ca, s.z - s.R * sa], [s.x + s.R * ca, s.z + s.R * sa]], w: 0.07 });
+    }
+  });
+
   // ───────────────────────── 렌더러·장면 ─────────────────────────
   if (window.getComputedStyle(container).position === 'static') container.style.position = 'relative';
   container.style.overflow = 'hidden';
@@ -184,6 +301,7 @@ function createWorldMap(container, THREE, opts) {
   var SUN_DIR = new THREE.Vector3(-0.55, 1.0, 0.55).normalize();
 
   // ───────────────────────── 지형 메시 ─────────────────────────
+  for (var fi = 0; fi < FW * FH; fi++) natData[fi * 4 + 3] = F[fi] > 0 ? clamp(FLD[fi] * 255, 0, 255) : 0;
   function dataTex(data, linear) { var t = new THREE.DataTexture(data, FW, FH, THREE.RGBAFormat); t.magFilter = t.minFilter = linear ? THREE.LinearFilter : THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; }
   var natTex = dataTex(natData, true), polTex = dataTex(polData, false);
   var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uPol: { value: polTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
@@ -206,8 +324,12 @@ function createWorldMap(container, THREE, opts) {
       'float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }',
       'float vn2(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h21(i),h21(i+vec2(1.0,0.0)),f.x), mix(h21(i+vec2(0.0,1.0)),h21(i+vec2(1.0,1.0)),f.x), f.y); }'].join('\n'))
       .replace('#include <map_fragment>', [
-        '#ifdef USE_MAP', '  vec4 texelColor = texture2D( map, vUv );', '  texelColor = mapTexelToLinear( texelColor );', '  diffuseColor *= texelColor;', '#endif',
+        '#ifdef USE_MAP', '  vec4 texelColor = texture2D( map, vUv );', '  texelColor = mapTexelToLinear( texelColor );', '  diffuseColor.rgb *= texelColor.rgb;', '  float fa = texelColor.a;', '#else', '  float fa = 0.0;', '#endif',
         '  float dn = vn2(vXZ*14.0)*0.55 + vn2(vXZ*47.0)*0.45;',
+        '  vec2 fq0 = vec2(vXZ.x * 0.8 + vXZ.y * 0.35, vXZ.y * 0.8 - vXZ.x * 0.35) / vec2(0.62, 0.46); vec2 fcell = floor(fq0); vec2 fq = fract(fq0); float fh = h21(fcell + 17.0);',
+        '  vec3 fcol = fh < 0.38 ? vec3(0.88, 0.75, 0.36) : fh < 0.68 ? vec3(0.55, 0.67, 0.3) : fh < 0.86 ? vec3(0.67, 0.53, 0.34) : vec3(0.93, 0.84, 0.52);',
+        '  fcol = mix(fcol, diffuseColor.rgb, 0.3); float fedge = min(min(fq.x, 1.0 - fq.x), min(fq.y, 1.0 - fq.y)); fcol *= mix(0.8, 1.0, smoothstep(0.0, 0.05, fedge)) * (0.95 + 0.05 * sin(fq0.x * 60.0));',
+        '  diffuseColor.rgb = mix(diffuseColor.rgb, fcol, fa * step(0.2, h21(fcell + 3.0)));',
         '  diffuseColor.rgb *= mix(1.0, 0.82 + 0.34*dn, uDetail);',
         '  vec4 pc = texture2D(uPol, vUv); float a0 = pc.a; float land = step(0.02, a0);',
         '  float bd = step(0.01, abs(texture2D(uPol, vUv + vec2(uTexel.x, 0.0)).a - a0)) + step(0.01, abs(texture2D(uPol, vUv - vec2(uTexel.x, 0.0)).a - a0))',
@@ -355,7 +477,7 @@ function createWorldMap(container, THREE, opts) {
     var r = rng32(n.i * 104729 + 5), spots = [], pt = n.port;
     for (var t = 0; t < 4000 && spots.length < 40; t++) {
       var a = r() * Math.PI * 2, d = 2.6 + r() * 5.5, x = pt.x + Math.cos(a) * d - pt.sx * 1.5, z = pt.z + Math.sin(a) * d - pt.sz * 1.5;
-      if (nationAt(x, z) !== n.i || landAt(x, z) < 0.06 || heightAt(x, z) > 0.75) continue;
+      if (nationAt(x, z) !== n.i || landAt(x, z) < 0.06 || heightAt(x, z) > 0.75 || !farFromSettle(x, z, 0.5)) continue;
       var ok = true; for (var s = 0; s < spots.length; s++) if (Math.hypot(spots[s][0] - x, spots[s][1] - z) < 0.55) { ok = false; break; }
       if (!ok) continue; spots.push([x, z, r() * Math.PI * 2]);
       FOR[cellIdx(x, z)] = 0;
@@ -381,6 +503,45 @@ function createWorldMap(container, THREE, opts) {
     });
     PROP_TYPES.forEach(function (t) { propMesh[t].count = cnt[t]; propMesh[t].instanceMatrix.needsUpdate = true; });
   }
+
+  // ───────────────────────── 도시 건물·길 메시 ─────────────────────────
+  var cityMeshes = [], bldCount = 0;
+  (function () {
+    var plain = new THREE.MeshLambertMaterial({ color: 0xffffff }), geos = {};
+    geos.wall = new THREE.BoxGeometry(1, 1, 1); geos.wall.translate(0, 0.5, 0);
+    var rs = new THREE.Shape([new THREE.Vector2(-0.5, 0), new THREE.Vector2(0.5, 0), new THREE.Vector2(0, 1)]); geos.roof = new THREE.ExtrudeGeometry(rs, { depth: 1, bevelEnabled: false }); geos.roof.translate(0, 0, -0.5);
+    geos.dome = new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2);
+    geos.cone = new THREE.ConeGeometry(1, 1, 8); geos.cone.translate(0, 0.5, 0);
+    geos.cyl = new THREE.CylinderGeometry(1, 1, 1, 8); geos.cyl.translate(0, 0.5, 0);
+    Object.keys(BLD).forEach(function (t) {
+      var a = BLD[t], n = a.length / 10; if (!n) return;
+      var m = new THREE.InstancedMesh(geos[t], plain, n), e = m.instanceMatrix.array, col = new THREE.Color();
+      for (var k = 0; k < n; k++) {
+        var b = k * 10, c = Math.cos(a[b + 6]), s = Math.sin(a[b + 6]), o = k * 16;
+        e[o] = c * a[b + 3]; e[o + 1] = 0; e[o + 2] = -s * a[b + 3]; e[o + 3] = 0; e[o + 4] = 0; e[o + 5] = a[b + 4]; e[o + 6] = 0; e[o + 7] = 0;
+        e[o + 8] = s * a[b + 5]; e[o + 9] = 0; e[o + 10] = c * a[b + 5]; e[o + 11] = 0; e[o + 12] = a[b]; e[o + 13] = a[b + 1]; e[o + 14] = a[b + 2]; e[o + 15] = 1;
+        m.setColorAt(k, col.setRGB(a[b + 7], a[b + 8], a[b + 9]));
+      }
+      m.instanceMatrix.needsUpdate = true; m.frustumCulled = false; m.castShadow = true; m.receiveShadow = true; m.visible = false; scene.add(m); cityMeshes.push(m);
+      if (t === 'wall' || t === 'cyl') bldCount += n;
+    });
+    // 길: 지형을 따라가는 띠 + 수도 광장
+    var pos = [], idx = [];
+    function vtx(x, z) { pos.push(x, Math.max(heightAt(x, z), 0.02) + 0.014, z); return pos.length / 3 - 1; }
+    ROADS.forEach(function (rd) {
+      if (rd.disc) { var cx = rd.disc[0], cz = rd.disc[1], rr = rd.disc[2], c0 = vtx(cx, cz), prev = -1, first = -1; for (var q = 0; q <= 16; q++) { var aa = q / 16 * Math.PI * 2, v = q === 16 ? first : vtx(cx + Math.cos(aa) * rr, cz + Math.sin(aa) * rr); if (q === 0) first = v; if (prev >= 0) idx.push(c0, v, prev); prev = v; } return; }
+      var p = rd.pts, w = rd.w / 2, L = [], R = [];
+      var dense = []; for (var i = 0; i < p.length - 1; i++) { var sl = Math.hypot(p[i + 1][0] - p[i][0], p[i + 1][1] - p[i][1]), nsub = Math.max(1, Math.ceil(sl / 0.15)); for (var u = 0; u < nsub; u++) dense.push([lerp(p[i][0], p[i + 1][0], u / nsub), lerp(p[i][1], p[i + 1][1], u / nsub)]); } dense.push(p[p.length - 1]);
+      for (i = 0; i < dense.length; i++) {
+        var a2 = dense[Math.max(0, i - 1)], b2 = dense[Math.min(dense.length - 1, i + 1)], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l * w, nz = dx / l * w;
+        L.push(vtx(dense[i][0] + nx, dense[i][1] + nz)); R.push(vtx(dense[i][0] - nx, dense[i][1] - nz));
+        if (i > 0) idx.push(L[i - 1], R[i - 1], L[i], R[i - 1], R[i], L[i]);
+      }
+    });
+    var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    var roadMat = new THREE.MeshLambertMaterial({ color: 0xb3a58a, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide });
+    var rm = new THREE.Mesh(g, roadMat); rm.receiveShadow = true; rm.visible = false; scene.add(rm); cityMeshes.push(rm);
+  })();
 
   // ───────────────────────── 무역로 (게임 거래에서 만듦) ─────────────────────────
   var routeW = { value: 0.2 }, routes = [], routeGroup = new THREE.Group(); scene.add(routeGroup);
@@ -470,6 +631,10 @@ function createWorldMap(container, THREE, opts) {
     d.addEventListener('click', function (ev) { ev.stopPropagation(); selectNation(n.i); });
     labelLayer.appendChild(d); return { el: d, n: n, pos: new THREE.Vector3(n.cx, 0.4, n.cz) };
   });
+  var capLabels = SETTLE.filter(function (s) { return s.capital; }).map(function (s) {
+    var d = el('div', 'position:absolute;left:0;top:0;background:rgba(255,255,255,0.92);border-radius:10px;padding:1px 8px;font-weight:800;font-size:12px;color:#1d2731;box-shadow:0 1px 3px rgba(0,0,0,0.18);white-space:nowrap;pointer-events:none;border-left:5px solid ' + s.n.color + ';');
+    labelLayer.appendChild(d); return { el: d, s: s, pos: new THREE.Vector3(s.x, heightAt(s.x, s.z) + 0.55, s.z) };
+  });
   var portLabels = ports.map(function (p) {
     var d = el('div', 'position:absolute;left:0;top:0;background:#ffffff;border:2px solid ' + GOODS[p.n.good].color + ';border-radius:14px;padding:2px 9px 2px 6px;font-weight:700;font-size:12px;color:#1f2933;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;cursor:pointer;pointer-events:auto;user-select:none;-webkit-user-select:none;');
     d.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
@@ -487,6 +652,7 @@ function createWorldMap(container, THREE, opts) {
       l.el.innerHTML = '<div style="font-weight:800;font-size:14px;letter-spacing:0.5px;color:#1d2731;text-shadow:0 0 3px #ffffff,0 0 3px #ffffff,0 0 2px #ffffff;">' + esc(names[n.key] || n.ko) + badge + '</div><div style="font-size:11px;font-weight:700;color:#3a4652;text-shadow:0 0 3px #ffffff,0 0 3px #ffffff;">' + levelsLine(n) + '</div>';
     });
     portLabels.forEach(function (l) { var n = l.p.n; l.el.innerHTML = GOODS[n.good].icon + ' ' + esc(names[n.key] || n.ko) + ' 항구'; });
+    capLabels.forEach(function (l) { l.el.innerHTML = '🏛️ ' + esc(names[l.s.n.key] || l.s.n.ko) + ' 수도'; });
   }
   var hasPanel = opts.panel !== false;
   var panel = el('div', 'position:absolute;left:12px;top:12px;width:258px;background:rgba(255,255,255,0.94);border:1px solid #d5dce3;border-radius:14px;box-shadow:0 4px 16px rgba(20,30,40,0.14);padding:12px 14px;pointer-events:auto;font-size:12px;line-height:1.5;' + (hasPanel ? '' : 'display:none;'));
@@ -495,7 +661,7 @@ function createWorldMap(container, THREE, opts) {
   ui.appendChild(panel);
   function q(k) { return panel.querySelector('[data-k="' + k + '"]'); }
   var lvEls = ['세계', '대륙', '지역'].map(function (n, i) { var d = el('div', 'flex:1;text-align:center;padding:5px 0;border-radius:8px;font-weight:700;font-size:12px;background:#eef2f6;color:#7b8794;', (i + 1) + '단계 ' + n); q('levels').appendChild(d); return d; });
-  var LAYERS = ['나라 색·국경', '무역로·화물 이동', '지형 색 (사막·들판·숲·산)', '숲: 큰 덩어리 (낮은 LOD)', '숲: 나무 한 그루씩 (높은 LOD)', '3D 항구·산업 건물·그림자'];
+  var LAYERS = ['나라 색·국경', '무역로·화물 이동', '지형 색 (사막·들판·숲·산)', '숲: 큰 덩어리 (낮은 LOD)', '숲: 나무 한 그루씩 (높은 LOD)', '3D 항구·도시·산업 건물·그림자'];
   var layEls = LAYERS.map(function (n) { var d = el('div', 'display:flex;align-items:center;gap:6px;color:#9aa5b1;', '<span style="display:inline-block;width:9px;height:9px;border-radius:5px;background:#cfd6dd;"></span><span>' + n + '</span>'); q('layers').appendChild(d); return d; });
   var folded = !!opts.panelFolded;
   function applyFold() { q('body').style.display = folded ? 'none' : 'block'; q('fold').textContent = folded ? '펼치기' : '접기'; }
@@ -693,7 +859,7 @@ function createWorldMap(container, THREE, opts) {
     }
     updateCamera();
     var z = zoomT(), polMix = sstep(0.55, 0.78, z), detail = 1 - sstep(0.3, 0.6, z);
-    terrU.uMix.value = polMix; terrU.uDetail.value = detail; terrU.uBorder.value = sstep(0.5, 0.72, z);
+    terrU.uMix.value = polMix; terrU.uDetail.value = detail; terrU.uBorder.value = sstep(0.62, 0.8, z);
     oceanMat.color.copy(OCEAN_POL).lerp(OCEAN_NAT, 1 - polMix); oceanMat.opacity = lerp(0.72, 0.96, polMix);
     oceanMat.specular.setScalar(0.35 * detail); oceanMat.normalScale.set(0.6 * detail, 0.6 * detail);
     waveTex.offset.x += dt * 0.004; waveTex.offset.y += dt * 0.0025;
@@ -714,6 +880,9 @@ function createWorldMap(container, THREE, opts) {
       p.ships.forEach(function (s) { var th = clock * s.sp * 2 * Math.PI + s.ph, ax = 0.78, bz = 0.34; s.m.position.set(Math.cos(th) * ax, 0, 1.38 + Math.sin(th) * bz); s.m.rotation.y = Math.atan2(-(Math.cos(th) * bz), -Math.sin(th) * ax); });
       if (p.flame) { var f = 0.85 + Math.sin(clock * 23 + p.n.i) * 0.12 + Math.sin(clock * 37) * 0.08; p.flame.scale.set(f, f * 1.2, f); }
     });
+    var cityVis = z < 0.63; cityMeshes.forEach(function (m) { m.visible = cityVis; });
+    var capOp = sstep(0.28, 0.36, z) * (1 - sstep(0.56, 0.64, z));
+    capLabels.forEach(function (l) { if (capOp < 0.01) { l.el.style.display = 'none'; return; } project(l.pos, _pp); if (!_pp.ok) { l.el.style.display = 'none'; return; } l.el.style.display = 'block'; l.el.style.opacity = capOp; l.el.style.transform = 'translate(' + _pp.x.toFixed(1) + 'px,' + _pp.y.toFixed(1) + 'px) translate(-50%,-100%)'; });
     var cOp = sstep(0.5, 0.62, z);
     nationLabels.forEach(function (l) { if (cOp < 0.01) { l.el.style.display = 'none'; return; } project(l.pos, _pp); if (!_pp.ok) { l.el.style.display = 'none'; return; } l.el.style.display = 'block'; l.el.style.opacity = cOp; l.el.style.transform = 'translate(' + _pp.x.toFixed(1) + 'px,' + _pp.y.toFixed(1) + 'px) translate(-50%,-50%)'; });
     var pOp = 1 - sstep(0.6, 0.7, z);
@@ -739,8 +908,9 @@ function createWorldMap(container, THREE, opts) {
     update: update, setProfiles: setProfiles, setTrades: setTrades, setMe: setMe,
     flyTo: flyTo, flyToNation: flyToNation, selectNation: function (key) { selectNation(NK[key] ? NK[key].i : -1); },
     setView: function (x, z, d) { fly = null; target.x = x; target.z = z; dist = d; updateCamera(); },
-    getState: function () { return { x: target.x, z: target.z, dist: dist, zoom: zoomT(), trees: treeCount, calls: renderer.info.render.calls, routes: routes.length, props: PROP_TYPES.reduce(function (s, t) { return s + propMesh[t].count; }, 0) }; },
+    getState: function () { return { x: target.x, z: target.z, dist: dist, zoom: zoomT(), trees: treeCount, calls: renderer.info.render.calls, routes: routes.length, buildings: bldCount, settlements: SETTLE.length, props: PROP_TYPES.reduce(function (s, t) { return s + propMesh[t].count; }, 0) }; },
     nations: NATIONS.map(function (n) { return { key: n.key, ko: n.ko, good: n.good, port: { x: n.port.x, z: n.port.z }, center: { x: n.cx, z: n.cz }, cells: n.cells }; }),
+    settlements: SETTLE.map(function (s) { return { nation: s.n.key, capital: s.capital, x: s.x, z: s.z, r: s.R }; }),
     loadFile: loadFile, placeModel: placeModel,
     dispose: function () {
       cancelAnimationFrame(raf); if (demo && demo.timer) clearInterval(demo.timer); if (ro) ro.disconnect(); else window.removeEventListener('resize', onResize);
