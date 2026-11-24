@@ -83,7 +83,7 @@ function createWorldMap(container, THREE, opts) {
         var land = 1 - best;
         for (k = 0; k < BR.length; k++) { var b = BR[k], ex = b[2] - b[0], ez = b[3] - b[1], tt = clamp(((wx - b[0]) * ex + (wz - b[1]) * ez) / (ex * ex + ez * ez), 0.2, 0.8), qx = wx - b[0] - ex * tt, qz = wz - b[1] - ez * tt; land = Math.max(land, 1 - Math.sqrt(qx * qx + qz * qz) / b[4] - 0.25); }
         var isl = (fbm3(x * 0.07 + 100, z * 0.07, 15) - 0.69) * 4 - Math.max(0, best - 1.9) * 3; land = Math.max(land, isl);
-        var f = land + (fbm3(x * 0.11, z * 0.11, 3) - 0.5) * 0.5 + (vnoise(x * 0.4 + 7, z * 0.4, 5) - 0.5) * 0.1;
+        var f = land + (fbm3(x * 0.11, z * 0.11, 3) - 0.5) * 0.5 + (vnoise(x * 0.4 + 7, z * 0.4, 5) - 0.5) * 0.04;
         f -= sstep(WX - 14, WX - 3, Math.abs(x)) * 1.5 + sstep(WZ - 12, WZ - 3, Math.abs(z)) * 1.5;
         F[idx] = f;
         var sw = 0, mnt = 0, fp = 0; for (k = 0; k < BIOMES.length; k++) bAmt[k] = 0;
@@ -99,7 +99,7 @@ function createWorldMap(container, THREE, opts) {
           var r = fbm3(x * 0.085 + 50, z * 0.085 - 20, 4), ridge = 1 - Math.abs(2 * r - 1); ridge = ridge * ridge * ridge;
           var hills = fbm3(x * 0.25, z * 0.25, 6);
           h = 0.04 + sstep(0, 0.35, f) * 0.2 + mnt * ridge * 2.4 * sstep(0.05, 0.45, f) + (hills - 0.5) * 0.2 * (0.4 + mnt);
-          h = Math.max(0.03, h);
+          h = Math.min(Math.max(h, Math.min(0.03, f * 3.2)), f * 3.2); // 해안에서 높이가 0부터 이어지게(끊기면 해안선이 톱니가 됨)
           // 자연색
           c = [0, 0, 0]; for (k = 0; k < BIOMES.length; k++) { var bc = BIO[BIOMES[k]].c; c[0] += bc[0] * bAmt[k]; c[1] += bc[1] * bAmt[k]; c[2] += bc[2] * bAmt[k]; }
           var pl = bAmt[1];
@@ -306,9 +306,20 @@ function createWorldMap(container, THREE, opts) {
 
   // ───────────────────────── 지형 메시 ─────────────────────────
   for (var fi = 0; fi < FW * FH; fi++) natData[fi * 4 + 3] = F[fi] > 0 ? clamp(FLD[fi] * 255, 0, 255) : 0;
+  var polCol = new Uint8Array(polData), seen = new Uint8Array(FW * FH);
+  for (var pi = 0; pi < FW * FH; pi++) seen[pi] = polData[pi * 4 + 3] > 0 ? 1 : 0;
+  for (var it = 0; it < 10; it++) {
+    var nxt = seen.slice();
+    for (var pj = 1; pj < FH - 1; pj++) for (var pk = 1; pk < FW - 1; pk++) {
+      var q0 = pj * FW + pk; if (seen[q0]) continue;
+      var nb = seen[q0 - 1] ? q0 - 1 : seen[q0 + 1] ? q0 + 1 : seen[q0 - FW] ? q0 - FW : seen[q0 + FW] ? q0 + FW : -1;
+      if (nb < 0) continue; polCol[q0 * 4] = polCol[nb * 4]; polCol[q0 * 4 + 1] = polCol[nb * 4 + 1]; polCol[q0 * 4 + 2] = polCol[nb * 4 + 2]; nxt[q0] = 1;
+    }
+    seen = nxt;
+  }
   function dataTex(data, linear) { var t = new THREE.DataTexture(data, FW, FH, THREE.RGBAFormat); t.magFilter = t.minFilter = linear ? THREE.LinearFilter : THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; }
-  var natTex = dataTex(natData, true), polTex = dataTex(polData, false);
-  var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uPol: { value: polTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
+  var natTex = dataTex(natData, true), polTex = dataTex(polData, false), polColTex = dataTex(polCol, true);
+  var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uPol: { value: polTex }, uPolC: { value: polColTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
   var terrGeo = (function () {
     var step = 2, VW = FW / step + 1, VH = FH / step + 1, pos = new Float32Array(VW * VH * 3), uv = new Float32Array(VW * VH * 2);
     for (var j = 0; j < VH; j++) for (var i = 0; i < VW; i++) {
@@ -322,9 +333,9 @@ function createWorldMap(container, THREE, opts) {
   var terrMat = new THREE.MeshLambertMaterial({ map: natTex });
   terrMat.onBeforeCompile = function (sh) {
     for (var k in terrU) sh.uniforms[k] = terrU[k];
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvXZ = position.xz;');
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ;\nvarying float vY;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvXZ = position.xz; vY = position.y;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', [
-      '#include <common>', 'uniform float uMix; uniform float uSel; uniform float uMe; uniform float uDetail; uniform float uBorder;', 'uniform sampler2D uPol; uniform vec2 uTexel;', 'varying vec2 vXZ;',
+      '#include <common>', 'uniform float uMix; uniform float uSel; uniform float uMe; uniform float uDetail; uniform float uBorder;', 'uniform sampler2D uPol; uniform sampler2D uPolC; uniform vec2 uTexel;', 'varying vec2 vXZ;', 'varying float vY;',
       'float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }',
       'float vn2(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h21(i),h21(i+vec2(1.0,0.0)),f.x), mix(h21(i+vec2(0.0,1.0)),h21(i+vec2(1.0,1.0)),f.x), f.y); }'].join('\n'))
       .replace('#include <map_fragment>', [
@@ -335,15 +346,21 @@ function createWorldMap(container, THREE, opts) {
         '  fcol = mix(fcol, diffuseColor.rgb, 0.3); float fedge = min(min(fq.x, 1.0 - fq.x), min(fq.y, 1.0 - fq.y)); fcol *= mix(0.8, 1.0, smoothstep(0.0, 0.05, fedge)) * (0.95 + 0.05 * sin(fq0.x * 60.0));',
         '  diffuseColor.rgb = mix(diffuseColor.rgb, fcol, fa * step(0.2, h21(fcell + 3.0)));',
         '  diffuseColor.rgb *= mix(1.0, 0.82 + 0.34*dn, uDetail);',
-        '  vec4 pc = texture2D(uPol, vUv); float a0 = pc.a; float land = step(0.02, a0);',
-        '  float bd = step(0.01, abs(texture2D(uPol, vUv + vec2(uTexel.x, 0.0)).a - a0)) + step(0.01, abs(texture2D(uPol, vUv - vec2(uTexel.x, 0.0)).a - a0))',
-        '           + step(0.01, abs(texture2D(uPol, vUv + vec2(0.0, uTexel.y)).a - a0)) + step(0.01, abs(texture2D(uPol, vUv - vec2(0.0, uTexel.y)).a - a0));',
-        '  bd = clamp(bd, 0.0, 1.0) * (0.55 + 0.45 * uMix);',
+        '  float a0 = texture2D(uPol, vUv).a;',
+        '  float land = smoothstep(-0.004, 0.02, vY);',
+        '  vec3 pcol = texture2D(uPolC, vUv).rgb;',
+        '  vec2 hx = vec2(uTexel.x * 0.6, 0.0); vec2 hy = vec2(0.0, uTexel.y * 0.6);',
+        '  float g = length(texture2D(uPolC, vUv + hx).rgb - texture2D(uPolC, vUv - hx).rgb) + length(texture2D(uPolC, vUv + hy).rgb - texture2D(uPolC, vUv - hy).rgb);',
+        '  float bd = smoothstep(0.05, 0.2, g) * land;',
+        '  float coast = 0.0;',
+        '#if __VERSION__ >= 300',
+        '  coast = (1.0 - smoothstep(0.0, fwidth(vY) * 1.6 + 0.0001, vY)) * step(0.0, vY);',
+        '#endif',
         '  float nid = floor(a0 * 255.0 / 20.0 + 0.5) - 1.0;',
-        '  diffuseColor.rgb = mix(diffuseColor.rgb, pc.rgb, uMix * land);',
-        '  if (land > 0.5 && abs(nid - uSel) < 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.94, 0.6), 0.45);',
-        '  float me = (land > 0.5 && abs(nid - uMe) < 0.5) ? 1.0 : 0.0;',
-        '  diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.17, 0.21, 0.26), vec3(0.12, 0.35, 0.85), me), clamp(bd, 0.0, 1.0) * land * uBorder);'
+        '  diffuseColor.rgb = mix(diffuseColor.rgb, pcol, uMix * land);',
+        '  if (land > 0.5 && a0 > 0.02 && abs(nid - uSel) < 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.94, 0.6), 0.45);',
+        '  float me = (a0 > 0.02 && abs(nid - uMe) < 0.5) ? 1.0 : 0.0;',
+        '  diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.17, 0.21, 0.26), vec3(0.12, 0.35, 0.85), me), clamp(bd * (0.55 + 0.45 * uMix) + coast * uMix * 0.85, 0.0, 1.0) * uBorder);'
       ].join('\n'));
   };
   var terrain = new THREE.Mesh(terrGeo, terrMat); terrain.receiveShadow = true; scene.add(terrain);
