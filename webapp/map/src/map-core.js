@@ -5,7 +5,7 @@ function createWorldMap(container, THREE, opts) {
   opts = opts || {};
   // ───────────────────────── 상수 ─────────────────────────
   // 세계 크기 비율: 나라 배치·모양은 그대로 두고 전체 크기만 바꾼다(1 = 처음 크기). 항구·집·나무 크기는 그대로다.
-  var S = opts.worldScale || 0.65;
+  var S = opts.worldScale || 0.55;
   var WX = Math.round(100 * S), WZ = Math.round(62 * S), CELL = 0.25, FW = Math.round(2 * WX / CELL), FH = Math.round(2 * WZ / CELL);
   var GROUND_Y = 0.12, QUAY_TOP = 0.2;
   var DMIN = 1.6, DMAX = Math.round(190 * S);
