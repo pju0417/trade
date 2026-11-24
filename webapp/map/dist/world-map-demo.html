@@ -18,9 +18,11 @@
 function createWorldMap(container, THREE, opts) {
   opts = opts || {};
   // ───────────────────────── 상수 ─────────────────────────
-  var WX = 100, WZ = 62, CELL = 0.25, FW = Math.round(2 * WX / CELL), FH = Math.round(2 * WZ / CELL);
+  // 세계 크기 비율: 나라 배치·모양은 그대로 두고 전체 크기만 바꾼다(1 = 처음 크기). 항구·집·나무 크기는 그대로다.
+  var S = opts.worldScale || 0.65;
+  var WX = Math.round(100 * S), WZ = Math.round(62 * S), CELL = 0.25, FW = Math.round(2 * WX / CELL), FH = Math.round(2 * WZ / CELL);
   var GROUND_Y = 0.12, QUAY_TOP = 0.2;
-  var DMIN = 1.6, DMAX = 190;
+  var DMIN = 1.6, DMAX = Math.round(190 * S);
   var FONT = "'Pretendard','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif";
   var GOODS = {
     wheat:       { ko: '밀',       icon: '🌾', color: '#c8913a', port: 'grain',     prop: 'farm' },
@@ -56,7 +58,7 @@ function createWorldMap(container, THREE, opts) {
     outback:   { c: [0.80, 0.47, 0.28], forest: 0.05 },
     island:    { c: [0.42, 0.63, 0.34], forest: 0.5 }
   };
-  NATIONS.forEach(function (n) { n.b = BIOMES.indexOf(n.biome); });
+  NATIONS.forEach(function (n) { n.b = BIOMES.indexOf(n.biome); n.x *= S; n.z *= S; n.r *= S; });
   var names = {}; NATIONS.forEach(function (n) { names[n.key] = n.ko; });
 
   // ───────────────────────── 유틸 ─────────────────────────
@@ -73,7 +75,7 @@ function createWorldMap(container, THREE, opts) {
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   // ───────────────────────── 세계 만들기 (항상 같은 모양) ─────────────────────────
-  var N = NATIONS.length, FLD = new Float32Array(FW * FH), F = new Float32Array(FW * FH), ID = new Int8Array(FW * FH), HG = new Float32Array(FW * FH), FOR = new Float32Array(FW * FH), CON = new Uint8Array(FW * FH);
+  var N = NATIONS.length, BDV = new Float32Array(FW * FH), FLD = new Float32Array(FW * FH), F = new Float32Array(FW * FH), ID = new Int8Array(FW * FH), HG = new Float32Array(FW * FH), FOR = new Float32Array(FW * FH), CON = new Uint8Array(FW * FH);
   var natData = new Uint8Array(FW * FH * 4), polData = new Uint8Array(FW * FH * 4);
   var cSum = NATIONS.map(function () { return [0, 0, 0]; });
   (function generate() {
@@ -85,15 +87,18 @@ function createWorldMap(container, THREE, opts) {
       var z = -WZ + (j + 0.5) * CELL;
       for (var i = 0; i < FW; i++) {
         var x = -WX + (i + 0.5) * CELL, idx = j * FW + i, o = idx * 4;
-        var n1 = fbm3(x * 0.045 + 3, z * 0.045 + 9, 1), n2 = fbm3(x * 0.045 + 21, z * 0.045 + 2, 2);
-        var wx = x + (fbm3(x * 0.028 + 40, z * 0.028 + 13, 13) - 0.5) * 22, wz = z + (fbm3(x * 0.028 - 31, z * 0.028 + 60, 14) - 0.5) * 22;
-        var best = 1e9, bi = 0, k;
-        for (k = 0; k < N; k++) { var dx = wx - NATIONS[k].x, dz = wz - NATIONS[k].z; var d = Math.sqrt(dx * dx + dz * dz) / NATIONS[k].r + ((n1 - 0.5) * COS[k] + (n2 - 0.5) * SIN[k]) * 0.55; dn[k] = d; if (d < best) { best = d; bi = k; } }
+        var xd = x / S, zd = z / S; // 모양을 만드는 잡음은 처음 크기 좌표로 계산해서 비율이 바뀌어도 모양이 같다
+        var n1 = fbm3(xd * 0.045 + 3, zd * 0.045 + 9, 1), n2 = fbm3(xd * 0.045 + 21, zd * 0.045 + 2, 2);
+        var wx = x + (fbm3(xd * 0.028 + 40, zd * 0.028 + 13, 13) - 0.5) * 22 * S, wz = z + (fbm3(xd * 0.028 - 31, zd * 0.028 + 60, 14) - 0.5) * 22 * S;
+        var best = 1e9, best2 = 1e9, bi = 0, bi2 = 0, k;
+        for (k = 0; k < N; k++) { var dx = wx - NATIONS[k].x, dz = wz - NATIONS[k].z; var d = Math.sqrt(dx * dx + dz * dz) / NATIONS[k].r + ((n1 - 0.5) * COS[k] + (n2 - 0.5) * SIN[k]) * 0.55; dn[k] = d; if (d < best) { best2 = best; bi2 = bi; best = d; bi = k; } else if (d < best2) { best2 = d; bi2 = k; } }
+        // 국경까지 거리(부호 있음): 두 나라 사이에서 정확히 0을 지나므로 확대해도 국경선이 끊기지 않는다
+        BDV[idx] = clamp((best2 - best) / 0.12, 0, 1) * (bi < bi2 ? 1 : -1);
         var land = 1 - best;
         for (k = 0; k < BR.length; k++) { var b = BR[k], ex = b[2] - b[0], ez = b[3] - b[1], tt = clamp(((wx - b[0]) * ex + (wz - b[1]) * ez) / (ex * ex + ez * ez), 0.2, 0.8), qx = wx - b[0] - ex * tt, qz = wz - b[1] - ez * tt; land = Math.max(land, 1 - Math.sqrt(qx * qx + qz * qz) / b[4] - 0.25); }
-        var isl = (fbm3(x * 0.07 + 100, z * 0.07, 15) - 0.69) * 4 - Math.max(0, best - 1.9) * 3; land = Math.max(land, isl);
-        var f = land + (fbm3(x * 0.11, z * 0.11, 3) - 0.5) * 0.5 + (vnoise(x * 0.4 + 7, z * 0.4, 5) - 0.5) * 0.04;
-        f -= sstep(WX - 14, WX - 3, Math.abs(x)) * 1.5 + sstep(WZ - 12, WZ - 3, Math.abs(z)) * 1.5;
+        var isl = (fbm3(xd * 0.07 + 100, zd * 0.07, 15) - 0.69) * 4 - Math.max(0, best - 1.9) * 3; land = Math.max(land, isl);
+        var f = land + (fbm3(xd * 0.11, zd * 0.11, 3) - 0.5) * 0.5 + (vnoise(xd * 0.4 + 7, zd * 0.4, 5) - 0.5) * 0.04;
+        f -= sstep(WX - 14 * S, WX - 3 * S, Math.abs(x)) * 1.5 + sstep(WZ - 12 * S, WZ - 3 * S, Math.abs(z)) * 1.5;
         F[idx] = f;
         var sw = 0, mnt = 0, fp = 0; for (k = 0; k < BIOMES.length; k++) bAmt[k] = 0;
         for (k = 0; k < N; k++) { var wk = Math.exp(-(dn[k] - best) * 4.5); sw += wk; dn[k] = wk; }
@@ -105,8 +110,8 @@ function createWorldMap(container, THREE, opts) {
           polData[o] = 0; polData[o + 1] = 0; polData[o + 2] = 0; polData[o + 3] = 0;
         } else {
           ID[idx] = bi; cSum[bi][0] += x; cSum[bi][1] += z; cSum[bi][2]++;
-          var r = fbm3(x * 0.085 + 50, z * 0.085 - 20, 4), ridge = 1 - Math.abs(2 * r - 1); ridge = ridge * ridge * ridge;
-          var hills = fbm3(x * 0.25, z * 0.25, 6);
+          var r = fbm3(xd * 0.085 + 50, zd * 0.085 - 20, 4), ridge = 1 - Math.abs(2 * r - 1); ridge = ridge * ridge * ridge;
+          var hills = fbm3(xd * 0.25, zd * 0.25, 6);
           h = 0.04 + sstep(0, 0.35, f) * 0.2 + mnt * ridge * 2.4 * sstep(0.05, 0.45, f) + (hills - 0.5) * 0.2 * (0.4 + mnt);
           h = Math.min(Math.max(h, Math.min(0.03, f * 3.2)), f * 3.2); // 해안에서 높이가 0부터 이어지게(끊기면 해안선이 톱니가 됨)
           // 자연색
@@ -114,9 +119,9 @@ function createWorldMap(container, THREE, opts) {
           var pl = bAmt[1];
           FLD[idx] = sstep(0.3, 0.75, pl) * 0.8;
           if (bAmt[3] > 0.05) { var s = Math.sin(x * 0.9 + z * 0.4 + fbm3(x * 0.2, z * 0.2, 8) * 6); var m = 1 + s * 0.06 * bAmt[3]; c = [c[0] * m, c[1] * m, c[2] * m]; }
-          if (bAmt[4] > 0.05) c = mixc(c, [0.14, 0.36, 0.15], bAmt[4] * sstep(0.45, 0.6, fbm3(x * 0.3, z * 0.3, 9)) * 0.6);
+          if (bAmt[4] > 0.05) c = mixc(c, [0.14, 0.36, 0.15], bAmt[4] * sstep(0.45, 0.6, fbm3(xd * 0.3, zd * 0.3, 9)) * 0.6);
           if (bAmt[5] > 0.05) c = mixc(c, [0.6, 0.31, 0.18], bAmt[5] * sstep(0.55, 0.72, vnoise(x * 1.3, z * 1.3, 10)) * 0.6);
-          var patch = sstep(0.4, 0.58, fbm3(x * 0.3 + 11, z * 0.3 + 7, 11));
+          var patch = sstep(0.4, 0.58, fbm3(xd * 0.3 + 11, zd * 0.3 + 7, 11));
           var prob = fp * lerp(patch, 1, bAmt[4] * 0.6) * sstep(0.03, 0.08, f) * (1 - sstep(0.8, 1.2, h));
           FOR[idx] = prob; CON[idx] = (bAmt[2] > 0.4 || h > 0.55) ? 1 : 0;
           c = mixc(c, FORC, prob * 0.35);
@@ -184,26 +189,29 @@ function createWorldMap(container, THREE, opts) {
   var GLASS = ['#7fb3d5', '#a9cce3', '#85929e', '#d6eaf8', '#5d6d7e', '#aab7b8'];
   var BLD = { wall: [], roof: [], dome: [], cone: [], cyl: [] }, ROADS = [], SETTLE = [];
   function farFromSettle(x, z, gap) { for (var k = 0; k < SETTLE.length; k++) { var s = SETTLE[k]; if (Math.hypot(x - s.x, z - s.z) < s.R + gap) return false; } return true; }
-  function siteOK(x, z, R) {
-    if (landAt(x, z) < 0.1) return false; var h0 = heightAt(x, z); if (h0 > 0.5) return false;
-    for (var a = 0; a < 8; a++) { var px = x + Math.cos(a * 0.785) * R, pz = z + Math.sin(a * 0.785) * R; if (landAt(px, pz) < 0.03 || Math.abs(heightAt(px, pz) - h0) > 0.4) return false; }
+  function siteOK(x, z, R, loose) {
+    if (landAt(x, z) < 0.1) return false; var h0 = heightAt(x, z); if (h0 > (loose ? 0.9 : 0.5)) return false;
+    for (var a = 0; a < 8; a++) { var px = x + Math.cos(a * 0.785) * R, pz = z + Math.sin(a * 0.785) * R; if (landAt(px, pz) < 0.03 || Math.abs(heightAt(px, pz) - h0) > (loose ? 0.6 : 0.4)) return false; }
     return true;
   }
   NATIONS.forEach(function (n) {
-    var r = rng32(n.i * 31337 + 3), best = null, bs = 1e9, R = n.cells > 9000 ? 2.4 : 1.8, t, x, z;
-    for (t = 0; t < 3000; t++) {
-      x = n.cx + (r() * 2 - 1) * n.r * 0.75; z = n.cz + (r() * 2 - 1) * n.r * 0.75;
-      if (nationAt(x, z) !== n.i || !siteOK(x, z, R)) continue;
-      var dp = Math.hypot(x - n.port.x, z - n.port.z); if (dp < R + 4.5) continue;
-      var sc = Math.hypot(x - n.cx, z - n.cz) + heightAt(x, z) * 6 + Math.max(0, dp - 14) * 0.3;
-      if (sc < bs) { bs = sc; best = [x, z]; }
+    var r = rng32(n.i * 31337 + 3), best = null, bs = 1e9, big = n.cells > 9000 * S * S, R = clamp(n.r * 0.16, 1.2, 2.4), t, x, z;
+    for (var relax = 1; relax >= 0.2 && !best; relax -= 0.4) {
+      for (t = 0; t < 3000; t++) {
+        x = n.cx + (r() * 2 - 1) * n.r * 0.75; z = n.cz + (r() * 2 - 1) * n.r * 0.75;
+        if (nationAt(x, z) !== n.i || !siteOK(x, z, R * (relax < 1 ? 0.8 : 1), relax < 1)) continue;
+        var dp = Math.hypot(x - n.port.x, z - n.port.z); if (dp < (R + 3 + 1.5 * S) * relax) continue;
+        var sc = Math.hypot(x - n.cx, z - n.cz) + heightAt(x, z) * 6 + Math.max(0, dp - 14 * S) * 0.3;
+        if (sc < bs) { bs = sc; best = [x, z]; }
+      }
     }
     if (best) SETTLE.push({ n: n, x: best[0], z: best[1], R: R, capital: true });
-    var want = n.cells > 9000 ? 3 : 2, made = 0;
-    for (t = 0; t < 6000 && made < want; t++) {
+    var want = big ? 3 : 2, made = 0;
+    for (t = 0; t < 9000 && made < want; t++) {
+      var rl = t < 5000 ? 1 : t < 7000 ? 0.7 : 0.45; // 작은 나라는 마을 간격을 조금씩 줄여서 찾는다
       x = n.cx + (r() * 2 - 1) * n.r * 1.1; z = n.cz + (r() * 2 - 1) * n.r * 1.1;
-      var tr = 0.85 + r() * 0.4;
-      if (nationAt(x, z) !== n.i || !siteOK(x, z, tr) || !farFromSettle(x, z, 5.5) || Math.hypot(x - n.port.x, z - n.port.z) < 5) continue;
+      var tr = (0.85 + r() * 0.4) * (rl < 1 ? 0.8 : 1);
+      if (nationAt(x, z) !== n.i || !siteOK(x, z, tr, rl < 1) || !farFromSettle(x, z, (3.5 + 2 * S) * rl) || Math.hypot(x - n.port.x, z - n.port.z) < (3.5 + 1.5 * S) * rl) continue;
       SETTLE.push({ n: n, x: x, z: z, R: tr, capital: false }); made++;
     }
   });
@@ -316,7 +324,10 @@ function createWorldMap(container, THREE, opts) {
   // ───────────────────────── 지형 메시 ─────────────────────────
   for (var fi = 0; fi < FW * FH; fi++) natData[fi * 4 + 3] = F[fi] > 0 ? clamp(FLD[fi] * 255, 0, 255) : 0;
   var polCol = new Uint8Array(polData), seen = new Uint8Array(FW * FH);
-  for (var pi = 0; pi < FW * FH; pi++) seen[pi] = polData[pi * 4 + 3] > 0 ? 1 : 0;
+  for (var pi = 0; pi < FW * FH; pi++) { seen[pi] = polData[pi * 4 + 3] > 0 ? 1 : 0; }
+  // 국경선용 텍스처: R = 부호 있는 국경 거리(0.5가 국경), G = 부호 없는 거리(진짜 국경 근처인지)
+  var bdData = new Uint8Array(FW * FH * 4);
+  for (pi = 0; pi < FW * FH; pi++) { var land0 = polData[pi * 4 + 3] > 0; bdData[pi * 4] = land0 ? clamp(127.5 + BDV[pi] * 127.5, 0, 255) : 255; bdData[pi * 4 + 1] = land0 ? Math.abs(BDV[pi]) * 255 : 255; bdData[pi * 4 + 3] = 255; }
   for (var it = 0; it < 10; it++) {
     var nxt = seen.slice();
     for (var pj = 1; pj < FH - 1; pj++) for (var pk = 1; pk < FW - 1; pk++) {
@@ -327,8 +338,8 @@ function createWorldMap(container, THREE, opts) {
     seen = nxt;
   }
   function dataTex(data, linear) { var t = new THREE.DataTexture(data, FW, FH, THREE.RGBAFormat); t.magFilter = t.minFilter = linear ? THREE.LinearFilter : THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; }
-  var natTex = dataTex(natData, true), polTex = dataTex(polData, false), polColTex = dataTex(polCol, true);
-  var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uPol: { value: polTex }, uPolC: { value: polColTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
+  var natTex = dataTex(natData, true), polTex = dataTex(polData, false), polColTex = dataTex(polCol, true), bdTex = dataTex(bdData, true);
+  var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uPol: { value: polTex }, uPolC: { value: polColTex }, uBd: { value: bdTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
   var terrGeo = (function () {
     var step = 2, VW = FW / step + 1, VH = FH / step + 1, pos = new Float32Array(VW * VH * 3), uv = new Float32Array(VW * VH * 2);
     for (var j = 0; j < VH; j++) for (var i = 0; i < VW; i++) {
@@ -344,7 +355,7 @@ function createWorldMap(container, THREE, opts) {
     for (var k in terrU) sh.uniforms[k] = terrU[k];
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ;\nvarying float vY;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvXZ = position.xz; vY = position.y;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', [
-      '#include <common>', 'uniform float uMix; uniform float uSel; uniform float uMe; uniform float uDetail; uniform float uBorder;', 'uniform sampler2D uPol; uniform sampler2D uPolC; uniform vec2 uTexel;', 'varying vec2 vXZ;', 'varying float vY;',
+      '#include <common>', 'uniform float uMix; uniform float uSel; uniform float uMe; uniform float uDetail; uniform float uBorder;', 'uniform sampler2D uPol; uniform sampler2D uPolC; uniform sampler2D uBd; uniform vec2 uTexel;', 'varying vec2 vXZ;', 'varying float vY;',
       'float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }',
       'float vn2(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h21(i),h21(i+vec2(1.0,0.0)),f.x), mix(h21(i+vec2(0.0,1.0)),h21(i+vec2(1.0,1.0)),f.x), f.y); }'].join('\n'))
       .replace('#include <map_fragment>', [
@@ -358,18 +369,18 @@ function createWorldMap(container, THREE, opts) {
         '  float a0 = texture2D(uPol, vUv).a;',
         '  float land = smoothstep(-0.004, 0.02, vY);',
         '  vec3 pcol = texture2D(uPolC, vUv).rgb;',
-        '  vec2 hx = vec2(uTexel.x * 0.6, 0.0); vec2 hy = vec2(0.0, uTexel.y * 0.6);',
-        '  float g = length(texture2D(uPolC, vUv + hx).rgb - texture2D(uPolC, vUv - hx).rgb) + length(texture2D(uPolC, vUv + hy).rgb - texture2D(uPolC, vUv - hy).rgb);',
-        '  float bd = smoothstep(0.05, 0.2, g) * land;',
+        '  vec2 bt = texture2D(uBd, vUv).rg; float bv = bt.r * 2.0 - 1.0; float near = 1.0 - smoothstep(0.25, 0.45, bt.g);',
+        '  float bd = (1.0 - smoothstep(0.0, 0.06, abs(bv))) * land * near;',
         '  float coast = 0.0;',
         '#if __VERSION__ >= 300',
+        '  bd = (1.0 - smoothstep(0.0, fwidth(bv) * 1.3 + 0.0001, abs(bv))) * land * near;',
         '  coast = (1.0 - smoothstep(0.0, fwidth(vY) * 1.6 + 0.0001, vY)) * step(0.0, vY);',
         '#endif',
         '  float nid = floor(a0 * 255.0 / 20.0 + 0.5) - 1.0;',
         '  diffuseColor.rgb = mix(diffuseColor.rgb, pcol, uMix * land);',
         '  if (land > 0.5 && a0 > 0.02 && abs(nid - uSel) < 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.94, 0.6), 0.45);',
         '  float me = (a0 > 0.02 && abs(nid - uMe) < 0.5) ? 1.0 : 0.0;',
-        '  diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.17, 0.21, 0.26), vec3(0.12, 0.35, 0.85), me), clamp(bd * (0.55 + 0.45 * uMix) + coast * uMix * 0.85, 0.0, 1.0) * uBorder);'
+        '  diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.17, 0.21, 0.26), vec3(0.12, 0.35, 0.85), me), clamp(bd * (0.4 + 0.6 * uMix) + coast * uMix * 0.85, 0.0, 1.0) * uBorder);'
       ].join('\n'));
   };
   var terrain = new THREE.Mesh(terrGeo, terrMat); terrain.receiveShadow = true; scene.add(terrain);
@@ -773,9 +784,11 @@ function createWorldMap(container, THREE, opts) {
   }
 
   // ───────────────────────── 카메라·조작 ─────────────────────────
-  var HOME = [-10, 2, 185], target = new THREE.Vector3(HOME[0], GROUND_Y, HOME[1]), dist = HOME[2], fly = null;
+  var HOME = [-10 * S, 2 * S, 185 * S], target = new THREE.Vector3(HOME[0], GROUND_Y, HOME[1]), dist = HOME[2], fly = null;
   if (opts.start) { target.x = opts.start[0]; target.z = opts.start[1]; dist = opts.start[2]; }
   var raycaster = new THREE.Raycaster(), groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -GROUND_Y), _ndc = new THREE.Vector2();
+  // 레이어(숲·도시·항구·정치 색)는 실제 카메라 거리로 정한다(세계 크기를 바꿔도 같은 거리에서 같은 것이 보이게)
+  function layerZ() { return (Math.log(dist) - Math.log(DMIN)) / (Math.log(190) - Math.log(DMIN)); }
   function zoomT() { return (Math.log(dist) - Math.log(DMIN)) / (Math.log(DMAX) - Math.log(DMIN)); }
   function tiltFor(z) { return (3 + 55 * (1 - sstep(0.12, 0.88, z))) * Math.PI / 180; }
   function updateCamera() {
@@ -888,8 +901,8 @@ function createWorldMap(container, THREE, opts) {
       if (e >= 1) fly = null;
     }
     updateCamera();
-    var z = zoomT(), polMix = sstep(0.55, 0.78, z), detail = 1 - sstep(0.3, 0.6, z);
-    terrU.uMix.value = polMix; terrU.uDetail.value = detail; terrU.uBorder.value = sstep(0.62, 0.8, z);
+    var z = layerZ(), polMix = sstep(0.55, 0.78, z), detail = 1 - sstep(0.3, 0.6, z);
+    terrU.uMix.value = polMix; terrU.uDetail.value = detail; terrU.uBorder.value = sstep(0.3, 0.5, z);
     oceanMat.color.copy(OCEAN_POL).lerp(OCEAN_NAT, 1 - polMix); oceanMat.opacity = lerp(0.72, 0.96, polMix);
     oceanMat.specular.setScalar(0.35 * detail); oceanMat.normalScale.set(0.6 * detail, 0.6 * detail);
     waveTex.offset.x += dt * 0.004; waveTex.offset.y += dt * 0.0025;
@@ -938,6 +951,7 @@ function createWorldMap(container, THREE, opts) {
     update: update, setProfiles: setProfiles, setTrades: setTrades, setMe: setMe,
     flyTo: flyTo, flyToNation: flyToNation, selectNation: function (key) { selectNation(NK[key] ? NK[key].i : -1); },
     setView: function (x, z, d) { fly = null; target.x = x; target.z = z; dist = d; updateCamera(); },
+    home: HOME.slice(), worldScale: S,
     getState: function () { return { x: target.x, z: target.z, dist: dist, zoom: zoomT(), trees: treeCount, calls: renderer.info.render.calls, routes: routes.length, buildings: bldCount, settlements: SETTLE.length, props: PROP_TYPES.reduce(function (s, t) { return s + propMesh[t].count; }, 0) }; },
     nations: NATIONS.map(function (n) { return { key: n.key, ko: n.ko, good: n.good, port: { x: n.port.x, z: n.port.z }, center: { x: n.cx, z: n.cz }, cells: n.cells }; }),
     settlements: SETTLE.map(function (s) { return { nation: s.n.key, capital: s.capital, x: s.x, z: s.z, r: s.R }; }),

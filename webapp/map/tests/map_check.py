@@ -73,8 +73,9 @@ with sync_playwright() as p:
     pg.wait_for_function('window.worldMap', timeout=90000)
     nations = pg.evaluate('worldMap.nations')
     check('나라 9개', len(nations) == 9)
-    small = [n['key'] for n in nations if n['cells'] < 3000]
-    check('모든 나라 땅 넓이 충분(3000칸 이상)', not small, ', '.join(f"{n['key']}={n['cells']}" for n in nations))
+    S = pg.evaluate('worldMap.worldScale')
+    small = [n['key'] for n in nations if n['cells'] < 3000 * S * S]
+    check('모든 나라 땅 넓이 충분(3000×비율² 칸 이상)', not small, ', '.join(f"{n['key']}={n['cells']}" for n in nations))
 
     def shot(name, x, z, d, wait=1500):
         pg.evaluate(f'worldMap.setView({x},{z},{d})')
@@ -90,9 +91,11 @@ with sync_playwright() as p:
             shot('3-capital-' + c['nation'], c['x'], c['z'] + 2.5, 5, 1200)
     st_c = pg.evaluate('worldMap.getState()')
     check('도시 건물 1000채 이상', st_c['buildings'] > 1000, f"buildings={st_c['buildings']}")
-    s = shot('1-world', -10, 2, 185)
+    home = pg.evaluate('worldMap.home')
+    s = shot('1-world', *home)
     check('세계 보기에 데모 무역로', s['routes'] > 0, f"routes={s['routes']}")
-    shot('2-continent', -40, -22, 26)
+    gr = next(n for n in nations if n['key'] == 'Grainia')
+    shot('2-continent', gr['center']['x'] - 4, gr['center']['z'], 26)
     for n in nations:
         st = shot('3-port-' + n['key'], n['port']['x'], n['port']['z'] + 0.4, 3.4, 1200)
     check('항구 가까이에서 산업 건물 보임', st['props'] > 0, f"props={st['props']}")
@@ -110,7 +113,7 @@ with sync_playwright() as p:
         ],
     }
     pg.evaluate('s => worldMap.update(s)', state)
-    s = shot('4-game-state-world', -10, 2, 185)
+    s = shot('4-game-state-world', *home)
     check('게임 거래 4묶음 → 무역로 4개', s['routes'] == 4, f"routes={s['routes']}")
     check('레벨 3 → 산업 건물 9×10개', s['props'] == 90, f"props={s['props']}")
     label = pg.evaluate("Array.from(document.querySelectorAll('div')).some(d => d.textContent === '오일리아우리 나라')")
@@ -118,7 +121,7 @@ with sync_playwright() as p:
 
     # 나라 클릭(오일리아 중심)
     oil = next(n for n in nations if n['key'] == 'Oilia')
-    pg.evaluate(f"worldMap.setView({oil['center']['x']},{oil['center']['z']},60)")
+    pg.evaluate(f"worldMap.setView({oil['center']['x']},{oil['center']['z']},45)")
     pg.wait_for_timeout(400)
     pg.mouse.click(640, 400)
     pg.wait_for_timeout(400)
