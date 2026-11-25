@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 node_modules/
+# Tripo 원본 4K 모델(약 221MB)은 로컬에만 둔다. 경량화본은 version2/assets/models/web/에 있다.
+version2/assets/models/*.glb
