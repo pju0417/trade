@@ -16,7 +16,7 @@
 | `docs/virtual_students.md` | 가상 학생 3명(민준·서연·지호) 시뮬레이션과 한 판 따라가기 |
 | `docs/webapp_human_play.md` | 웹앱의 사람용 규칙이 점수 균형에 주는 영향 |
 | `webapp/` | 수업용 웹앱(교사 화면이 엔진을 돌리고 학생 기기가 접속). `webapp/README.md`, 디자인용 `webapp/API.md` |
-| `webapp/map/` | 9개국 가상 세계 지도(문명·Anno 스타일 3단계 확대, three.js r128). 게임 상태로 무역로·산업 건물을 그림. `webapp/map/README.md`, Tripo 프롬프트 `webapp/map/TRIPO.md` |
+| `version2/` | 세계 지도 데모(`world-map-demo.html`, 9개국 가상 세계·3단계 확대, three.js r128)와 Tripo 에셋 계획. 게임용 엔진은 `webapp/js/world-engine.js` |
 | `docs/claude_review_report_v17.md` | Claude 교차 검증 보고서. 원본은 [Claude 문서](https://claude.ai/artifact/ExUwWNfED9nKjbTCEEYbSN) |
 | `handoff_v17/` | ChatGPT가 만든 v17 인수인계 묶음 그대로. 인수인계서, 검증 요청문, v13~v16 이력, 목표 보정 자료(`calibration_v15/`) |
 | `trade_v17/` | v17 전체 패키지(코드·설정·보고서·작은 결과). 대형 원본 6개는 제외 |
@@ -39,7 +39,7 @@
 1. 학생 3명 시범 수업으로 이해도·진행 시간 확인하기(`docs/student_rules_summary.md`, `docs/teacher_guide.md` 사용)
 2. 시범 수업 뒤 수출 목표 숫자 다시 보기(지금은 잠정). 학생 7명 이상이면 추가 3개국 목표도 정하기
 3. 웹앱: 기능 구현과 검증 완료(`webapp/README.md`). 여러 방·서버(Firebase 프로젝트)·진행 방식(교사/준비 완료/시간 제한) 지원. 주소 `https://pju0417.github.io/trade/webapp/`, 1서버 연결 확인. 남은 것은 디자인(GPT), 학교 기기·여러 기기 동시 접속 시험, 서버 추가(`webapp/FIREBASE_SETUP.md`)
-4. 세계 지도(`webapp/map/`): 9개국 가상 세계·3단계 확대·수도와 마을·게임 상태 연결까지 완료(2026-11-24, 헤드리스 크롬 검사 15개 통과). 지도 디자인은 Claude가 맡는다. 데모 `https://pju0417.github.io/trade/webapp/map/`. 남은 것은 실제 iPad·크롬북 확인, Tripo 모델로 임시 모델 바꾸기, 학생·교사 화면에 붙이기
+4. 세계 지도: `version2/world-map-demo.html`의 엔진을 `webapp/js/world-engine.js`로 옮겨 학생·교사 화면에 붙임(2026-11-25). Tripo 모델 16개(항구·화물선·산업 건물·수도·마을) 포함. 지도 디자인은 Claude가 맡는다. 남은 것은 실제 iPad·크롬북 확인, 실제 수업 흐름 확인
 
 ## 실행 방법
 

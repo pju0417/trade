@@ -53,7 +53,7 @@
 - `classroom.py`나 엔진 묶음 대상 파일을 바꾸면 `python3 webapp/build_bundle.py`로 `engine_bundle.json`을 다시 만들고 `webapp/README.md`의 검증을 다시 돌린다.
 - 서버 1개 = Firebase 프로젝트 1개(무료 동시 접속 100). `webapp/js/config.js`의 `SERVERS` 순서가 방 코드의 서버 번호이므로 순서를 바꾸지 않는다. 교사 화면 하나가 여러 방(독립 게임)을 엔진 하나로 돌린다.
 - 디자인은 GPT가 맡는다. 화면 코드(`*.html`, `js/*-ui.js`)와 엔진·통신 코드(`py/`, `js/engine-*`, `host.js`, `student-client.js`, `transport.js`)를 섞지 않는다. 화면이 쓰는 계약은 `webapp/API.md`다.
-- 세계 지도(`webapp/map/`)의 디자인은 Claude가 맡는다(사용자, 2026-11-24). `src/map-core.js`만 고치고 `node webapp/map/build.mjs`로 `world-map.js`·데모·JSX를 다시 만든다. three.js는 r128 고정(claude.ai JSX 환경과 맞춤). 바꾼 뒤 `python3 webapp/map/tests/map_check.py /tmp/map_results`를 돌린다. 결과물은 HTML(PC용)과 JSX(iPad 테스트용) 둘 다 낸다.
+- 세계 지도의 디자인은 Claude가 맡는다(사용자, 2026-11-24). 데모는 `version2/world-map-demo.html`, 게임용은 `webapp/js/world-engine.js`이고 둘에 같은 `createWorldMap`이 들어 있으므로 함께 고친다. 게임은 `political: false`(멀리서도 자연 지형)로 쓴다. three.js는 r128 고정(`webapp/assets/world/vendor/`). Tripo 원본 4K 모델은 `version2/assets/models/`에 로컬로만 두고, 경량화본만 저장소에 넣는다.
 
 ## 저장소에 없는 대형 파일
 

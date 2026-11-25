@@ -14,7 +14,7 @@
 <script>
 // 무역 게임 세계 지도 (three.js r128). 9개국이 사는 가상 세계를 코드로 만들어 그린다.
 // createWorldMap(container, THREE, opts) → { update(state), setProfiles, setTrades, setMe, flyToNation, ... }
-// 화면 계약은 webapp/map/README.md. 이 파일은 build.mjs가 world-map.js(ES 모듈)·데모 HTML·JSX로 감싼다.
+// 게임용 사본은 webapp/js/world-engine.js(같은 createWorldMap). 여기를 고치면 그쪽도 같이 고친다.
 function createWorldMap(container, THREE, opts) {
   opts = opts || {};
   // ───────────────────────── 상수 ─────────────────────────
