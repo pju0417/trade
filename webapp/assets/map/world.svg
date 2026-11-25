@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960"><title>두 대륙과 남부 군도로 이어진 아홉 나라의 세계</title><defs>
+<radialGradient id="sea"><stop stop-color="#356f79"/><stop offset="1" stop-color="#173c4d"/></radialGradient>
+<pattern id="water" width="66" height="48" patternUnits="userSpaceOnUse"><path d="M7 20q12-5 24 0m13 19q8-4 16 0" fill="none" stroke="#a3c3b8" opacity=".15"/></pattern>
+<pattern id="grid" width="120" height="120" patternUnits="userSpaceOnUse"><path d="M120 0H0v120" fill="none" stroke="#c4ccad" opacity=".09"/></pattern>
+<g id="tree"><path d="M0 8v-21" stroke="#7b6444" stroke-width="3"/><path d="m-9 1 9-25 10 25Z" fill="#40664b"/><path d="m-7-9 7-23 8 23Z" fill="#63835a"/></g>
+<g id="mountain"><path d="m-27 13 24-51 32 51Z" fill="#65796c"/><path d="m-27 13 24-51 3 51Z" fill="#a2a58a"/><path d="m-11-20 8-18 11 17-11-5Z" fill="#ded9b7"/></g>
+<g id="town"><path d="M-16-8 2 0v23l-18-8Z" fill="#d9c498"/><path d="M2 0 21-9v23L2 23Z" fill="#ab9b76"/><path d="m-20-9 11-19L11-18 2 3Z" fill="#a76042"/><path d="m-9-28 19-9L26-10 2 3l9-21Z" fill="#bb8057"/><path d="M-10 0v8m7-5v8M9 2v8m7-12v8" stroke="#536a60" stroke-width="3"/></g>
+</defs><path d="M0 0h1440v960H0z" fill="url(#sea)"/><path d="M0 0h1440v960H0z" fill="url(#water)"/><path d="M0 0h1440v960H0z" fill="url(#grid)"/>
+<path d="M125,400 80,340 110,260 90,195 130,110 240,75 330,95 380,145 460,130 550,180 610,270 590,340 650,420 610,470 655,540 600,600 570,690 490,730 430,700 365,640 300,670 245,620 180,640 130,580 160,530 105,470Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M125,400 80,340 110,260 90,195 130,110 240,75 330,95 380,145 460,130 550,180 610,270 590,340 650,420 610,470 655,540 600,600 570,690 490,730 430,700 365,640 300,670 245,620 180,640 130,580 160,530 105,470Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M125,400 80,340 110,260 90,195 130,110 240,75 330,95 380,145 460,130 550,180 610,270 590,340 650,420 610,470 655,540 600,600 570,690 490,730 430,700 365,640 300,670 245,620 180,640 130,580 160,530 105,470Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M930,320 850,275 875,210 805,170 820,110 900,70 990,95 1050,145 1160,100 1290,160 1320,255 1280,325 1350,410 1325,500 1360,555 1300,630 1270,730 1175,765 1100,715 1030,735 990,665 1000,580 945,525 975,455 910,390Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M930,320 850,275 875,210 805,170 820,110 900,70 990,95 1050,145 1160,100 1290,160 1320,255 1280,325 1350,410 1325,500 1360,555 1300,630 1270,730 1175,765 1100,715 1030,735 990,665 1000,580 945,525 975,455 910,390Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M930,320 850,275 875,210 805,170 820,110 900,70 990,95 1050,145 1160,100 1290,160 1320,255 1280,325 1350,410 1325,500 1360,555 1300,630 1270,730 1175,765 1100,715 1030,735 990,665 1000,580 945,525 975,455 910,390Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M680,415 730,380 780,405 805,465 790,525 735,565 680,540 650,480Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M680,415 730,380 780,405 805,465 790,525 735,565 680,540 650,480Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M680,415 730,380 780,405 805,465 790,525 735,565 680,540 650,480Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M220,745 270,715 340,725 390,770 400,825 365,870 305,900 240,865 205,810Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M220,745 270,715 340,725 390,770 400,825 365,870 305,900 240,865 205,810Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M220,745 270,715 340,725 390,770 400,825 365,870 305,900 240,865 205,810Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M755,765 805,730 875,745 930,800 925,850 875,900 800,890 740,835Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M755,765 805,730 875,745 930,800 925,850 875,900 800,890 740,835Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M755,765 805,730 875,745 930,800 925,850 875,900 800,890 740,835Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M115,785 145,767 168,790 153,820 122,812Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M115,785 145,767 168,790 153,820 122,812Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M115,785 145,767 168,790 153,820 122,812Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M470,820 495,812 510,835 487,852 469,841Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M470,820 495,812 510,835 487,852 469,841Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M470,820 495,812 510,835 487,852 469,841Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M650,735 674,718 689,744 671,765 648,755Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M650,735 674,718 689,744 671,765 648,755Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M650,735 674,718 689,744 671,765 648,755Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M1005,840 1032,820 1065,835 1074,864 1038,888 1008,868Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M1005,840 1032,820 1065,835 1074,864 1038,888 1008,868Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M1005,840 1032,820 1065,835 1074,864 1038,888 1008,868Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M720,165 741,148 763,160 758,187 730,195Z" fill="none" stroke="#93c2ad" stroke-width="30" opacity=".10"/><path d="M720,165 741,148 763,160 758,187 730,195Z" transform="translate(0 8)" fill="#294c45" stroke="#294c45" stroke-width="8"/><path d="M720,165 741,148 763,160 758,187 730,195Z" fill="#8b9b75" stroke="#d7c68e" stroke-width="7" stroke-linejoin="round"/>
+<path d="M125,400 80,340 110,260 90,195 130,110 240,75 330,95 380,145 460,130 550,180 610,270 590,340 470,360 360,330 280,370Z" fill="#92a36b" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M930,320 850,275 875,210 805,170 820,110 900,70 990,95 1050,145 1160,100 1290,160 1320,255 1280,325 1190,300 1090,345 1010,310Z" fill="#829d8a" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1300,630 1270,730 1175,765 1100,715 1030,735 990,665 1000,580 1110,595 1190,575Z" fill="#bdac76" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M125,400 280,370 360,330 470,360 440,450 350,490 365,640 300,670 245,620 180,640 130,580 160,530 105,470Z" fill="#708f60" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M680,415 730,380 780,405 805,465 790,525 735,565 680,540 650,480Z" fill="#879077" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M1280,325 1350,410 1325,500 1360,555 1300,630 1190,575 1110,595 1000,580 945,525 975,455 910,390 930,320 1010,310 1090,345 1190,300Z" fill="#8b9a83" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M220,745 270,715 340,725 390,770 400,825 365,870 305,900 240,865 205,810Z" fill="#6e9b66" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M590,340 650,420 610,470 655,540 600,600 570,690 490,730 430,700 365,640 350,490 440,450 470,360Z" fill="#8c9c78" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<path d="M755,765 805,730 875,745 930,800 925,850 875,900 800,890 740,835Z" fill="#8ba58d" stroke="#dbc990" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/>
+<use href="#mountain" transform="translate(330 175) scale(1)"/>
+<use href="#mountain" transform="translate(385 220) scale(1)"/>
+<use href="#mountain" transform="translate(410 270) scale(1)"/>
+<use href="#mountain" transform="translate(440 315) scale(1)"/>
+<use href="#mountain" transform="translate(470 370) scale(1)"/>
+<use href="#mountain" transform="translate(1025 380) scale(1.35)"/>
+<use href="#mountain" transform="translate(1080 410) scale(1.35)"/>
+<use href="#mountain" transform="translate(1130 465) scale(1.35)"/>
+<use href="#mountain" transform="translate(1160 515) scale(1.35)"/>
+<use href="#mountain" transform="translate(1210 540) scale(1.35)"/>
+<use href="#mountain" transform="translate(710 435) scale(0.85)"/>
+<use href="#mountain" transform="translate(740 475) scale(0.85)"/>
+<use href="#mountain" transform="translate(755 515) scale(0.85)"/>
+<use href="#tree" x="180" y="250"/>
+<use href="#tree" x="193" y="262"/>
+<use href="#tree" x="169" y="264"/>
+<use href="#tree" x="220" y="310"/>
+<use href="#tree" x="233" y="322"/>
+<use href="#tree" x="209" y="324"/>
+<use href="#tree" x="175" y="430"/>
+<use href="#tree" x="188" y="442"/>
+<use href="#tree" x="164" y="444"/>
+<use href="#tree" x="220" y="470"/>
+<use href="#tree" x="233" y="482"/>
+<use href="#tree" x="209" y="484"/>
+<use href="#tree" x="275" y="550"/>
+<use href="#tree" x="288" y="562"/>
+<use href="#tree" x="264" y="564"/>
+<use href="#tree" x="315" y="600"/>
+<use href="#tree" x="328" y="612"/>
+<use href="#tree" x="304" y="614"/>
+<use href="#tree" x="950" y="160"/>
+<use href="#tree" x="963" y="172"/>
+<use href="#tree" x="939" y="174"/>
+<use href="#tree" x="1005" y="195"/>
+<use href="#tree" x="1018" y="207"/>
+<use href="#tree" x="994" y="209"/>
+<use href="#tree" x="1180" y="220"/>
+<use href="#tree" x="1193" y="232"/>
+<use href="#tree" x="1169" y="234"/>
+<use href="#tree" x="1240" y="270"/>
+<use href="#tree" x="1253" y="282"/>
+<use href="#tree" x="1229" y="284"/>
+<use href="#tree" x="835" y="785"/>
+<use href="#tree" x="848" y="797"/>
+<use href="#tree" x="824" y="799"/>
+<path d="M405,245 350,290 380,365 325,425 300,480 260,540 235,600 180,625" fill="none" stroke="#7eafaa" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1080,410 1130,370 1200,355 1240,310 1295,295" fill="none" stroke="#7eafaa" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M320 250Q460.0 275 600 285" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(300 250) scale(.55)"/>
+<use href="#town" transform="translate(329 260) scale(.55)"/>
+<use href="#town" transform="translate(320 233) scale(.55)"/>
+<circle cx="600" cy="285" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M1090 220Q970.0 245 850 270" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(1070 220) scale(.55)"/>
+<use href="#town" transform="translate(1099 230) scale(.55)"/>
+<use href="#town" transform="translate(1090 203) scale(.55)"/>
+<circle cx="850" cy="270" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M1160 660Q1222.5 685 1285 730" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(1140 660) scale(.55)"/>
+<use href="#town" transform="translate(1169 670) scale(.55)"/>
+<use href="#town" transform="translate(1160 643) scale(.55)"/>
+<circle cx="1285" cy="730" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M230 510Q183.5 535 137 567" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(210 510) scale(.55)"/>
+<use href="#town" transform="translate(239 520) scale(.55)"/>
+<use href="#town" transform="translate(230 493) scale(.55)"/>
+<circle cx="137" cy="567" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M730 480Q762.5 505 795 500" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(710 480) scale(.55)"/>
+<use href="#town" transform="translate(739 490) scale(.55)"/>
+<use href="#town" transform="translate(730 463) scale(.55)"/>
+<circle cx="795" cy="500" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M1170 440Q1250.0 465 1330 475" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(1150 440) scale(.55)"/>
+<use href="#town" transform="translate(1179 450) scale(.55)"/>
+<use href="#town" transform="translate(1170 423) scale(.55)"/>
+<circle cx="1330" cy="475" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M300 810Q347.5 835 395 810" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(280 810) scale(.55)"/>
+<use href="#town" transform="translate(309 820) scale(.55)"/>
+<use href="#town" transform="translate(300 793) scale(.55)"/>
+<circle cx="395" cy="810" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M490 550Q540.0 575 590 630" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(470 550) scale(.55)"/>
+<use href="#town" transform="translate(499 560) scale(.55)"/>
+<use href="#town" transform="translate(490 533) scale(.55)"/>
+<circle cx="590" cy="630" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<path d="M840 825Q880.0 850 920 830" fill="none" stroke="#c9bb8b" stroke-width="3" stroke-dasharray="7 3" opacity=".7"/>
+<use href="#town" transform="translate(820 825) scale(.55)"/>
+<use href="#town" transform="translate(849 835) scale(.55)"/>
+<use href="#town" transform="translate(840 808) scale(.55)"/>
+<circle cx="920" cy="830" r="6" fill="#edd294" stroke="#294c50" stroke-width="3"/>
+<g fill="#d3d7b8" opacity=".45" font-family="sans-serif" font-size="18" letter-spacing="6"><text x="630" y="295" transform="rotate(75 630 295)">중앙 해협</text><text x="470" y="925">남부 군도</text></g><g transform="translate(1330 865)" stroke="#d2c58f" opacity=".75"><circle r="35" fill="none"/><circle r="28" fill="none" stroke-width=".6"/><path d="M0-53 8-8 53 0 8 8 0 53-8 8-53 0-8-8Z" fill="none"/><path d="M0-53 0 0-8-8Z" fill="#e2d1a0"/><path d="M-53 0H53M0-53V53" fill="none"/></g><path d="M22 65V22h65M1353 22h65v43M22 895v43h65M1353 938h65v-43" fill="none" stroke="#d1bf87" opacity=".5" stroke-width="2"/></svg>

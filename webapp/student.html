@@ -5,10 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>무역 게임 · 학생</title>
 <link rel="stylesheet" href="trade.css">
+<link rel="stylesheet" href="atlas.css">
+<meta name="theme-color" content="#132e3d">
 </head>
 <body class="student-page">
-<header id="status" class="status" hidden><div class="shell status-inner"><div id="identity"></div><div id="bar"></div></div></header>
-<main id="app" class="shell">불러오는 중…</main>
+<div id="entry-map" class="entry-background" aria-hidden="true"></div>
+<header id="status" class="status" hidden><div class="status-inner"><div id="identity"></div><div id="bar"></div></div></header>
+<main class="student-workspace"><section id="student-atlas" class="student-atlas" hidden aria-label="세계 지도와 나라 정보"><div id="student-world-map"></div></section><div id="app" class="shell">불러오는 중…</div></main>
 <script type="module" src="js/student-ui.js"></script>
 </body>
 </html>

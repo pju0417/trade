@@ -1,5 +1,8 @@
 import { serverList, countOnline, LOCAL_FLAG } from './transport.js';
 import { $, esc, render } from './dom.js';
+import { applyMapBackground } from './world-map.js';
+
+applyMapBackground($('#title-map'));
 
 if (LOCAL_FLAG) for (const link of document.querySelectorAll('.entry')) link.search = '?local=1';
 
