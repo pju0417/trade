@@ -24,6 +24,8 @@ function createWorldMap(container, THREE, opts) {
   // ───────────────────────── 상수 ─────────────────────────
   // 세계 크기 비율: 나라 배치·모양은 그대로 두고 전체 크기만 바꾼다(1 = 처음 크기). 항구·집·나무 크기는 그대로다.
   var S = opts.worldScale || 0.55;
+  // political: false → 멀리서도 정치 색 지도 대신 자연 지형·깊은 바다를 비스듬히 본다(게임 지도). farTilt = 가장 멀리서의 기울기(도)
+  var POLITICAL = opts.political !== false, FAR_TILT = opts.farTilt != null ? opts.farTilt : (POLITICAL ? 3 : 34);
   var WX = Math.round(100 * S), WZ = Math.round(62 * S), CELL = 0.25, FW = Math.round(2 * WX / CELL), FH = Math.round(2 * WZ / CELL);
   var GROUND_Y = 0.12, QUAY_TOP = 0.2;
   var DMIN = 1.6, DMAX = Math.round(190 * S);
@@ -318,6 +320,7 @@ function createWorldMap(container, THREE, opts) {
   container.appendChild(canvas);
   var scene = new THREE.Scene();
   var SKY = new THREE.Color('#cfe0ea');
+  if (!POLITICAL) SKY = new THREE.Color('#1b4a6b');
   scene.background = SKY.clone(); scene.fog = new THREE.Fog(SKY.getHex(), 100, 400);
   var camera = new THREE.PerspectiveCamera(40, (container.clientWidth || 800) / (container.clientHeight || 600), 0.05, 3000);
   scene.add(new THREE.HemisphereLight(0xeaf3ff, 0x5e6b4f, 0.58));
@@ -344,7 +347,7 @@ function createWorldMap(container, THREE, opts) {
   }
   function dataTex(data, linear) { var t = new THREE.DataTexture(data, FW, FH, THREE.RGBAFormat); t.magFilter = t.minFilter = linear ? THREE.LinearFilter : THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; }
   var natTex = dataTex(natData, true), polTex = dataTex(polData, false), polColTex = dataTex(polCol, true), bdTex = dataTex(bdData, true);
-  var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uPol: { value: polTex }, uPolC: { value: polColTex }, uBd: { value: bdTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
+  var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uRelief: { value: 0 }, uPol: { value: polTex }, uPolC: { value: polColTex }, uBd: { value: bdTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
   var terrGeo = (function () {
     var step = 2, VW = FW / step + 1, VH = FH / step + 1, pos = new Float32Array(VW * VH * 3), uv = new Float32Array(VW * VH * 2);
     for (var j = 0; j < VH; j++) for (var i = 0; i < VW; i++) {
@@ -358,9 +361,9 @@ function createWorldMap(container, THREE, opts) {
   var terrMat = new THREE.MeshLambertMaterial({ map: natTex });
   terrMat.onBeforeCompile = function (sh) {
     for (var k in terrU) sh.uniforms[k] = terrU[k];
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ;\nvarying float vY;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvXZ = position.xz; vY = position.y;');
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vXZ;\nvarying float vY;\nvarying vec3 vNrm;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvXZ = position.xz; vY = position.y; vNrm = normal;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', [
-      '#include <common>', 'uniform float uMix; uniform float uSel; uniform float uMe; uniform float uDetail; uniform float uBorder;', 'uniform sampler2D uPol; uniform sampler2D uPolC; uniform sampler2D uBd; uniform vec2 uTexel;', 'varying vec2 vXZ;', 'varying float vY;',
+      '#include <common>', 'uniform float uMix; uniform float uSel; uniform float uMe; uniform float uDetail; uniform float uBorder; uniform float uRelief;', 'varying vec3 vNrm;', 'uniform sampler2D uPol; uniform sampler2D uPolC; uniform sampler2D uBd; uniform vec2 uTexel;', 'varying vec2 vXZ;', 'varying float vY;',
       'float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }',
       'float vn2(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h21(i),h21(i+vec2(1.0,0.0)),f.x), mix(h21(i+vec2(0.0,1.0)),h21(i+vec2(1.0,1.0)),f.x), f.y); }'].join('\n'))
       .replace('#include <map_fragment>', [
@@ -371,6 +374,8 @@ function createWorldMap(container, THREE, opts) {
         '  fcol = mix(fcol, diffuseColor.rgb, 0.3); float fedge = min(min(fq.x, 1.0 - fq.x), min(fq.y, 1.0 - fq.y)); fcol *= mix(0.8, 1.0, smoothstep(0.0, 0.05, fedge)) * (0.95 + 0.05 * sin(fq0.x * 60.0));',
         '  diffuseColor.rgb = mix(diffuseColor.rgb, fcol, fa * step(0.2, h21(fcell + 3.0)));',
         '  diffuseColor.rgb *= mix(1.0, 0.82 + 0.34*dn, uDetail);',
+        '  vec3 rn = normalize(vec3(vNrm.x * 5.0, vNrm.y, vNrm.z * 5.0)); float hs = clamp(dot(rn, normalize(vec3(-0.55, 0.62, -0.35))), 0.0, 1.0);',
+        '  diffuseColor.rgb *= mix(1.0, 0.5 + 0.75 * hs + 0.12 * smoothstep(0.6, 1.6, vY), uRelief * smoothstep(0.02, 0.15, vY));',
         '  float a0 = texture2D(uPol, vUv).a;',
         '  float land = smoothstep(-0.004, 0.02, vY);',
         '  vec3 pcol = texture2D(uPolC, vUv).rgb;',
@@ -405,6 +410,7 @@ function createWorldMap(container, THREE, opts) {
     var t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(300, 200); return t;
   })();
   var OCEAN_POL = new THREE.Color('#b9d8ea'), OCEAN_NAT = new THREE.Color('#2f7aa6');
+  if (!POLITICAL) OCEAN_NAT = new THREE.Color('#24687c'); // 게임 지도: 예전 지도처럼 짙은 청록 바다
   var oceanMat = new THREE.MeshPhongMaterial({ color: OCEAN_POL.clone(), specular: new THREE.Color(0x000000), shininess: 60, normalMap: waveTex, normalScale: new THREE.Vector2(0, 0), transparent: true, opacity: 0.95, depthWrite: false });
   var ocean = new THREE.Mesh(new THREE.PlaneGeometry(600, 400), oceanMat); ocean.rotation.x = -Math.PI / 2; ocean.receiveShadow = true; ocean.renderOrder = 1; scene.add(ocean);
   var deep = new THREE.Mesh(new THREE.PlaneGeometry(600, 400), new THREE.MeshBasicMaterial({ color: 0x1b4a6b })); deep.rotation.x = -Math.PI / 2; deep.position.y = -0.95; scene.add(deep);
@@ -696,6 +702,14 @@ function createWorldMap(container, THREE, opts) {
   function refreshLabels() {
     nationLabels.forEach(function (l) {
       var n = l.n, prof = profiles[n.key] || {}, isMe = me === n.key, stu = prof.student;
+      if (!POLITICAL) {
+        var main = prof.main || n.good, lv = prof.levels && prof.levels[main] ? prof.levels[main] : 0, kind = isMe ? '우리 나라' : stu ? '학생' : prof.evaluated === false ? 'AI 전용' : 'AI';
+        l.el.style.minWidth = '104px'; l.el.style.padding = '6px 9px 6px 8px'; l.el.style.borderRadius = '5px'; l.el.style.textAlign = 'left'; l.el.style.boxShadow = '0 3px 12px rgba(7,28,40,0.35)';
+        l.el.style.background = isMe ? 'linear-gradient(115deg,rgba(56,92,67,0.94),rgba(33,62,53,0.94))' : 'linear-gradient(115deg,rgba(242,229,188,0.93),rgba(215,199,154,0.93))';
+        l.el.style.border = isMe ? '2px solid #efd08b' : '1px solid rgba(147,167,135,0.8)'; l.el.style.color = isMe ? '#fff1c6' : '#1f2a24';
+        l.el.innerHTML = '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;"><span style="font-weight:800;font-size:14px;">' + esc(names[n.key] || n.ko) + '</span><span style="font-size:10px;font-weight:600;opacity:0.75;">' + kind + '</span></div><div style="font-size:12px;font-weight:600;margin-top:2px;">' + (GOODS[main] ? GOODS[main].icon + ' ' + GOODS[main].ko : '') + (lv ? ' <b>Lv.' + lv + '</b>' : '') + '</div>';
+        return;
+      }
       var badge = isMe ? '<span style="display:inline-block;margin-left:4px;padding:0 6px;border-radius:8px;background:#2f6fd6;color:#ffffff;font-size:10px;vertical-align:2px;">우리 나라</span>' : stu ? '<span style="display:inline-block;margin-left:4px;padding:0 6px;border-radius:8px;background:#1f2933;color:#ffffff;font-size:10px;vertical-align:2px;">학생</span>' : '';
       l.el.innerHTML = '<div style="font-weight:800;font-size:14px;letter-spacing:0.5px;color:#1d2731;text-shadow:0 0 3px #ffffff,0 0 3px #ffffff,0 0 2px #ffffff;">' + esc(names[n.key] || n.ko) + badge + '</div><div style="font-size:11px;font-weight:700;color:#3a4652;text-shadow:0 0 3px #ffffff,0 0 3px #ffffff;">' + levelsLine(n) + '</div>';
     });
@@ -878,7 +892,7 @@ function createWorldMap(container, THREE, opts) {
   // 레이어(숲·도시·항구·정치 색)는 실제 카메라 거리로 정한다(세계 크기를 바꿔도 같은 거리에서 같은 것이 보이게)
   function layerZ() { return (Math.log(dist) - Math.log(DMIN)) / (Math.log(190) - Math.log(DMIN)); }
   function zoomT() { return (Math.log(dist) - Math.log(DMIN)) / (Math.log(DMAX) - Math.log(DMIN)); }
-  function tiltFor(z) { return (3 + 55 * (1 - sstep(0.12, 0.88, z))) * Math.PI / 180; }
+  function tiltFor(z) { return (FAR_TILT + (58 - FAR_TILT) * (1 - sstep(0.12, 0.88, z))) * Math.PI / 180; }
   function updateCamera() {
     dist = clamp(dist, DMIN, DMAX); target.x = clamp(target.x, -WX, WX); target.z = clamp(target.z, -WZ, WZ);
     var t = tiltFor(zoomT()), gy = Math.max(GROUND_Y, heightAt(target.x, target.z) * sstep(0.5, 0.1, zoomT()));
@@ -989,9 +1003,9 @@ function createWorldMap(container, THREE, opts) {
       if (e >= 1) fly = null;
     }
     updateCamera();
-    var z = layerZ(), polMix = sstep(0.55, 0.78, z), detail = 1 - sstep(0.3, 0.6, z);
-    terrU.uMix.value = polMix; terrU.uDetail.value = detail; terrU.uBorder.value = sstep(0.3, 0.5, z);
-    oceanMat.color.copy(OCEAN_POL).lerp(OCEAN_NAT, 1 - polMix); oceanMat.opacity = lerp(0.72, 0.96, polMix);
+    var z = layerZ(), polMix = POLITICAL ? sstep(0.55, 0.78, z) : 0, detail = 1 - sstep(0.3, 0.6, z);
+    terrU.uMix.value = polMix; terrU.uRelief.value = POLITICAL ? 0 : sstep(0.25, 0.6, z); terrU.uDetail.value = detail; terrU.uBorder.value = sstep(0.3, 0.5, z);
+    oceanMat.color.copy(OCEAN_POL).lerp(OCEAN_NAT, 1 - polMix); oceanMat.opacity = POLITICAL ? lerp(0.72, 0.96, polMix) : lerp(0.72, 0.9, sstep(0.35, 0.7, z));
     oceanMat.specular.setScalar(0.35 * detail); oceanMat.normalScale.set(0.6 * detail, 0.6 * detail);
     waveTex.offset.x += dt * 0.004; waveTex.offset.y += dt * 0.0025;
     scene.fog.near = dist * 1.7; scene.fog.far = dist * 5.5;
@@ -1044,6 +1058,7 @@ function createWorldMap(container, THREE, opts) {
     nations: NATIONS.map(function (n) { return { key: n.key, ko: n.ko, good: n.good, port: { x: n.port.x, z: n.port.z }, center: { x: n.cx, z: n.cz }, cells: n.cells }; }),
     settlements: SETTLE.map(function (s) { return { nation: s.n.key, capital: s.capital, x: s.x, z: s.z, r: s.R }; }),
     loadFile: loadFile, placeModel: placeModel,
+    setRoutesVisible: function (v) { routeGroup.visible = !!v; legend.style.visibility = v ? '' : 'hidden'; },
     models: function () { return { loaded: modelsLoaded, failed: modelsFailed, total: USE_MODELS ? Object.keys(MODEL_FIT).length : 0 }; },
     dispose: function () {
       cancelAnimationFrame(raf); if (demo && demo.timer) clearInterval(demo.timer); if (ro) ro.disconnect(); else window.removeEventListener('resize', onResize);
