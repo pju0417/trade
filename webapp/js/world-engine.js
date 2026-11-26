@@ -191,14 +191,95 @@ function createWorldMap(container, THREE, opts) {
     }
   });
 
+  // ───────────────────────── 강 (산에서 바다까지 흐르고, 골짜기를 판다) ─────────────────────────
+  // RD = 물가까지 거리(물 위는 음수), RSF = 그 자리 물 높이. 마을·집·풍경은 RD로 강을 피하고, 길은 다리처럼 물 위로 올라간다.
+  var RD = new Float32Array(FW * FH).fill(9), RSF = new Float32Array(FW * FH), RIVERS = [];
+  (function makeRivers() {
+    // 흐름 지형: 넓게 흐린 높이 + 땅 깊이(바다 쪽으로 갈수록 낮아짐) → 웅덩이에 갇히지 않고 바다로 간다
+    var B = new Float32Array(HG), T = new Float32Array(FW * FH), K = 4, i, j, k, a;
+    for (var pass = 0; pass < 2; pass++) {
+      for (j = 0; j < FH; j++) { a = 0; for (i = -K; i <= K; i++) a += B[j * FW + clamp(i, 0, FW - 1)]; for (i = 0; i < FW; i++) { T[j * FW + i] = a / (2 * K + 1); a += B[j * FW + clamp(i + K + 1, 0, FW - 1)] - B[j * FW + clamp(i - K, 0, FW - 1)]; } }
+      for (i = 0; i < FW; i++) { a = 0; for (j = -K; j <= K; j++) a += T[clamp(j, 0, FH - 1) * FW + i]; for (j = 0; j < FH; j++) { B[j * FW + i] = a / (2 * K + 1); a += T[clamp(j + K + 1, 0, FH - 1) * FW + i] - T[clamp(j - K, 0, FH - 1) * FW + i]; } }
+    }
+    function flow(x, z) { return sampleArr(B, x, z) + Math.max(0, landAt(x, z)) * 1.1; }
+    function nearPort(x, z, d) { for (var q = 0; q < NATIONS.length; q++) if (Math.hypot(NATIONS[q].port.x - x, NATIONS[q].port.z - z) < d) return true; return false; }
+    var r = rng32(9001), srcs = [], STEP = 0.3;
+    for (var t = 0; t < 60000 && srcs.length < 26; t++) {
+      var x = (r() * 2 - 1) * WX, z = (r() * 2 - 1) * WZ, f = landAt(x, z), h = heightAt(x, z);
+      if (f < 0.22 || h < 0.5 || h > 1.5 || nearPort(x, z, 6)) continue;
+      var ok = true; for (k = 0; k < srcs.length; k++) if (Math.hypot(srcs[k][0] - x, srcs[k][1] - z) < 8 * S + 3) { ok = false; break; } if (!ok) continue;
+      srcs.push([x, z]);
+    }
+    var taken = new Set();
+    function trace(src, si) {
+      var x = src[0], z = src[1], pts = [[x, z]], dirA = null, seen = new Set(), done = false, joined = false;
+      for (var st = 0; st < 700; st++) {
+        var best = 1e9, bx = 0, bz = 0, ba = 0;
+        for (var q = 0; q < 16; q++) {
+          var aa = q / 16 * Math.PI * 2; if (dirA !== null && Math.cos(aa - dirA) < 0.1) continue;
+          var nx = x + Math.cos(aa) * STEP, nz = z + Math.sin(aa) * STEP, key = Math.floor(nx / 0.25) + ',' + Math.floor(nz / 0.25);
+          if (seen.has(key)) continue;
+          var sc = flow(nx, nz) + (dirA !== null ? (1 - Math.cos(aa - dirA)) * 0.012 : 0) + (vnoise(nx * 0.9, nz * 0.9, 77 + si) - 0.5) * 0.03 + (nearPort(nx, nz, 3.6) ? 5 : 0);
+          if (sc < best) { best = sc; bx = nx; bz = nz; ba = aa; }
+        }
+        if (best > 4 || Math.abs(bx) > WX - 1 || Math.abs(bz) > WZ - 1) break;
+        seen.add(Math.floor(x / 0.25) + ',' + Math.floor(z / 0.25));
+        x = bx; z = bz; dirA = ba; pts.push([x, z]);
+        if (landAt(x, z) < -0.04) { done = true; break; }
+        if (taken.has(Math.floor(x / 0.5) + ',' + Math.floor(z / 0.5)) && pts.length > 4) { done = true; joined = true; break; }
+      }
+      if (!done || pts.length < (joined ? 10 : 14)) return false; // 세계가 작아 강도 짧다(14걸음 ≈ 4칸 이상만)
+      // 부드럽게(Chaikin 2번)
+      for (var it = 0; it < 2; it++) { var sm = [pts[0]]; for (k = 0; k < pts.length - 1; k++) { var p0 = pts[k], p1 = pts[k + 1]; sm.push([p0[0] * 0.75 + p1[0] * 0.25, p0[1] * 0.75 + p1[1] * 0.25], [p0[0] * 0.25 + p1[0] * 0.75, p0[1] * 0.25 + p1[1] * 0.75]); } sm.push(pts[pts.length - 1]); pts = sm; }
+      pts.forEach(function (pp) { taken.add(Math.floor(pp[0] / 0.5) + ',' + Math.floor(pp[1] / 0.5)); });
+      // 물 높이는 하류로 갈수록 내려가기만 한다. 폭은 하류로 갈수록 넓어진다
+      var n = pts.length, surf = [], wid = [], sv = heightAt(pts[0][0], pts[0][1]) - 0.01;
+      for (k = 0; k < n; k++) { sv = Math.max(0.004, Math.min(sv, heightAt(pts[k][0], pts[k][1]) - 0.004)); if (landAt(pts[k][0], pts[k][1]) < 0) sv = Math.min(sv, 0.004); surf.push(sv); wid.push(lerp(0.035, 0.11, Math.pow(k / (n - 1), 0.8))); }
+      // 하구: 바다에 가까울수록 넓어지고(삼각강), 물 높이가 바다 밑으로 내려가 바다 물에 자연스럽게 섞인다
+      var mouth = [], fade = [], low = 1e9;
+      for (k = 0; k < n; k++) { var m = 1 - sstep(0.0, 0.06, landAt(pts[k][0], pts[k][1])); mouth.push(m); wid[k] *= 1 + 1.3 * m * m; low = Math.min(low, lerp(surf[k], -0.008, m)); surf[k] = low; fade.push(1 - sstep(0.3, 0.9, m)); }
+      RIVERS.push({ pts: pts, surf: surf, wid: wid, mouth: mouth, fade: fade, ni: nationAt(src[0], src[1]) }); return true;
+    }
+    srcs.forEach(trace);
+    // 강이 하나도 없는 나라(평야·사막)는 나라 안쪽 높은 곳 몇 군데에서 다시 시도한다
+    NATIONS.forEach(function (n, ni) {
+      if (RIVERS.some(function (rv) { return rv.ni === ni; })) return;
+      var cands = [];
+      for (var t = 0; t < 3000; t++) { var x = n.cx + (r() * 2 - 1) * n.r, z = n.cz + (r() * 2 - 1) * n.r, f = landAt(x, z); if (f < 0.25 || nationAt(x, z) !== ni || nearPort(x, z, 5)) continue; cands.push([x, z, heightAt(x, z) + f * 0.4]); }
+      cands.sort(function (a, b) { return b[2] - a[2]; });
+      for (var c = 0, tried = 0; c < cands.length && tried < 8; c += 37) { tried++; if (trace(cands[c], 50 + ni * 10 + tried)) break; }
+    });
+    // 골짜기 파기 + 물가 칠하기 + 숲·밭 치우기
+    RIVERS.forEach(function (rv) {
+      var pts = rv.pts;
+      for (var k = 0; k < pts.length; k++) {
+        var px = pts[k][0], pz = pts[k][1], w = rv.wid[k], sv = rv.surf[k], mo = rv.mouth[k], Rc = w + 0.75, c = Math.ceil(Rc / CELL), i0 = Math.floor((px + WX) / CELL), j0 = Math.floor((pz + WZ) / CELL);
+        for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) {
+          var ii = i0 + di, jj = j0 + dj; if (ii < 0 || jj < 0 || ii >= FW || jj >= FH) continue;
+          var idx = jj * FW + ii, cx = -WX + (ii + 0.5) * CELL, cz = -WZ + (jj + 0.5) * CELL, d = Math.hypot(cx - px, cz - pz); if (d > Rc) continue;
+          var edge = d - w;
+          if (edge < RD[idx]) { RD[idx] = edge; RSF[idx] = sv; }
+          var bed = sv - 0.018, tgt = lerp(bed, HG[idx], sstep(w + 0.3, Rc, d)); if (mo > 0) tgt = Math.min(tgt, lerp(HG[idx], -0.03, mo * (1 - sstep(w * 0.6, w + 0.2, d)))); if (tgt < HG[idx]) HG[idx] = tgt;
+          if (HG[idx] < 0.002 && F[idx] > 0) RD[idx] = Math.min(RD[idx], -0.01); // 하구 물길(바다 높이 아래)도 물로 친다
+          if (F[idx] <= 0) continue;
+          var o = idx * 4, wet = 1 - sstep(w - 0.02, w + 0.12, d), bank = (1 - sstep(w + 0.1, w + 0.32, d)) * (1 - wet);
+          if (wet > 0) { natData[o] = lerp(natData[o], 0.3 * 255, wet * 0.6); natData[o + 1] = lerp(natData[o + 1], 0.42 * 255, wet * 0.6); natData[o + 2] = lerp(natData[o + 2], 0.4 * 255, wet * 0.6); }
+          if (bank > 0) { natData[o] = lerp(natData[o], 0.6 * 255, bank * 0.18); natData[o + 1] = lerp(natData[o + 1], 0.58 * 255, bank * 0.18); natData[o + 2] = lerp(natData[o + 2], 0.42 * 255, bank * 0.18); }
+          if (edge < 0.15) FOR[idx] = 0; if (edge < 0.3) FLD[idx] = 0;
+        }
+      }
+    });
+  })();
+  function riverAt(x, z, pad) { return RD[cellIdx(x, z)] < (pad || 0); }
+
   // ───────────────────────── 도시·마을 (수도 1곳 + 마을 2~3곳, 길, 밭) ─────────────────────────
   var STYLES = {
-    temperate: { walls: ['#f3ece0', '#e8dcc6', '#f6f1e7', '#e2d3bd'], roofs: ['#c0583a', '#a8462f', '#5b6f82', '#8a5a44'], house: 'gable', farm: [[0.86, 0.74, 0.36], [0.55, 0.67, 0.3], [0.67, 0.53, 0.34], [0.47, 0.6, 0.28]], farmW: 2.6 },
-    plains:    { walls: ['#f4efe4', '#e9dfcb', '#b5523b', '#f4efe4'], roofs: ['#6d4c41', '#8a5a44', '#5d6d7e'], house: 'gable', farm: [[0.86, 0.74, 0.36], [0.55, 0.67, 0.3], [0.67, 0.53, 0.34], [0.93, 0.84, 0.52]], farmW: 3.2 },
-    boreal:    { walls: ['#7b5a43', '#8d6e58', '#6b4f3a', '#c9b9a6'], roofs: ['#3e4f45', '#4a4a4a', '#5b6f5f'], house: 'gable', farm: [[0.5, 0.6, 0.35], [0.62, 0.66, 0.4]], farmW: 1.4 },
+    temperate: { walls: ['#e9d9b8', '#dcc49a', '#efe0c2', '#d6b98e', '#e4cfa6'], roofs: ['#b8532f', '#a2452b', '#c46a3d', '#8a4a32', '#7a5a48'], house: 'gable', farm: [[0.86, 0.74, 0.36], [0.55, 0.67, 0.3], [0.67, 0.53, 0.34], [0.47, 0.6, 0.28]], farmW: 2.6 },
+    plains:    { walls: ['#e8d6b0', '#d9bf93', '#c98c5c', '#ead9b6'], roofs: ['#8a4a32', '#a2452b', '#6e4a38'], house: 'gable', farm: [[0.86, 0.74, 0.36], [0.55, 0.67, 0.3], [0.67, 0.53, 0.34], [0.93, 0.84, 0.52]], farmW: 3.2 },
+    boreal:    { walls: ['#8a6446', '#9b7656', '#76543c', '#c9b294'], roofs: ['#4d5a4c', '#5a4e44', '#6b5a48'], house: 'gable', farm: [[0.5, 0.6, 0.35], [0.62, 0.66, 0.4]], farmW: 1.4 },
     desert:    { walls: ['#e8d5ae', '#ddc597', '#f0e2c4', '#d6b98a'], roofs: ['#e8d5ae'], house: 'flat', farm: [[0.42, 0.58, 0.27], [0.52, 0.64, 0.3]], farmW: 1.1 },
-    tropical:  { walls: ['#f7c8b4', '#f6e3a1', '#a8e0d2', '#f4f1e8', '#c8e6a6'], roofs: ['#c96a3d', '#b5523b', '#d9a066'], house: 'gable', hut: true, farm: [[0.2, 0.42, 0.18], [0.3, 0.5, 0.22], [0.55, 0.62, 0.3]], farmW: 2.0 },
-    outback:   { walls: ['#f1e6d6', '#e2c9a6', '#d8b48c'], roofs: ['#9aa3a8', '#7f8a90', '#b0b8bc'], house: 'gable', farm: null, farmW: 0 },
+    tropical:  { walls: ['#efc3a2', '#eed58f', '#9fd1bd', '#efe3c8', '#c3d99a'], roofs: ['#c96a3d', '#b5523b', '#d9a066'], house: 'gable', hut: true, farm: [[0.2, 0.42, 0.18], [0.3, 0.5, 0.22], [0.55, 0.62, 0.3]], farmW: 2.0 },
+    outback:   { walls: ['#f1e6d6', '#e2c9a6', '#d8b48c'], roofs: ['#8e938f', '#a08a6c', '#7f7466'], house: 'gable', farm: null, farmW: 0 },
     island:    { walls: ['#ffffff', '#f4f6f7', '#eaf2f8'], roofs: ['#2e86c1', '#3498db', '#1f618d'], house: 'flat', farm: [[0.5, 0.66, 0.34], [0.62, 0.7, 0.4]], farmW: 1.2 }
   };
   var MODERN = { Technia: 1, Novia: 0.9, Oilia: 0.75, Mechania: 0.6, Grainia: 0.2, Mineria: 0.3, Ferria: 0.15, Tropia: 0.3, Agrea: 0.25 };
@@ -206,12 +287,14 @@ function createWorldMap(container, THREE, opts) {
   var BLD = { wall: [], roof: [], dome: [], cone: [], cyl: [] }, ROADS = [], SETTLE = [];
   function farFromSettle(x, z, gap) { for (var k = 0; k < SETTLE.length; k++) { var s = SETTLE[k]; if (Math.hypot(x - s.x, z - s.z) < s.R + gap) return false; } return true; }
   function siteOK(x, z, R, loose) {
-    if (landAt(x, z) < 0.1) return false; var h0 = heightAt(x, z); if (h0 > (loose ? 0.9 : 0.5)) return false;
+    if (landAt(x, z) < 0.1 || riverAt(x, z, R * 0.8)) return false; var h0 = heightAt(x, z); if (h0 > (loose ? 0.9 : 0.5)) return false;
     for (var a = 0; a < 8; a++) { var px = x + Math.cos(a * 0.785) * R, pz = z + Math.sin(a * 0.785) * R; if (landAt(px, pz) < 0.03 || Math.abs(heightAt(px, pz) - h0) > (loose ? 0.6 : 0.4)) return false; }
     return true;
   }
   NATIONS.forEach(function (n) {
     var r = rng32(n.i * 31337 + 3), best = null, bs = 1e9, big = n.cells > 9000 * S * S, R = clamp(n.r * 0.16, 1.2, 2.4), t, x, z;
+    // 항구 도시: 부두 바로 뒤. 격자 길·빽빽한 집·창고만 있고 밭은 없다
+    var pR = big ? 1.1 : 0.9; SETTLE.push({ n: n, x: n.port.x - n.port.sx * (0.3 + pR), z: n.port.z - n.port.sz * (0.3 + pR), R: pR, capital: false, port: true, portAng: Math.atan2(n.port.sz, n.port.sx) });
     for (var relax = 1; relax >= 0.2 && !best; relax -= 0.4) {
       for (t = 0; t < 3000; t++) {
         x = n.cx + (r() * 2 - 1) * n.r * 0.75; z = n.cz + (r() * 2 - 1) * n.r * 0.75;
@@ -237,7 +320,7 @@ function createWorldMap(container, THREE, opts) {
     var L = Math.hypot(bx - ax, bz - az); if (L < 0.3) return false;
     var cnt = Math.max(2, Math.ceil(L / 0.3)), px = -(bz - az) / L, pz = (bx - ax) / L, pts = [];
     for (var i = 0; i <= cnt; i++) {
-      var t = i / cnt, wob = Math.sin(t * Math.PI) * (vnoise(t * 3, seed, 21) - 0.5) * Math.min(L * 0.3, 4);
+      var t = i / cnt, wob = Math.sin(t * Math.PI) * (vnoise(t * 3, seed, 21) - 0.5) * Math.min(L * 0.1, 0.9);
       var x = ax + (bx - ax) * t + px * wob, z = az + (bz - az) * t + pz * wob;
       if (landAt(x, z) < 0.015) return false;
       pts.push([x, z]);
@@ -246,43 +329,56 @@ function createWorldMap(container, THREE, opts) {
     ROADS.push({ pts: pts, w: w }); return true;
   }
   NATIONS.forEach(function (n) {
-    var mine = SETTLE.filter(function (s) { return s.n === n; }), cap = mine.filter(function (s) { return s.capital; })[0], pq = { x: n.port.x - n.port.sx * 0.75, z: n.port.z - n.port.sz * 0.75 };
-    var nodes = [pq]; if (cap) { makeRoad(cap.x, cap.z, pq.x, pq.z, 0.075, n.i * 10); nodes.push(cap); }
+    var mine = SETTLE.filter(function (s) { return s.n === n; }), cap = mine.filter(function (s) { return s.capital; })[0], ptown = mine.filter(function (s) { return s.port; })[0], pq = ptown ? { x: ptown.x, z: ptown.z } : { x: n.port.x - n.port.sx * 0.75, z: n.port.z - n.port.sz * 0.75 };
+    var nodes = [pq]; if (cap) { if (!makeRoad(cap.x, cap.z, pq.x, pq.z, 0.075, n.i * 10)) cap.noRoad = true; nodes.push(cap); }
     mine.forEach(function (s, k) {
-      if (s.capital) return;
+      if (s.capital || s.port) return;
       var order = nodes.slice().sort(function (a, b) { return Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z); });
       for (var q = 0; q < order.length; q++) if (makeRoad(s.x, s.z, order[q].x, order[q].z, 0.06, n.i * 10 + k + 1)) break;
+      if (q === order.length) s.noRoad = true; else s.roadAng = Math.atan2(order[q].z - s.z, order[q].x - s.x); // 마을 큰길을 이 길과 한 줄로 잇는다
       nodes.push(s);
     });
   });
   // 도시 바닥·밭을 자연색 텍스처에 칠하고 숲을 치운다
   SETTLE.forEach(function (s, si) {
-    var st = STYLES[s.n.biome], farm = st.farm ? s.R + st.farmW * (s.capital ? 1.2 : 0.8) : s.R, ang = si * 0.7, ca = Math.cos(ang), sa = Math.sin(ang);
+    var st = STYLES[s.n.biome], farm = st.farm && !s.port ? s.R + st.farmW * (s.capital ? 1.2 : 0.8) : s.R, ang = si * 0.7, ca = Math.cos(ang), sa = Math.sin(ang);
     var c = Math.ceil(farm / CELL), i0 = Math.floor((s.x + WX) / CELL), j0 = Math.floor((s.z + WZ) / CELL);
     for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) {
       var i = i0 + di, j = j0 + dj; if (i < 0 || j < 0 || i >= FW || j >= FH) continue;
       var idx = j * FW + i; if (F[idx] <= 0.02) continue;
       var dx = di * CELL, dz = dj * CELL, d = Math.hypot(dx, dz) + (vnoise(i * 0.3, j * 0.3, 30 + si) - 0.5) * 0.8; if (d > farm) continue;
       var o = idx * 4, col, w;
-      if (d < s.R * 0.95) { col = [0.64, 0.61, 0.55]; w = 0.55; FOR[idx] = 0; }
+      if (d < s.R * 0.95) { col = s.port ? [0.6, 0.57, 0.52] : [0.64, 0.61, 0.55]; w = s.port || s.capital ? 0.72 : 0.6; FOR[idx] = 0; }
       else {
         if (!st.farm) continue; FLD[idx] = Math.max(FLD[idx], 0.85 * (1 - sstep(farm - 0.9, farm, d))); FOR[idx] *= 0.15; continue;
       }
       natData[o] = lerp(natData[o], col[0] * 255, w); natData[o + 1] = lerp(natData[o + 1], col[1] * 255, w); natData[o + 2] = lerp(natData[o + 2], col[2] * 255, w);
     }
   });
+  // 도시 안에는 밭 무늬가 없게(다른 마을의 밭 테두리가 겹쳐도 지운다), 항구 도시는 둘레도 조금 비운다
+  SETTLE.forEach(function (s) {
+    var rr = s.R * (s.port ? 1.25 : 1.02), c = Math.ceil(rr / CELL), i0 = Math.floor((s.x + WX) / CELL), j0 = Math.floor((s.z + WZ) / CELL);
+    for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) {
+      var i = i0 + di, j = j0 + dj; if (i < 0 || j < 0 || i >= FW || j >= FH) continue;
+      var idx = j * FW + i, d = Math.hypot(di * CELL, dj * CELL); if (d > rr) continue;
+      FLD[idx] = Math.min(FLD[idx], sstep(s.R * 0.92, rr, d)); if (s.port) FOR[idx] *= sstep(s.R, rr, d);
+    }
+  });
   // 건물 목록 (x, y, z, 너비, 높이, 깊이, 회전, r, g, b)
   function pick(a, r) { return a[Math.floor(r() * a.length)]; }
   function addB(type, x, y, z, sx, sy, sz, ry, col) { var c = Array.isArray(col) ? col : hexRGB(col); BLD[type].push(x, y, z, sx, sy, sz, ry, c[0], c[1], c[2]); }
+  // 집: 종류(HV) 0 오두막(박공) 1 2층 목조 주택 2 ㄱ자 집 3 모임지붕 4 평지붕 5 유리 빌딩 6 둥근 초가
+  // 벽·지붕 색은 집마다 따로, 창문·문·목재 무늬는 셰이더가 실제 크기에 맞춰 그린다. HSINK = 땅에 묻는 깊이(비탈에서 틈이 안 보이게)
+  var HOUSES = [], HSINK = 0.015;
+  function addH(v, x, y, z, w, h, d, ry, wall, roof) { HOUSES.push({ v: v, x: x, y: y, z: z, w: w, h: h, d: d, ry: ry, wall: Array.isArray(wall) ? wall : hexRGB(wall), roof: Array.isArray(roof) ? roof : hexRGB(roof) }); }
   function house(st, x, z, ry, r, capital) {
-    var y = heightAt(x, z) - 0.03, w = 0.07 + r() * 0.04, d = 0.06 + r() * 0.035, h = 0.05 + r() * 0.04 + 0.03;
-    if (st.hut && !capital && r() < 0.75) { addB('cyl', x, y, z, w * 0.5, h, w * 0.5, 0, pick(st.walls, r)); addB('cone', x, y + h, z, w * 0.72, h * 0.9, w * 0.72, 0, [0.72, 0.6, 0.38]); return; }
-    addB('wall', x, y, z, w, h, d, ry, pick(st.walls, r));
-    if (st.house === 'gable') addB('roof', x, y + h, z, w * 1.1, h * 0.5, d * 1.08, ry, pick(st.roofs, r));
-    else if (r() < 0.15) addB('dome', x, y + h, z, w * 0.3, w * 0.3, w * 0.3, 0, [0.96, 0.95, 0.92]);
+    var y = heightAt(x, z) - HSINK, w = 0.07 + r() * 0.04, d = 0.06 + r() * 0.035, h = 0.035 + r() * 0.03 + HSINK, wall = pick(st.walls, r), roof = pick(st.roofs, r);
+    if (st.hut && !capital && r() < 0.75) { addH(6, x, y, z, w, h, w, r() * 6.283, wall, [0.72, 0.6, 0.38]); return; }
+    if (st.house === 'gable') { var q = r(), v = q < 0.14 ? 2 : q < 0.3 ? 3 : (capital ? q < 0.62 : q < 0.4) ? 1 : 0; addH(v, x, y, z, w, v === 1 ? h * 0.72 : h, d, ry, wall, roof); }
+    else { addH(4, x, y, z, w, h + 0.01, d, ry, wall, roof); if (r() < 0.15) addB('dome', x, y + h + 0.01, z, w * 0.3, w * 0.3, w * 0.3, 0, [0.96, 0.95, 0.92]); }
   }
   SETTLE.forEach(function (s, si) {
-    var r = rng32(si * 7907 + 11), st = STYLES[s.n.biome], mod = MODERN[s.n.key] || 0.2, h0 = heightAt(s.x, s.z), ang = r() * Math.PI, ca = Math.cos(ang), sa = Math.sin(ang), nc = hexRGB(s.n.color);
+    var r = rng32(si * 7907 + 11), st = STYLES[s.n.biome], mod = MODERN[s.n.key] || 0.2, h0 = heightAt(s.x, s.z), ang = s.port ? (r(), s.portAng) : s.roadAng != null ? (r(), s.roadAng) : r() * Math.PI, ca = Math.cos(ang), sa = Math.sin(ang), nc = hexRGB(s.n.color);
     s.ang = ang;
     if (s.capital) {
       var P = 0.15, nn = Math.ceil(s.R / P);
@@ -291,10 +387,10 @@ function createWorldMap(container, THREE, opts) {
         var lx = i * P + (r() - 0.5) * 0.03, lz = j * P + (r() - 0.5) * 0.03, d = Math.hypot(lx, lz) / s.R;
         if (d > 1 || d < (USE_MODELS ? 0.3 : 0.13) || r() > 1 - d * d * 0.75) continue;
         var x = s.x + lx * ca - lz * sa, z = s.z + lx * sa + lz * ca;
-        if (landAt(x, z) < 0.03 || Math.abs(heightAt(x, z) - h0) > 0.4) continue;
+        if (landAt(x, z) < 0.03 || riverAt(x, z, 0.06) || Math.abs(heightAt(x, z) - h0) > 0.4) continue;
         var y = heightAt(x, z) - 0.03;
-        if (d < 0.45 && r() < mod * (1 - d * 1.6)) { var tw = 0.08 + r() * 0.05, th = (0.18 + r() * 0.45) * mod * (1 - d) + 0.14; addB('wall', x, y, z, tw, th, tw, ang, pick(GLASS, r)); addB('wall', x, y + th, z, tw * 1.05, 0.014, tw * 1.05, ang, [0.92, 0.94, 0.96]); }
-        else if (d < 0.6 && r() < 0.4) { addB('wall', x, y, z, 0.1 + r() * 0.04, 0.12 + r() * 0.06, 0.09 + r() * 0.03, ang, pick(st.walls, r)); }
+        if (d < 0.45 && r() < mod * (1 - d * 1.6)) { var tw = 0.08 + r() * 0.05, th = (0.18 + r() * 0.45) * mod * (1 - d) + 0.14; addH(5, x, y, z, tw, th, tw, ang, pick(GLASS, r), [0.92, 0.94, 0.96]); }
+        else if (d < 0.6 && r() < 0.4) { var fw = 0.1 + r() * 0.04, fd = 0.09 + r() * 0.03; if (st.house === 'gable') addH(1, x, y + 0.03 - HSINK, z, fw, 0.06 + r() * 0.025, fd, ang, pick(st.walls, r), pick(st.roofs, r)); else addH(4, x, y + 0.03 - HSINK, z, fw, 0.1 + r() * 0.05, fd, ang, pick(st.walls, r), pick(st.roofs, r)); }
         else house(st, x, z, ang + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
       }
       // 시청(지붕이 나라 색) + 깃발
@@ -302,18 +398,86 @@ function createWorldMap(container, THREE, opts) {
       var fo = USE_MODELS ? 0.36 : 0.2, fx = s.x + fo * ca, fz = s.z + fo * sa; addB('cyl', fx, h0, fz, 0.005, 0.32, 0.005, 0, [0.35, 0.35, 0.35]); addB('wall', fx + 0.035, h0 + 0.26, fz, 0.07, 0.045, 0.005, 0, nc);
       ROADS.push({ pts: [[s.x - s.R * ca, s.z - s.R * sa], [s.x + s.R * ca, s.z + s.R * sa]], w: 0.1 }); ROADS.push({ pts: [[s.x + s.R * sa, s.z - s.R * ca], [s.x - s.R * sa, s.z + s.R * ca]], w: 0.1 });
       ROADS.push({ disc: [s.x, s.z, 0.34] });
+    } else if (s.port) {
+      // 로컬 x축 = 바다 쪽. 4칸마다 길, 길 사이에 집이 빽빽하고 바다 쪽 줄은 창고
+      var P2 = 0.13, n2 = Math.ceil(s.R / P2);
+      for (var i2 = -n2; i2 <= n2; i2++) for (var j2 = -n2; j2 <= n2; j2++) {
+        if (i2 % 4 === 0 || j2 % 4 === 0) continue;
+        var lx2 = i2 * P2, lz2 = j2 * P2, d2 = Math.hypot(lx2, lz2) / s.R;
+        if (d2 > 1 || r() > 1.1 - d2 * d2 * 0.45) continue;
+        if (USE_MODELS && Math.hypot(lx2, lz2) < 0.22) continue;
+        var x3 = s.x + lx2 * ca - lz2 * sa, z3 = s.z + lx2 * sa + lz2 * ca;
+        if (landAt(x3, z3) < 0.03 || riverAt(x3, z3, 0.06) || Math.abs(heightAt(x3, z3) - h0) > 0.4) continue;
+        if (lx2 > s.R * 0.4 && r() < 0.75) addH(4, x3, heightAt(x3, z3) - HSINK, z3, 0.11 + r() * 0.025, 0.045 + r() * 0.015 + HSINK, 0.085, ang, ['#c9c2b4', '#b8b0a2', '#d6cfc0', '#a8604a'][Math.floor(r() * 4)], '#8a8f94');
+        else house(st, x3, z3, ang + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
+      }
+      for (var g2 = -n2; g2 <= n2; g2++) {
+        if (g2 % 4) continue; var c2 = g2 * P2; if (Math.abs(c2) >= s.R * 0.98) continue; var hl = Math.sqrt(s.R * s.R - c2 * c2);
+        ROADS.push({ pts: [[s.x - hl * ca - c2 * sa, s.z - hl * sa + c2 * ca], [s.x + hl * ca - c2 * sa, s.z + hl * sa + c2 * ca]], w: 0.055 });
+        ROADS.push({ pts: [[s.x + c2 * ca + hl * sa, s.z + c2 * sa - hl * ca], [s.x + c2 * ca - hl * sa, s.z + c2 * sa + hl * ca]], w: 0.055 });
+      }
+      ROADS.push({ pts: [[s.x, s.z], [s.n.port.x - s.n.port.sx * 0.1, s.n.port.z - s.n.port.sz * 0.1]], w: 0.075 });
     } else {
       var cnt = Math.round(22 + s.R * 38);
       for (var k = 0; k < cnt * 3 && cnt > 0; k++) {
         var onStreet = r() < 0.55, rad = s.R * Math.sqrt(r()), a2 = r() * Math.PI * 2, ox, oz;
-        if (onStreet) { var along = (r() * 2 - 1) * s.R, side = (r() < 0.5 ? -1 : 1) * (0.09 + r() * 0.05); ox = along * ca - side * sa; oz = along * sa + side * ca; }
+        if (onStreet) { var along = (r() * 1.7 - 0.7) * s.R, side = (r() < 0.5 ? -1 : 1) * (0.09 + r() * 0.05); ox = along * ca - side * sa; oz = along * sa + side * ca; }
         else { ox = Math.cos(a2) * rad; oz = Math.sin(a2) * rad; if (Math.hypot(ox, oz) < 0.12) continue; }
         if (USE_MODELS && Math.hypot(ox, oz) < 0.2) continue; // 가운데는 마을 모델 자리
-        var x2 = s.x + ox, z2 = s.z + oz; if (landAt(x2, z2) < 0.03 || Math.abs(heightAt(x2, z2) - h0) > 0.35) continue;
+        var x2 = s.x + ox, z2 = s.z + oz; if (landAt(x2, z2) < 0.03 || riverAt(x2, z2, 0.06) || Math.abs(heightAt(x2, z2) - h0) > 0.35) continue;
         house(st, x2, z2, onStreet ? ang : r() * Math.PI, r, false); cnt--;
       }
       if (!USE_MODELS) { addB('wall', s.x, h0 - 0.03, s.z, 0.12, 0.1, 0.1, ang, [0.95, 0.93, 0.88]); addB('roof', s.x, h0 + 0.07, s.z, 0.13, 0.06, 0.11, ang, nc); }
-      ROADS.push({ pts: [[s.x - s.R * ca, s.z - s.R * sa], [s.x + s.R * ca, s.z + s.R * sa]], w: 0.07 });
+      // 큰길: 바깥 길 쪽(+)으로는 그 길과 이어지고, 반대쪽은 마을 끝 집에서 멈춘다(들판 한가운데서 끊기지 않게)
+      ROADS.push({ pts: [[s.x - s.R * 0.7 * ca, s.z - s.R * 0.7 * sa], [s.x + s.R * ca, s.z + s.R * sa]], w: 0.07 });
+    }
+  });
+  // 농가: 밭 사이 곳곳에 살림집 + 헛간(빈 들판을 채운다)
+  var FARMS = [];
+  SETTLE.forEach(function (s, si) {
+    var st = STYLES[s.n.biome]; if (!st.farm || s.port) return;
+    var r = rng32(si * 6007 + 29), farR = s.R + st.farmW * (s.capital ? 1.2 : 0.8), want = Math.round((s.capital ? 7 : 4) * Math.min(1.4, st.farmW / 2)), h0 = heightAt(s.x, s.z);
+    for (var t = 0, k = 0; t < 200 && k < want; t++) {
+      var a = r() * Math.PI * 2, d = lerp(s.R + 0.4, farR - 0.15, r()), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+      if (landAt(x, z) < 0.06 || riverAt(x, z, 0.3) || Math.abs(heightAt(x, z) - h0) > 0.5 || !farFromSettle(x, z, 0.25)) continue;
+      var ok = true; for (var q = 0; q < FARMS.length; q++) if (Math.hypot(FARMS[q].x - x, FARMS[q].z - z) < 0.7) { ok = false; break; } if (!ok) continue;
+      var ry = r() * Math.PI, c = Math.cos(ry), sn = Math.sin(ry), bx2 = x + 0.13 * c, bz2 = z - 0.13 * sn;
+      if (st.house === 'gable') {
+        addH(r() < 0.5 ? 2 : 0, x, heightAt(x, z) - HSINK, z, 0.08 + r() * 0.02, 0.05 + HSINK, 0.065, ry, pick(st.walls, r), pick(st.roofs, r));
+        addH(0, bx2, heightAt(bx2, bz2) - HSINK, bz2, 0.07, 0.055 + HSINK, 0.13, ry, ['#9c4a32', '#8a6a4a', '#7b5a43'][Math.floor(r() * 3)], '#5b4a3f');
+      } else {
+        addH(4, x, heightAt(x, z) - HSINK, z, 0.08, 0.05 + HSINK, 0.07, ry, pick(st.walls, r), pick(st.roofs, r));
+        addH(4, bx2, heightAt(bx2, bz2) - HSINK, bz2, 0.07, 0.04 + HSINK, 0.1, ry, pick(st.walls, r), pick(st.roofs, r));
+      }
+      for (var cj = -2; cj <= 2; cj++) for (var ci = -2; ci <= 2; ci++) FOR[cellIdx(x + ci * CELL * 0.5, z + cj * CELL * 0.5)] = 0;
+      FARMS.push({ x: x, z: z, ry: ry, s: s }); k++;
+    }
+  });
+
+  // 공항: 나라마다 수도 근처 평평한 땅에 활주로 하나(땅을 고르고 숲을 치운다). 터미널·격납고는 집 목록에 넣는다
+  var AIRPORTS = [], RWL = 1.1;
+  NATIONS.forEach(function (n, ni) {
+    var cap = SETTLE.filter(function (s) { return s.n === n && s.capital; })[0], r = rng32(ni * 9419 + 3), best = null, bs = 1e9;
+    var cx = cap ? cap.x : n.cx, cz = cap ? cap.z : n.cz;
+    for (var t = 0; t < 4000; t++) {
+      var a = r() * Math.PI * 2, d = 2.2 + r() * 4.5, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d, ry = r() * Math.PI, c = Math.cos(ry), sn = Math.sin(ry);
+      if (nationAt(x, z) !== ni || landAt(x, z) < 0.12 || !farFromSettle(x, z, 0.9)) continue;
+      var h0 = heightAt(x, z), ok = h0 < 0.7, k;
+      for (k = -3; k <= 3 && ok; k++) { var px = x + c * RWL * k / 6, pz = z - sn * RWL * k / 6; if (landAt(px, pz) < 0.08 || riverAt(px, pz, 0.45) || Math.abs(heightAt(px, pz) - h0) > 0.14) ok = false; }
+      if (!ok || Math.hypot(n.port.x - x, n.port.z - z) < 3) continue;
+      for (k = 0; k < FARMS.length; k++) if (Math.hypot(FARMS[k].x - x, FARMS[k].z - z) < 0.9) { ok = false; break; } if (!ok) continue;
+      var sc = d + Math.abs(heightAt(x + c * 0.5, z - sn * 0.5) - heightAt(x - c * 0.5, z + sn * 0.5)) * 20; if (sc < bs) { bs = sc; best = [x, z, ry, h0]; }
+    }
+    if (!best) return;
+    var ap = { n: n, x: best[0], z: best[1], ry: best[2], h: Math.max(best[3], 0.03) + 0.004 }; AIRPORTS.push(ap);
+    if (cap) { var ac = Math.cos(ap.ry), as = Math.sin(ap.ry); makeRoad(cap.x, cap.z, ap.x + 0.5 * as, ap.z + 0.5 * ac, 0.06, ni * 10 + 7); }
+    var c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry), R2 = RWL / 2 + 0.35, cc = Math.ceil(R2 / CELL), i0 = Math.floor((ap.x + WX) / CELL), j0 = Math.floor((ap.z + WZ) / CELL);
+    for (var dj = -cc; dj <= cc; dj++) for (var di = -cc; di <= cc; di++) {
+      var ii = i0 + di, jj = j0 + dj; if (ii < 0 || jj < 0 || ii >= FW || jj >= FH) continue;
+      var idx = jj * FW + ii, wx = -WX + (ii + 0.5) * CELL - ap.x, wz = -WZ + (jj + 0.5) * CELL - ap.z, lx = wx * c0 - wz * s0, lz = wx * s0 + wz * c0;
+      var e = Math.max(Math.abs(lx) - RWL / 2, Math.max(-0.14 - lz, lz - 0.62)), w = 1 - sstep(0, 0.3, e); if (w <= 0) continue;
+      HG[idx] = lerp(HG[idx], ap.h - 0.004, w); FOR[idx] = 0; FLD[idx] *= 1 - w;
+      var o = idx * 4; natData[o] = lerp(natData[o], 0.52 * 255, w * 0.35); natData[o + 1] = lerp(natData[o + 1], 0.58 * 255, w * 0.35); natData[o + 2] = lerp(natData[o + 2], 0.4 * 255, w * 0.35);
     }
   });
 
@@ -328,6 +492,7 @@ function createWorldMap(container, THREE, opts) {
   var canvas = renderer.domElement;
   canvas.style.cssText = 'display:block;width:100%;height:100%;touch-action:none;outline:none;';
   container.appendChild(canvas);
+  if (!POLITICAL) { var vign = document.createElement('div'); vign.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 48%, rgba(0,0,0,0) 58%, rgba(6,22,38,0.38) 100%);'; container.appendChild(vign); }
   var scene = new THREE.Scene();
   var SKY = new THREE.Color('#cfe0ea');
   if (!POLITICAL) SKY = new THREE.Color('#1b4a6b');
@@ -422,17 +587,153 @@ function createWorldMap(container, THREE, opts) {
   var OCEAN_POL = new THREE.Color('#b9d8ea'), OCEAN_NAT = new THREE.Color('#2f7aa6');
   if (!POLITICAL) OCEAN_NAT = new THREE.Color('#24687c'); // 게임 지도: 예전 지도처럼 짙은 청록 바다
   var oceanMat = new THREE.MeshPhongMaterial({ color: OCEAN_POL.clone(), specular: new THREE.Color(0x000000), shininess: 60, normalMap: waveTex, normalScale: new THREE.Vector2(0, 0), transparent: true, opacity: 0.95, depthWrite: false });
+  // 바다 깊이·해안 거리 텍스처: R = 깊이, G = 가장 가까운 땅까지 거리(셀 16칸까지)
+  var seaU = { uDep: { value: null }, uGame: { value: 0 }, uTime: { value: 0 }, uWorld: { value: new THREE.Vector2(WX, WZ) } };
+  (function () {
+    var N = FW * FH, dd = new Uint8Array(N * 4), dist0 = new Float32Array(N), MAXC = 16;
+    for (var j = 0; j < FH; j++) for (var i = 0; i < FW; i++) {
+      var k = j * FW + i, h = heightAt(-WX + (i + 0.5) * CELL, -WZ + (j + 0.5) * CELL);
+      dd[k * 4] = clamp(-h / 0.9 * 255, 0, 255); dd[k * 4 + 3] = 255;
+      dist0[k] = h > 0 ? 0 : MAXC;
+    }
+    // 대각선까지 보는 2회 훑기 거리(계단 모양 줄무늬가 생기지 않게) + 부드럽게 두 번 흐리기
+    var D2 = Math.SQRT2, ii, jj, kk;
+    for (jj = 0; jj < FH; jj++) for (ii = 0; ii < FW; ii++) { kk = jj * FW + ii; var v = dist0[kk];
+      if (ii > 0) v = Math.min(v, dist0[kk - 1] + 1); if (jj > 0) { v = Math.min(v, dist0[kk - FW] + 1); if (ii > 0) v = Math.min(v, dist0[kk - FW - 1] + D2); if (ii < FW - 1) v = Math.min(v, dist0[kk - FW + 1] + D2); } dist0[kk] = v; }
+    for (jj = FH - 1; jj >= 0; jj--) for (ii = FW - 1; ii >= 0; ii--) { kk = jj * FW + ii; v = dist0[kk];
+      if (ii < FW - 1) v = Math.min(v, dist0[kk + 1] + 1); if (jj < FH - 1) { v = Math.min(v, dist0[kk + FW] + 1); if (ii < FW - 1) v = Math.min(v, dist0[kk + FW + 1] + D2); if (ii > 0) v = Math.min(v, dist0[kk + FW - 1] + D2); } dist0[kk] = Math.min(v, MAXC); }
+    for (var bp = 0; bp < 2; bp++) { var tmp = dist0.slice(); for (jj = 1; jj < FH - 1; jj++) for (ii = 1; ii < FW - 1; ii++) { kk = jj * FW + ii; if (tmp[kk] === 0) continue; dist0[kk] = (tmp[kk] * 4 + tmp[kk - 1] + tmp[kk + 1] + tmp[kk - FW] + tmp[kk + FW]) / 8; } }
+    for (k = 0; k < N; k++) dd[k * 4 + 1] = dist0[k] / MAXC * 255;
+    var t = new THREE.DataTexture(dd, FW, FH, THREE.RGBAFormat); t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true; seaU.uDep.value = t;
+  })();
+  oceanMat.onBeforeCompile = function (sh) {
+    for (var k in seaU) sh.uniforms[k] = seaU[k];
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', [
+      '#include <common>', 'varying vec3 vWP; uniform sampler2D uDep; uniform float uGame; uniform float uTime; uniform vec2 uWorld;',
+      'float sh21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }',
+      'float sn2(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(sh21(i),sh21(i+vec2(1.0,0.0)),f.x), mix(sh21(i+vec2(0.0,1.0)),sh21(i+vec2(1.0,1.0)),f.x), f.y); }'].join('\n'))
+      .replace('#include <color_fragment>', [
+        '#include <color_fragment>',
+        '  vec2 duv = (vWP.xz + uWorld) / (2.0 * uWorld);',
+        '  vec2 dt2 = texture2D(uDep, clamp(duv, 0.001, 0.999)).rg; float inside = step(0.0, duv.x) * step(duv.x, 1.0) * step(0.0, duv.y) * step(duv.y, 1.0);',
+        '  float dep = mix(1.0, dt2.r, inside), cd = mix(1.0, dt2.g, inside);',
+        '  float nz = sn2(vWP.xz * 0.35) * 0.6 + sn2(vWP.xz * 1.3) * 0.4;',
+        '  vec3 shallow = vec3(0.36, 0.74, 0.72), mid = vec3(0.14, 0.50, 0.62), deepC = vec3(0.06, 0.26, 0.42);',
+        '  vec3 wc = mix(shallow, mid, smoothstep(0.0, 0.22, dep + cd * 0.25)); wc = mix(wc, deepC, smoothstep(0.25, 0.85, dep * 0.7 + cd * 0.5 + (nz - 0.5) * 0.15));',
+        // surf: a bright line at the shore + thin wave lines moving towards the land
+        '  float wv = fract(cd * 6.0 - uTime * 0.12 + nz * 0.6); float lines = smoothstep(0.0, 0.06, wv) * (1.0 - smoothstep(0.06, 0.16, wv)) * (1.0 - smoothstep(0.08, 0.36, cd)) * smoothstep(0.35, 0.7, sn2(vWP.xz * 2.2 + uTime * 0.05));',
+        '  float shore = 1.0 - smoothstep(0.0, 0.05, cd + (nz - 0.5) * 0.03);',
+        '  wc = mix(wc, vec3(0.93, 0.97, 0.98), clamp(lines * 0.45 + shore * 0.45, 0.0, 1.0));',
+        '  diffuseColor.rgb = mix(diffuseColor.rgb, wc, uGame);',
+        '  diffuseColor.a = mix(diffuseColor.a, mix(0.62, 0.97, smoothstep(0.0, 0.18, dep + cd * 0.3)) + shore * 0.3, uGame);'
+      ].join('\n'));
+  };
   var ocean = new THREE.Mesh(new THREE.PlaneGeometry(600, 400), oceanMat); ocean.rotation.x = -Math.PI / 2; ocean.receiveShadow = true; ocean.renderOrder = 1; scene.add(ocean);
+  // 구름: 멀리서 볼 때만 바다 위로 천천히 흘러간다(가까이 가면 사라진다)
+  var CLOUDS = [], cloudTex = (function () {
+    var S2 = 256, cv = document.createElement('canvas'); cv.width = S2; cv.height = S2 / 2; var cx = cv.getContext('2d'), r = rng32(77);
+    for (var i = 0; i < 26; i++) {
+      var x = S2 * (0.18 + r() * 0.64), y = S2 / 2 * (0.42 + r() * 0.3), rad = 18 + r() * 34 * (1 - Math.abs(x / S2 - 0.5)), g = cx.createRadialGradient(x, y - rad * 0.2, rad * 0.1, x, y, rad);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(0.55, 'rgba(246,249,252,0.75)'); g.addColorStop(1, 'rgba(225,234,242,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, rad, 0, Math.PI * 2); cx.fill();
+    }
+    return new THREE.CanvasTexture(cv);
+  })();
+  (function () {
+    var r = rng32(4242), made = 0;
+    for (var t = 0; t < 3000 && made < 26; t++) {
+      var x = (r() * 2 - 1) * WX * 1.15, z = (r() * 2 - 1) * WZ * 1.15;
+      // 비스듬히 보면 구름은 땅에서 카메라 쪽(+z)으로 밀려 보인다. 그 자리까지 포함해 땅을 가리지 않는 곳에만 띄운다
+      var sc = 6 + r() * 7, cy = 6 + r() * 4, zs = z + cy * 0.75, clear = true;
+      for (var q = 0; q < 25 && clear; q++) { var qx = x + (q % 5 - 2) * sc * 0.3, qz = zs + (Math.floor(q / 5) - 2) * sc * 0.2; if (landAt(qx, qz) > 0.01) clear = false; }
+      if (!clear) continue;
+      var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTex, transparent: true, depthWrite: false, opacity: 0, fog: false }));
+      sp.scale.set(sc, sc * 0.5, 1); sp.position.set(x, cy, z); sp.renderOrder = 5; sp.visible = false;
+      sp.userData = { a: 0.55 + r() * 0.35, v: 0.35 + r() * 0.45, f: 1 }; scene.add(sp); CLOUDS.push(sp); made++;
+    }
+  })();
+  function updateClouds(z, dt) {
+    var op = POLITICAL ? 0 : sstep(0.62, 0.85, z);
+    CLOUDS.forEach(function (c) {
+      c.position.x += c.userData.v * dt; if (c.position.x > WX * 1.3) c.position.x = -WX * 1.3; // 바람 따라 계속 흘러간다
+      c.visible = op > 0.01; if (!c.visible) return;
+      // 땅 위를 지날 때는 옅어져서 나라를 가리지 않는다(화면에서 구름 밑으로 보이는 땅을 본다)
+      var zs = c.position.z + c.position.y * 0.75, hw = c.scale.x * 0.35, land = 0;
+      for (var q = -1; q <= 1; q++) if (landAt(c.position.x + q * hw, zs) > 0.01) land++;
+      c.userData.f += ((land ? 0.22 : 1) - c.userData.f) * Math.min(1, dt * 1.5);
+      c.material.opacity = op * c.userData.a * c.userData.f;
+    });
+  }
+  // 멀리서 보는 도시: 마을마다 집 덩어리(벽 + 지붕). 카메라가 멀어질수록 커져서 축소해도 도시가 보인다
+  var farCityU = { value: 1 }, FAR_CITY = [];
+  (function () {
+    var W = [], R = []; // [x, y, z, w, h, d, ry, r, g, b]
+    SETTLE.forEach(function (s, si) {
+      var st = STYLES[s.n.biome], r = rng32(si * 3571 + 9), flat = st.house === 'flat', nc = hexRGB(s.n.color);
+      var cnt = Math.round((s.capital ? 50 : s.port ? 36 : 24) * clamp(s.R, 0.8, 1.6)), ang = r() * Math.PI;
+      for (var t = 0, k = 0; t < cnt * 4 && k < cnt; t++) {
+        var rad = s.R * 0.75 * Math.pow(r(), 0.65), a = r() * Math.PI * 2, x = s.x + Math.cos(a) * rad, z = s.z + Math.sin(a) * rad;
+        if (landAt(x, z) < 0.03) continue;
+        var core = 1 - rad / s.R, tall = s.capital ? 1 + core * 2.2 : s.port ? 1 + core * 0.8 : 1;
+        var w = 0.09 + r() * 0.03, h = (0.05 + r() * 0.03) * tall, d = 0.08 + r() * 0.03, ry = ang + (r() < 0.5 ? 0 : Math.PI / 2) + (r() - 0.5) * 0.3, y = heightAt(x, z) - 0.01;
+        var wc = hexRGB(pick(st.walls, r)), rc = s.port && r() < 0.4 ? [0.55, 0.57, 0.6] : flat ? wc : hexRGB(pick(st.roofs, r));
+        W.push([x, y, z, w, h, d, ry].concat(wc)); R.push([x, y, z, w, h, d, ry].concat(rc)); k++;
+      }
+      if (s.capital) { // 수도 한가운데 랜드마크: 나라 색 지붕의 높은 건물
+        var y0 = heightAt(s.x, s.z) - 0.01; W.push([s.x, y0, s.z, 0.13, 0.26, 0.13, ang, 0.93, 0.91, 0.86]); R.push([s.x, y0, s.z, 0.13, 0.26, 0.13, ang].concat(nc));
+      }
+    });
+    var wallG = new THREE.BoxGeometry(1, 1, 1); wallG.translate(0, 0.5, 0);
+    var roofG = new THREE.ConeGeometry(0.74, 0.55, 4); roofG.rotateY(Math.PI / 4); roofG.translate(0, 1.27, 0);
+    [[wallG, W], [roofG, R]].forEach(function (pr) {
+      var list = pr[1], mat = new THREE.MeshLambertMaterial();
+      mat.onBeforeCompile = function (sh) { sh.uniforms.uS = farCityU; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uS;').replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed *= uS;'); };
+      var m = new THREE.InstancedMesh(pr[0], mat, list.length), mm = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), col = new THREE.Color();
+      list.forEach(function (b, i) { e.set(0, b[6], 0); q.setFromEuler(e); mm.compose(new THREE.Vector3(b[0], b[1], b[2]), q, new THREE.Vector3(b[3], b[4], b[5])); m.setMatrixAt(i, mm); m.setColorAt(i, col.setRGB(b[7], b[8], b[9])); });
+      m.instanceMatrix.needsUpdate = true; m.frustumCulled = false; m.visible = false; scene.add(m); FAR_CITY.push(m);
+    });
+  })();
   var deep = new THREE.Mesh(new THREE.PlaneGeometry(600, 400), new THREE.MeshBasicMaterial({ color: 0x1b4a6b })); deep.rotation.x = -Math.PI / 2; deep.position.y = -0.95; scene.add(deep);
+  // 강물: 강 길을 따라 띠 메시(물 높이는 하류로만 내려감). 잔물결 무늬가 흐른다
+  var riverTex = waveTex.clone(); riverTex.needsUpdate = true; riverTex.repeat.set(1, 1);
+  var riverMat = new THREE.MeshPhongMaterial({ color: new THREE.Color('#3b7480'), specular: new THREE.Color(0x1e2a2e), shininess: 30, normalMap: riverTex, normalScale: new THREE.Vector2(0.3, 0.3), transparent: true, opacity: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  // 멀리서도 강이 보이게: 카메라가 멀면 폭을 넓힌다(골짜기 안에서만, 최대 0.32)
+  var riverW = { value: 0 };
+  riverMat.onBeforeCompile = function (sh) {
+    sh.uniforms.uRW = riverW;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uRW; attribute vec3 aOff; attribute vec2 aEF; varying vec2 vEF;').replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.xz += aOff.xy * max(0.0, uRW - aOff.z); vEF = aEF;');
+    // 가장자리는 흐리게(땅에 스며들게), 하구에서는 투명해져 바다 물이 이어받는다
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vEF;').replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.a *= (1.0 - smoothstep(0.45, 1.0, abs(vEF.x))) * vEF.y;');
+  };
+  (function () {
+    var pos = [], uv = [], idx = [], off = [], ef = [];
+    RIVERS.forEach(function (rv) {
+      var p = rv.pts, n = p.length, base = pos.length / 3, along = 0;
+      for (var k = 0; k < n; k++) {
+        var a = p[Math.max(0, k - 1)], b = p[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, w = rv.wid[k], y = rv.surf[k] + 0.004;
+        if (k > 0) along += Math.hypot(p[k][0] - p[k - 1][0], p[k][1] - p[k - 1][1]);
+        pos.push(p[k][0] + nx * w, y, p[k][1] + nz * w, p[k][0], y, p[k][1], p[k][0] - nx * w, y, p[k][1] - nz * w); uv.push(along * 2.2, 0, along * 2.2, w * 2.2, along * 2.2, w * 4.4); off.push(nx, nz, w, 0, 0, w, -nx, -nz, w);
+        var fd = rv.fade[k] * Math.min(1, k / 4); ef.push(-1, fd, 0, fd, 1, fd);
+        if (k > 0) { var q = base + k * 3; idx.push(q - 3, q - 2, q, q - 2, q + 1, q, q - 2, q - 1, q + 1, q - 1, q + 2, q + 1); }
+      }
+    });
+    if (!pos.length) return;
+    var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('aOff', new THREE.Float32BufferAttribute(off, 3)); g.setAttribute('aEF', new THREE.Float32BufferAttribute(ef, 2)); g.setIndex(idx); g.computeVertexNormals();
+    if (g.attributes.normal.array[1] < 0) { for (var k = 0; k < idx.length; k += 3) { var tmp = idx[k + 1]; idx[k + 1] = idx[k + 2]; idx[k + 2] = tmp; } g.setIndex(idx); g.computeVertexNormals(); } // 면이 위를 보게
+    var rm = new THREE.Mesh(g, riverMat); rm.receiveShadow = true; rm.renderOrder = 1; scene.add(rm);
+  })();
 
   // ───────────────────────── 지오메트리 합치기 도우미 ─────────────────────────
   var _e = new THREE.Euler(), _q = new THREE.Quaternion();
   function mergeParts(parts) {
     var gs = [], total = 0;
     parts.forEach(function (p) { var g = p.g.index ? p.g.toNonIndexed() : p.g.clone(); g.applyMatrix4(p.m); gs.push({ g: g, c: p.c }); total += g.attributes.position.count; });
-    var pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), col = new Float32Array(total * 3), off = 0;
-    gs.forEach(function (it) { var n = it.g.attributes.position.count; pos.set(it.g.attributes.position.array, off * 3); nor.set(it.g.attributes.normal.array, off * 3); for (var k = 0; k < n; k++) { col[(off + k) * 3] = it.c[0]; col[(off + k) * 3 + 1] = it.c[1]; col[(off + k) * 3 + 2] = it.c[2]; } off += n; it.g.dispose(); });
-    var G = new THREE.BufferGeometry(); G.setAttribute('position', new THREE.BufferAttribute(pos, 3)); G.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); G.setAttribute('color', new THREE.BufferAttribute(col, 3)); G.computeBoundingSphere(); return G;
+    var pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), col = new Float32Array(total * 3), kind = new Float32Array(total), hasK = false, off = 0;
+    parts.forEach(function (p, i) { gs[i].k = p.k || 0; if (p.k) hasK = true; });
+    gs.forEach(function (it) { var n = it.g.attributes.position.count; pos.set(it.g.attributes.position.array, off * 3); nor.set(it.g.attributes.normal.array, off * 3); for (var k = 0; k < n; k++) { col[(off + k) * 3] = it.c[0]; col[(off + k) * 3 + 1] = it.c[1]; col[(off + k) * 3 + 2] = it.c[2]; kind[off + k] = it.k; } off += n; it.g.dispose(); });
+    var G = new THREE.BufferGeometry(); G.setAttribute('position', new THREE.BufferAttribute(pos, 3)); G.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); G.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    if (hasK) G.setAttribute('kind', new THREE.BufferAttribute(kind, 1)); // 집 부분 종류(1 벽, 2 지붕, 3 목조 벽, 4 평지붕 벽, 5 유리 벽, 0 고정 색)
+    G.computeBoundingSphere(); return G;
   }
   function M(x, y, z, ry, rz) { _e.set(0, ry || 0, rz || 0); _q.setFromEuler(_e); return new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), _q.clone(), new THREE.Vector3(1, 1, 1)); }
   function C(h) { return Array.isArray(h) ? h : hexRGB(h); }
@@ -457,12 +758,35 @@ function createWorldMap(container, THREE, opts) {
     if (type === 'container' || type === 'fruit') { for (var i = 0; i < 5; i++) for (var j = 0; j < 2; j++) { var hgt = 1 + Math.floor(r() * 3); for (var k = 0; k < hgt; k++) Box(P, 0.036, 0.014, 0.026, -L / 2 + 0.09 + i * 0.038, Hh - 0.006 + k * 0.014, (j - 0.5) * 0.028, cols[Math.floor(r() * cols.length)]); } }
     else if (type === 'oil') { Box(P, L * 0.55, 0.006, 0.01, 0.03, Hh - 0.006, 0, '#c9b26a'); for (i = 0; i < 4; i++) Cyl(P, 0.012, 0.012, 0.01, -0.04 + i * 0.05, Hh - 0.006, 0, '#d8d8d8', 8); }
     else { for (i = 0; i < 5; i++) Box(P, 0.03, 0.01, 0.045, -L / 2 + 0.1 + i * 0.038, Hh - 0.006, 0, type === 'ore' ? '#8a3d22' : '#c8a64a'); }
-    var mesh = new THREE.Mesh(mergeParts(P), lambertVC); mesh.castShadow = true; mesh.receiveShadow = true; return mesh;
+    var mesh = new THREE.Mesh(mergeParts(P), lambertVC); mesh.castShadow = false; mesh.receiveShadow = true; return mesh; // 그림자는 바다 밑바닥에 떨어져 배가 떠 보이므로 끈다
+  }
+  // 물거품 텍스처: 오른쪽(+x)이 뱃머리. 뱃머리 물결 + 뒤로 퍼지는 V자 항적
+  var PORT_SCALE = 0.3, SHIP_SCALE = 0.45; // 항구·배 크기(1 = 처음 크기). 집 한 채 ≈ 0.1
+  var wakeTex = (function () {
+    var W2 = 256, H2 = 64, cv = document.createElement('canvas'); cv.width = W2; cv.height = H2; var cx = cv.getContext('2d');
+    for (var i = 0; i < 900; i++) {
+      var u = Math.random(), x = W2 * (1 - u * 0.95) - 20, side = Math.random() < 0.5 ? -1 : 1, spread = 4 + u * 26, y = H2 / 2 + side * spread * (0.55 + Math.random() * 0.45), a = (1 - u) * 0.5;
+      cx.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')'; cx.beginPath(); cx.arc(x, y, 1.2 + Math.random() * 2.2 * (1 - u * 0.5), 0, Math.PI * 2); cx.fill();
+    }
+    var g = cx.createRadialGradient(W2 - 46, H2 / 2, 2, W2 - 46, H2 / 2, 30); g.addColorStop(0, 'rgba(255,255,255,0.75)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    cx.fillStyle = g; cx.beginPath(); cx.ellipse(W2 - 46, H2 / 2, 44, 15, 0, 0, Math.PI * 2); cx.fill();
+    var t = new THREE.CanvasTexture(cv); return t;
+  })();
+  var ringTex = (function () {
+    var S2 = 128, cv = document.createElement('canvas'); cv.width = cv.height = S2; var cx = cv.getContext('2d'), g = cx.createRadialGradient(S2 / 2, S2 / 2, S2 * 0.18, S2 / 2, S2 / 2, S2 / 2);
+    g.addColorStop(0, 'rgba(255,255,255,0.55)'); g.addColorStop(0.5, 'rgba(255,255,255,0.18)'); g.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = g; cx.fillRect(0, 0, S2, S2);
+    return new THREE.CanvasTexture(cv);
+  })();
+  var wakeGeo = new THREE.PlaneGeometry(0.78, 0.17); wakeGeo.rotateX(-Math.PI / 2); wakeGeo.translate(-0.2, 0.004, 0);
+  var ringGeo = new THREE.PlaneGeometry(0.46, 0.13); ringGeo.rotateX(-Math.PI / 2); ringGeo.translate(0, 0.004, 0);
+  function addFoam(ship, moving) {
+    var m = new THREE.Mesh(moving ? wakeGeo : ringGeo, new THREE.MeshBasicMaterial({ map: moving ? wakeTex : ringTex, transparent: true, depthWrite: false, opacity: moving ? 0.85 : 0.6 }));
+    m.renderOrder = 2; m.userData.foam = true; ship.add(m); return m;
   }
   function makePort(n) {
     var r = rng32(n.i * 7919 + 17), g = new THREE.Group(), P = [], pt = n.port, t = GOODS[n.good].port;
     var ry = Math.atan2(pt.sx, pt.sz);
-    g.position.set(pt.x, 0, pt.z); g.rotation.y = ry;
+    g.position.set(pt.x, 0, pt.z); g.rotation.y = ry; g.scale.setScalar(PORT_SCALE); // 집 크기와 맞게 항구 전체(부두·크레인·정박한 배)를 줄인다
     Box(P, 1.7, QUAY_TOP + 0.4, 1.05, 0, -0.4, 0, '#c7c1b3');
     Box(P, 1.7, 0.004, 0.03, 0, QUAY_TOP, 0.5, '#e9d36b');
     var i, j, k, h;
@@ -498,24 +822,12 @@ function createWorldMap(container, THREE, opts) {
     }
     // 항구 마을 (여기까지가 부두·설비 = Tripo 항구 모델이 오면 숨긴다)
     var termN = P.length;
-    var ROOF =['#b5523b', '#8a5a44', '#5b6f82', '#c46a3d', '#6d7f5a'], houses = 0;
-    for (var tries = 0; tries < 900 && houses < 160; tries++) {
-      var lx = (r() * 2 - 1) * 2.0, lz = -0.4 - r() * 1.8;
-      if (Math.abs(lx) < 0.9 && lz > -0.65) continue; if (lx * lx + lz * lz > 4.2) continue;
-      var wx = pt.x + lx * Math.cos(ry) + lz * Math.sin(ry), wz = pt.z - lx * Math.sin(ry) + lz * Math.cos(ry);
-      if (landAt(wx, wz) < 0.03) continue; var gy = heightAt(wx, wz); if (gy > 0.6) continue;
-      var hw = 0.045 + r() * 0.035, hd = 0.04 + r() * 0.03, hh = 0.03 + r() * 0.035, hr = Math.floor(r() * 4) * Math.PI / 2 + (r() - 0.5) * 0.2, big = r() < 0.08;
-      if (big) { hw *= 1.6; hh *= 2.2; }
-      Box(P, hw, hh + 0.05, hd, lx, gy - 0.05, lz, big ? '#d7dde2' : ['#efe8da', '#e6dcc8', '#f3efe6'][Math.floor(r() * 3)], hr);
-      if (!big) Roof(P, hw * 1.08, hh * 0.6, hd * 1.05, lx, gy + hh, lz, ROOF[Math.floor(r() * ROOF.length)], hr);
-      houses++;
-    }
     var term = new THREE.Mesh(mergeParts(P.slice(0, termN)), lambertVC); term.castShadow = true; term.receiveShadow = true; g.add(term);
     if (P.length > termN) { var mesh = new THREE.Mesh(mergeParts(P.slice(termN)), lambertVC); mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh); }
     var slot = new THREE.Group(); slot.position.set(0.6, QUAY_TOP, -0.3); g.add(slot);
     var LP = []; Cyl(LP, 0.03, 0.04, 0.2, 0, 0, 0, '#f4f4f0', 10); Cyl(LP, 0.042, 0.042, 0.02, 0, 0.08, 0, '#d1495b', 10); Cyl(LP, 0.035, 0.035, 0.04, 0, 0.2, 0, '#f6e7a1', 10); Cone(LP, 0.045, 0.05, 0, 0.24, 0, '#d1495b', 10);
     var lh = new THREE.Mesh(mergeParts(LP), lambertVC); lh.castShadow = true; slot.add(lh);
-    var ships = []; for (i = 0; i < 2; i++) { var s = makeShip(t, r); g.add(s); ships.push({ m: s, ph: i * Math.PI + r(), sp: 0.07 + r() * 0.03 }); }
+    var ships = []; for (i = 0; i < 2; i++) { var s = makeShip(t, r); addFoam(s, false); s.scale.setScalar(SHIP_SCALE / PORT_SCALE); s.position.set(i ? 0.55 : -0.45, 0, 1.12); s.rotation.y = i ? Math.PI : 0; g.add(s); ships.push({ m: s }); } // 부두에 정박
     var flame = null;
     if (t === 'oil') { flame = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.06, 6), new THREE.MeshBasicMaterial({ color: 0xff8a2a })); flame.position.set(0.3, QUAY_TOP + 0.39, 0.2); g.add(flame); }
     g.visible = false; scene.add(g);
@@ -536,18 +848,31 @@ function createWorldMap(container, THREE, opts) {
   })();
   var PROP_TYPES = Object.keys(PROP_GEO), PCAP = 140;
   var propMesh = {}; PROP_TYPES.forEach(function (t) { var m = new THREE.InstancedMesh(PROP_GEO[t], lambertVC, PCAP); m.count = 0; m.frustumCulled = false; m.castShadow = true; m.receiveShadow = true; m.visible = false; scene.add(m); propMesh[t] = m; });
+  function farFromFarms(x, z) { for (var k = 0; k < SETTLE.length; k++) { var s = SETTLE[k], st = STYLES[s.n.biome], fr = st.farm && !s.port ? s.R + st.farmW * (s.capital ? 1.2 : 0.8) : s.R + 0.3; if (Math.hypot(x - s.x, z - s.z) < fr + 0.3) return false; } for (k = 0; k < FARMS.length; k++) if (Math.hypot(FARMS[k].x - x, FARMS[k].z - z) < 0.6) return false; return true; }
   // 나라마다 건물 자리 후보(항구 뒤쪽 땅)
   NATIONS.forEach(function (n) {
     var r = rng32(n.i * 104729 + 5), spots = [], pt = n.port;
     for (var t = 0; t < 4000 && spots.length < 40; t++) {
       var a = r() * Math.PI * 2, d = 2.6 + r() * 5.5, x = pt.x + Math.cos(a) * d - pt.sx * 1.5, z = pt.z + Math.sin(a) * d - pt.sz * 1.5;
-      if (nationAt(x, z) !== n.i || landAt(x, z) < 0.06 || heightAt(x, z) > 0.75 || !farFromSettle(x, z, 0.5)) continue;
+      if (nationAt(x, z) !== n.i || landAt(x, z) < 0.06 || riverAt(x, z, 0.3) || heightAt(x, z) > 0.75 || !farFromSettle(x, z, 0.5)) continue;
+      if (t < 2600 && !farFromFarms(x, z)) continue; // 처음에는 밭 둘레도 피한다(자리가 모자라면 풀어 준다)
       var ok = true; for (var s = 0; s < spots.length; s++) if (Math.hypot(spots[s][0] - x, spots[s][1] - z) < 0.55) { ok = false; break; }
       if (!ok) continue; spots.push([x, z, r() * Math.PI * 2]);
       FOR[cellIdx(x, z)] = 0;
     }
     n.spots = spots;
+    // 산업 건물 자리마다 자갈 마당(밭 무늬·숲 없음)
+    spots.forEach(function (sp) {
+      var c = Math.ceil(0.32 / CELL), i0 = Math.floor((sp[0] + WX) / CELL), j0 = Math.floor((sp[1] + WZ) / CELL);
+      for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) {
+        var i = i0 + di, j = j0 + dj; if (i < 0 || j < 0 || i >= FW || j >= FH) continue;
+        var idx = j * FW + i, d = Math.hypot(di * CELL, dj * CELL); if (d > 0.32) continue;
+        var w = 1 - sstep(0.16, 0.32, d), o = idx * 4; FOR[idx] *= 1 - w; FLD[idx] *= 1 - w; natData[o + 3] = Math.round(natData[o + 3] * (1 - w));
+        natData[o] = lerp(natData[o], 0.62 * 255, w * 0.55); natData[o + 1] = lerp(natData[o + 1], 0.58 * 255, w * 0.55); natData[o + 2] = lerp(natData[o + 2], 0.5 * 255, w * 0.55);
+      }
+    });
   });
+  natTex.needsUpdate = true;
   var COUNT_MAIN = [0, 3, 6, 10, 15], COUNT_OTHER = [0, 1, 3, 5, 8];
   function rebuildProps() {
     var cnt = {}; PROP_TYPES.forEach(function (t) { cnt[t] = 0; });
@@ -558,7 +883,7 @@ function createWorldMap(container, THREE, opts) {
       order.forEach(function (g) {
         var lv = clamp(levels[g] | 0, 0, 4), want = g === n.good ? COUNT_MAIN[lv] : COUNT_OTHER[lv], t = GOODS[g].prop, m = propMesh[t];
         for (var q = 0; q < want && si < n.spots.length; q++, si++) {
-          if (cnt[t] >= PCAP) break; var sp = n.spots[si], y = heightAt(sp[0], sp[1]), s = 1.5;
+          if (cnt[t] >= PCAP) break; var sp = n.spots[si], y = heightAt(sp[0], sp[1]), s = 0.85;
           var c = Math.cos(sp[2]) * s, sn = Math.sin(sp[2]) * s, e = m.instanceMatrix.array, o = cnt[t] * 16;
           e[o] = c; e[o + 1] = 0; e[o + 2] = -sn; e[o + 3] = 0; e[o + 4] = 0; e[o + 5] = s; e[o + 6] = 0; e[o + 7] = 0; e[o + 8] = sn; e[o + 9] = 0; e[o + 10] = c; e[o + 11] = 0; e[o + 12] = sp[0]; e[o + 13] = y - 0.01; e[o + 14] = sp[1]; e[o + 15] = 1;
           cnt[t]++;
@@ -591,11 +916,17 @@ function createWorldMap(container, THREE, opts) {
     });
     // 길: 지형을 따라가는 띠 + 수도 광장
     var pos = [], idx = [];
-    function vtx(x, z) { pos.push(x, Math.max(heightAt(x, z), 0.02) + 0.014, z); return pos.length / 3 - 1; }
+    // 지형 메시는 0.5 간격 삼각형이라 골짜기에서는 실제 높이보다 위에 있다. 길이 그 밑에 묻혀 끊겨 보이지 않게 메시 높이도 본다
+    function meshH(x, z) {
+      var st = CELL * 2, gx = (x + WX) / st, gz = (z + WZ) / st, i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, x0 = -WX + i * st, z0 = -WZ + j * st;
+      var ha = heightAt(x0, z0), hb = heightAt(x0 + st, z0), hc = heightAt(x0, z0 + st), hd = heightAt(x0 + st, z0 + st);
+      return fx + fz < 1 ? ha + (hb - ha) * fx + (hc - ha) * fz : hd + (hc - hd) * (1 - fx) + (hb - hd) * (1 - fz);
+    }
+    function vtx(x, z) { var y = Math.max(heightAt(x, z), meshH(x, z), 0.02) + 0.02, ci = cellIdx(x, z); if (RD[ci] < 0.3) y = Math.max(y, RSF[ci] + 0.03 * (1 - sstep(0.1, 0.3, RD[ci])) + 0.008); pos.push(x, y, z); return pos.length / 3 - 1; }
     ROADS.forEach(function (rd) {
       if (rd.disc) { var cx = rd.disc[0], cz = rd.disc[1], rr = rd.disc[2], c0 = vtx(cx, cz), prev = -1, first = -1; for (var q = 0; q <= 16; q++) { var aa = q / 16 * Math.PI * 2, v = q === 16 ? first : vtx(cx + Math.cos(aa) * rr, cz + Math.sin(aa) * rr); if (q === 0) first = v; if (prev >= 0) idx.push(c0, v, prev); prev = v; } return; }
       var p = rd.pts, w = rd.w / 2, L = [], R = [];
-      var dense = []; for (var i = 0; i < p.length - 1; i++) { var sl = Math.hypot(p[i + 1][0] - p[i][0], p[i + 1][1] - p[i][1]), nsub = Math.max(1, Math.ceil(sl / 0.15)); for (var u = 0; u < nsub; u++) dense.push([lerp(p[i][0], p[i + 1][0], u / nsub), lerp(p[i][1], p[i + 1][1], u / nsub)]); } dense.push(p[p.length - 1]);
+      var dense = []; for (var i = 0; i < p.length - 1; i++) { var sl = Math.hypot(p[i + 1][0] - p[i][0], p[i + 1][1] - p[i][1]), nsub = Math.max(1, Math.ceil(sl / 0.1)); for (var u = 0; u < nsub; u++) dense.push([lerp(p[i][0], p[i + 1][0], u / nsub), lerp(p[i][1], p[i + 1][1], u / nsub)]); } dense.push(p[p.length - 1]);
       for (i = 0; i < dense.length; i++) {
         var a2 = dense[Math.max(0, i - 1)], b2 = dense[Math.min(dense.length - 1, i + 1)], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l * w, nz = dx / l * w;
         L.push(vtx(dense[i][0] + nx, dense[i][1] + nz)); R.push(vtx(dense[i][0] - nx, dense[i][1] - nz));
@@ -603,34 +934,374 @@ function createWorldMap(container, THREE, opts) {
       }
     });
     var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-    var roadMat = new THREE.MeshLambertMaterial({ color: 0xb3a58a, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide });
+    var roadMat = new THREE.MeshLambertMaterial({ color: 0x8c7b62, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide });
     var rm = new THREE.Mesh(g, roadMat); rm.receiveShadow = true; rm.visible = false; scene.add(rm); cityMeshes.push(rm);
   })();
 
+  // ───────────────────────── 집 (종류별 인스턴스 + 창문·문·목재 무늬 셰이더) ─────────────────────────
+  var _he = new THREE.Euler(0, 0, 0, 'YXZ'), _hq = new THREE.Quaternion(), _hv = new THREE.Vector3(), _hs = new THREE.Vector3(1, 1, 1);
+  function part(P, g, x, y, z, rx, ry, col, k) { _he.set(rx || 0, ry || 0, 0, 'YXZ'); _hq.setFromEuler(_he); P.push({ g: g, m: new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), _hq.clone(), _hs), c: C(col), k: k }); }
+  function bx(P, w, h, d, x, y, z, col, k, rx, ry) { part(P, new THREE.BoxGeometry(w, h, d), x, y, z, rx, ry, col, k); }
+  // 박공지붕: 벽 색 삼각 박공 + 처마가 나온 지붕판 두 장. alongZ면 용마루가 z 방향
+  function gable(P, cx, cz, base, span, len, rise, alongZ) {
+    var r0 = alongZ ? Math.PI / 2 : 0, c0 = Math.cos(r0), s0 = Math.sin(r0);
+    function at(lx, ly, lz, rx, g, col, k) { part(P, g, cx + lx * c0 + lz * s0, ly, cz - lx * s0 + lz * c0, rx, r0, col, k); }
+    var sh = new THREE.Shape([new THREE.Vector2(-span / 2, 0), new THREE.Vector2(span / 2, 0), new THREE.Vector2(0, rise)]);
+    var pg = new THREE.ExtrudeGeometry(sh, { depth: len, bevelEnabled: false }); pg.translate(0, 0, -len / 2); pg.rotateY(Math.PI / 2);
+    at(0, base, 0, 0, pg, '#ffffff', 1);
+    var ov = 0.1, dz = span / 2 + ov, dy = rise + 0.08 + 0.02, a = Math.atan2(dy, dz), L = Math.hypot(dz, dy), my = base - 0.08 + dy / 2;
+    at(0, my, dz / 2, a, new THREE.BoxGeometry(len + 0.12, 0.05, L), '#ffffff', 2);
+    at(0, my, -dz / 2, -a, new THREE.BoxGeometry(len + 0.12, 0.05, L), '#ffffff', 2);
+  }
+  var HGEO = (function () {
+    var V = [], P, BRICK = '#8d4b3a';
+    P = []; bx(P, 1, 1, 1, 0, 0.5, 0, '#ffffff', 1); gable(P, 0, 0, 1, 1, 1, 0.6, false); bx(P, 0.1, 0.5, 0.1, 0.28, 1.3, -0.2, BRICK, 0); V[0] = P;
+    P = []; bx(P, 1, 1.7, 1, 0, 0.85, 0, '#ffffff', 3); gable(P, 0, 0, 1.7, 1, 1, 0.55, false); bx(P, 0.1, 0.5, 0.1, -0.28, 2.0, 0.2, BRICK, 0); V[1] = P;
+    P = []; bx(P, 1, 1, 1, 0, 0.5, 0, '#ffffff', 1); gable(P, 0, 0, 1, 1, 1, 0.6, false); bx(P, 0.5, 0.85, 0.7, 0.22, 0.425, 0.8, '#ffffff', 1); gable(P, 0.22, 0.8, 0.85, 0.5, 0.75, 0.42, true); bx(P, 0.1, 0.5, 0.1, -0.3, 1.3, -0.2, BRICK, 0); V[2] = P;
+    P = []; bx(P, 1, 1, 1, 0, 0.5, 0, '#ffffff', 1); var pyr = new THREE.ConeGeometry(0.86, 0.6, 4); pyr.rotateY(Math.PI / 4); part(P, pyr, 0, 1.27, 0, 0, 0, '#ffffff', 2); bx(P, 0.1, 0.45, 0.1, 0.25, 1.25, 0.18, BRICK, 0); V[3] = P;
+    P = []; bx(P, 1, 1, 1, 0, 0.5, 0, '#ffffff', 4); bx(P, 1.04, 0.1, 0.06, 0, 1.05, 0.49, '#ffffff', 4); bx(P, 1.04, 0.1, 0.06, 0, 1.05, -0.49, '#ffffff', 4); bx(P, 0.06, 0.1, 1.04, 0.49, 1.05, 0, '#ffffff', 4); bx(P, 0.06, 0.1, 1.04, -0.49, 1.05, 0, '#ffffff', 4);
+    bx(P, 0.3, 0.28, 0.3, -0.25, 1.14, -0.2, '#ffffff', 4); bx(P, 0.42, 0.03, 0.22, 0, 0.66, 0.6, '#b07a45', 0); V[4] = P;
+    P = []; bx(P, 1, 1, 1, 0, 0.5, 0, '#ffffff', 5); bx(P, 1.06, 0.03, 1.06, 0, 1.015, 0, '#e4e8ec', 0); bx(P, 0.4, 0.08, 0.4, 0.15, 1.07, 0.1, '#9aa5ad', 0); V[5] = P;
+    P = []; part(P, new THREE.CylinderGeometry(0.5, 0.5, 1, 10), 0, 0.5, 0, 0, 0, '#ffffff', 1); part(P, new THREE.ConeGeometry(0.74, 0.95, 10), 0, 1.47, 0, 0, 0, '#ffffff', 2); V[6] = P;
+    return V.map(mergeParts);
+  })();
+  var houseMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  houseMat.onBeforeCompile = function (sh) {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float kind; attribute vec3 iRoof; varying float vKind; varying vec3 vLP; varying vec3 vLN; varying vec3 vScl; varying vec2 vSeed;')
+      .replace('#include <color_vertex>', '#include <color_vertex>\n  vColor.rgb = color * (kind > 1.5 && kind < 2.5 ? iRoof : kind > 0.5 ? instanceColor : vec3(1.0));\n  vKind = kind; vLP = position; vLN = normal; vScl = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz)); vSeed = instanceMatrix[3].xz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vKind; varying vec3 vLP; varying vec3 vLN; varying vec3 vScl; varying vec2 vSeed;\nfloat hh1(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }\nfloat hn2(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(hh1(i),hh1(i+vec2(1.0,0.0)),f.x), mix(hh1(i+vec2(0.0,1.0)),hh1(i+vec2(1.0,1.0)),f.x), f.y); }')
+      .replace('#include <color_fragment>', [
+        '#include <color_fragment>',
+        '  float hgt = vLP.y * vScl.y - ' + HSINK.toFixed(3) + ';',
+        '  bool isWall = (vKind > 0.5 && vKind < 1.5) || vKind > 2.5;',
+        '  if (isWall && abs(vLN.y) < 0.5) {',
+        '    bool fz = abs(vLN.z) > abs(vLN.x);',
+        '    float u = fz ? vLP.x * vScl.x : vLP.z * vScl.z;',
+        '    if (vKind > 4.5) {',
+        '      float cu = fract(u / 0.018 + 0.5), cv = fract(hgt / 0.024);',
+        '      diffuseColor.rgb *= mix(0.7, 1.18, step(0.22, cv) * step(cv, 0.86)) * mix(0.82, 1.0, step(0.1, cu));',
+        '    } else {',
+        '      float eave = (vKind > 2.5 && vKind < 3.5 ? 1.7 : 1.0) * vScl.y - ' + HSINK.toFixed(3) + ' - 0.006;',
+        '      float cu = fract(u / 0.036 + 0.5), cv = fract(hgt / 0.038), body = step(hgt, eave) * step(0.004, hgt);',
+        '      float win = step(0.37, cu) * step(cu, 0.63) * step(0.36, cv) * step(cv, 0.76) * body;',
+        '      float sill = (step(0.33, cu) * step(cu, 0.67) * step(0.32, cv) * step(cv, 0.8) * body) * (1.0 - win);',
+        '      float door = (fz && vLN.z > 0.0) ? step(abs(u), 0.0065) * step(hgt, 0.026) : 0.0;',
+        '      if (vKind > 2.5 && vKind < 3.5) { float beam = min(1.0, step(cv, 0.07) + step(0.93, cu) + step(cu, 0.07)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.33, 0.23, 0.16), beam * body * (1.0 - win)); }',
+        '      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.3, 0.2), sill * (1.0 - door));',
+        '      diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.2, 0.22, 0.24), vec3(0.36, 0.33, 0.28), step(0.56, cv)), win * (1.0 - door));',
+        '      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.38, 0.24, 0.14), door);',
+        '      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.46, 0.4) * (0.85 + 0.3 * hn2(vec2(u, hgt) * 900.0)), 1.0 - step(0.006, hgt));',
+        '    }',
+        '  }',
+        '  if (vKind > 1.5 && vKind < 2.5) { float row = fract(hgt / 0.011); float tile = hh1(floor(vec2((vLP.x + vLP.z) * vScl.x / 0.012, hgt / 0.011)) + vSeed * 13.0); diffuseColor.rgb *= (0.76 + 0.24 * smoothstep(0.0, 0.35, row)) * (0.88 + 0.2 * tile); }',
+        '  float grime = hn2((vLP.xz * vScl.xz + vSeed) * 140.0 + vec2(0.0, hgt * 160.0)) * 0.6 + hn2((vLP.xz * vScl.xz + vSeed) * 420.0 + hgt * 400.0) * 0.4;',
+        '  if (vKind > 0.5 && vKind < 4.5) diffuseColor.rgb *= (0.86 + 0.2 * grime) * mix(0.78, 1.0, smoothstep(0.0, 0.03, hgt));',
+        '  diffuseColor.rgb *= vec3(1.04, 1.0, 0.93);'
+      ].join('\n'));
+  };
+  (function () {
+    var byV = HGEO.map(function () { return []; }); HOUSES.forEach(function (h) { byV[h.v].push(h); });
+    var col = new THREE.Color(), mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), s = new THREE.Vector3();
+    byV.forEach(function (list, v) {
+      if (!list.length) return;
+      var g = HGEO[v].clone(), roof = new Float32Array(list.length * 3);
+      var m = new THREE.InstancedMesh(g, houseMat, list.length);
+      list.forEach(function (h, i) {
+        e.set(0, h.ry, 0); q.setFromEuler(e); mtx.compose(p.set(h.x, h.y, h.z), q, s.set(h.w, h.h, h.d)); m.setMatrixAt(i, mtx);
+        m.setColorAt(i, col.setRGB(h.wall[0], h.wall[1], h.wall[2])); roof[i * 3] = h.roof[0]; roof[i * 3 + 1] = h.roof[1]; roof[i * 3 + 2] = h.roof[2];
+      });
+      g.setAttribute('iRoof', new THREE.InstancedBufferAttribute(roof, 3));
+      m.instanceMatrix.needsUpdate = true; m.frustumCulled = false; m.castShadow = true; m.receiveShadow = true; m.visible = false; scene.add(m); cityMeshes.push(m);
+      bldCount += list.length;
+    });
+  })();
+
+
+  // ───────────────────────── 공항·비행기 ─────────────────────────
+  var AP_BLD = null, APK = {}; AIRPORTS.forEach(function (ap) { APK[ap.n.key] = ap; });
+  (function () {
+    if (!AIRPORTS.length) return;
+    var P = [];
+    AIRPORTS.forEach(function (ap) {
+      var c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry);
+      function ap3(g, lx, ly, lz, col) { part(P, g, ap.x + lx * c0 + lz * s0, ap.h + ly, ap.z - lx * s0 + lz * c0, 0, ap.ry, col, 0); }
+      ap3(new THREE.BoxGeometry(RWL, 0.008, 0.085), 0, 0.004, 0, '#4b5057');
+      for (var k = 0; k < 9; k++) ap3(new THREE.BoxGeometry(0.05, 0.0025, 0.006), -RWL / 2 + 0.1 + k * 0.113, 0.0085, 0, '#eef0f2');
+      ap3(new THREE.BoxGeometry(0.06, 0.0025, 0.07), -RWL / 2 + 0.04, 0.0085, 0, '#eef0f2'); ap3(new THREE.BoxGeometry(0.06, 0.0025, 0.07), RWL / 2 - 0.04, 0.0085, 0, '#eef0f2');
+      ap3(new THREE.BoxGeometry(0.75, 0.006, 0.03), 0, 0.003, 0.085, '#5d636a'); ap3(new THREE.BoxGeometry(0.4, 0.006, 0.09), 0.02, 0.003, 0.15, '#7c8289');
+    });
+    var m = new THREE.Mesh(mergeParts(P), lambertVC); m.receiveShadow = true; m.castShadow = true; m.visible = false; scene.add(m); cityMeshes.push(m);
+    // 터미널·관제탑·격납고(코드 도형). Tripo 공항 모델이 오면 숨기고 모델로 바꾼다
+    P = [];
+    AIRPORTS.forEach(function (ap) {
+      var c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry);
+      function ap3(g, lx, ly, lz, col) { part(P, g, ap.x + lx * c0 + lz * s0, ap.h + ly, ap.z - lx * s0 + lz * c0, 0, ap.ry, col, 0); }
+      ap3(new THREE.BoxGeometry(0.22, 0.05, 0.09), 0.1, 0.025, 0.3, '#e3e6e8'); ap3(new THREE.BoxGeometry(0.2, 0.012, 0.02), 0.1, 0.03, 0.25, '#6f9bb3');
+      var hg = new THREE.CylinderGeometry(0.06, 0.06, 0.16, 12, 1, false, 0, Math.PI); hg.rotateZ(Math.PI / 2); hg.rotateY(Math.PI / 2); ap3(hg, -0.22, 0, 0.32, '#b8c0c6');
+      ap3(new THREE.CylinderGeometry(0.008, 0.011, 0.11, 8), 0.3, 0.055, 0.3, '#e9ecee'); ap3(new THREE.CylinderGeometry(0.018, 0.016, 0.022, 8), 0.3, 0.12, 0.3, '#5f8fa8'); ap3(new THREE.CylinderGeometry(0.02, 0.02, 0.006, 8), 0.3, 0.134, 0.3, '#e9ecee');
+    });
+    AP_BLD = new THREE.Mesh(mergeParts(P), lambertVC); AP_BLD.receiveShadow = true; AP_BLD.castShadow = true; AP_BLD.visible = false; scene.add(AP_BLD); cityMeshes.push(AP_BLD);
+  })();
+  function planeGeo(tail) {
+    var P = [], body = new THREE.CylinderGeometry(0.0085, 0.006, 0.11, 8); body.rotateZ(Math.PI / 2); P.push({ g: body, m: new THREE.Matrix4(), c: C('#f4f6f7') });
+    var nose = new THREE.SphereGeometry(0.0085, 8, 6); nose.scale(1.6, 1, 1); nose.translate(0.055, 0, 0); P.push({ g: nose, m: new THREE.Matrix4(), c: C('#f4f6f7') });
+    bx(P, 0.03, 0.003, 0.125, 0.004, -0.002, 0, '#dfe4e8'); bx(P, 0.016, 0.003, 0.046, -0.048, 0.002, 0, '#dfe4e8');
+    bx(P, 0.022, 0.026, 0.003, -0.049, 0.014, 0, tail, 0); bx(P, 0.11, 0.003, 0.0172, 0.0, 0.0, 0, tail, 0);
+    bx(P, 0.016, 0.007, 0.007, 0.008, -0.007, 0.03, '#9aa5ad'); bx(P, 0.016, 0.007, 0.007, 0.008, -0.007, -0.03, '#9aa5ad');
+    return mergeParts(P);
+  }
+  var CRUISE = 2.3, PSPEED = 1.7, PLANE_MESHES = [], PLANE_MODEL = null;
+  function newPlane(color) {
+    var mesh = PLANE_MODEL ? new THREE.Mesh(PLANE_MODEL.geo, PLANE_MODEL.mat) : new THREE.Mesh(planeGeo(color), lambertVC);
+    mesh.castShadow = true; mesh.rotation.order = 'YXZ'; mesh.userData.color = color; PLANE_MESHES.push(mesh); return mesh;
+  }
+  // 공항마다 계류장에 비행기 한 대(무역이 없을 때도 공항이 비어 보이지 않게)
+  AIRPORTS.forEach(function (ap) {
+    var m = newPlane(ap.n.color), c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry), lx = 0.02, lz = 0.15;
+    m.position.set(ap.x + lx * c0 + lz * s0, ap.h + 0.012, ap.z - lx * s0 + lz * c0); m.rotation.set(0, ap.ry + Math.PI, 0); m.visible = false; scene.add(m); cityMeshes.push(m);
+  });
+  // 이륙: 활주로를 따라 달리다 떠오름 → 순항 → 내려와 상대 공항 활주로에 내림 (t: 0~1)
+  function runEnd(ap, sgn) { return [ap.x + Math.cos(ap.ry) * RWL * 0.45 * sgn, ap.z - Math.sin(ap.ry) * RWL * 0.45 * sgn]; }
+  function planePose(A, B, t, out) {
+    var dx = B.x - A.x, dz = B.z - A.z, L = Math.hypot(dx, dz) || 1;
+    var sa = (dx * Math.cos(A.ry) - dz * Math.sin(A.ry)) > 0 ? 1 : -1, sb = (dx * Math.cos(B.ry) - dz * Math.sin(B.ry)) > 0 ? 1 : -1;
+    var A0 = runEnd(A, -sa), A1 = runEnd(A, sa), B0 = runEnd(B, -sb), B1 = runEnd(B, sb), tr = 0.9 / (L + 2);
+    out.pitch = 0;
+    if (t < tr) { var u = t / tr; out.x = lerp(A0[0], A1[0], u); out.z = lerp(A0[1], A1[1], u); out.y = A.h + 0.012 + Math.max(0, u - 0.6) * 0.3; out.hx = A1[0] - A0[0]; out.hz = A1[1] - A0[1]; out.pitch = u > 0.6 ? 0.15 : 0; return out; }
+    if (t > 1 - tr) { var u2 = (t - (1 - tr)) / tr; out.x = lerp(B0[0], B1[0], u2); out.z = lerp(B0[1], B1[1], u2); out.y = B.h + 0.012 + Math.max(0, 0.4 - u2) * 0.3; out.hx = B1[0] - B0[0]; out.hz = B1[1] - B0[1]; return out; }
+    var v = (t - tr) / (1 - 2 * tr), sx = A1[0], sz = A1[1], ex = B0[0], ez = B0[1];
+    function at(vv, o) { var bend = Math.sin(Math.PI * vv) * L * 0.06; o[0] = lerp(sx, ex, vv) - dz / L * bend; o[1] = lerp(sz, ez, vv) + dx / L * bend; o[2] = lerp(A.h + 0.12, B.h + 0.12, vv) + (CRUISE - 0.12) * sstep(0, 0.22, vv) * (1 - sstep(0.78, 1, vv)); return o; }
+    var p0 = at(v, [0, 0, 0]), p1 = at(Math.min(1, v + 0.01), [0, 0, 0]), p2 = at(Math.max(0, v - 0.01), [0, 0, 0]);
+    out.x = p0[0]; out.z = p0[1]; out.y = p0[2]; out.hx = p1[0] - p2[0]; out.hz = p1[1] - p2[1];
+    out.pitch = clamp(Math.atan2(p1[2] - p2[2], Math.hypot(p1[0] - p2[0], p1[1] - p2[1]) + 1e-6), -0.25, 0.25); return out;
+  }
+  function flightLen(A, B) { return Math.hypot(B.x - A.x, B.z - A.z) + 2; }
+
+  // ───────────────────────── 마을 풍경 (풍차·풍력 발전기·건초·가축·장터·우물·정원 나무·고깃배·바위) ─────────────────────────
+  var DECO_GEO = (function () {
+    var o = {}, P, k;
+    P = []; Cyl(P, 0.045, 0.065, 0.2, 0, 0, 0, '#efe6d3', 8); Cone(P, 0.062, 0.07, 0, 0.2, 0, '#7a4e35', 8); bx(P, 0.022, 0.04, 0.02, 0.055, 0.02, 0, '#5a3d2b'); bx(P, 0.03, 0.025, 0.03, 0.058, 0.2, 0, '#6b4a33'); o.mill = mergeParts(P);
+    P = []; for (k = 0; k < 4; k++) { var ga = new THREE.BoxGeometry(0.004, 0.17, 0.004); ga.translate(0, 0.09, 0); ga.rotateX(k * Math.PI / 2); P.push({ g: ga, m: new THREE.Matrix4(), c: C('#6b4a33') }); var gs = new THREE.BoxGeometry(0.003, 0.12, 0.034); gs.translate(0, 0.11, 0.019); gs.rotateX(k * Math.PI / 2); P.push({ g: gs, m: new THREE.Matrix4(), c: C('#f1ead8') }); } o.millBlades = mergeParts(P);
+    P = []; Cyl(P, 0.0045, 0.008, 0.26, 0, 0, 0, '#f4f6f7', 8); bx(P, 0.034, 0.016, 0.016, 0.006, 0.267, 0, '#eef1f3'); o.turbine = mergeParts(P);
+    P = []; for (k = 0; k < 3; k++) { var gb = new THREE.BoxGeometry(0.003, 0.11, 0.01); gb.translate(0, 0.055, 0); gb.rotateX(k * Math.PI * 2 / 3); P.push({ g: gb, m: new THREE.Matrix4(), c: C('#f7f9fa') }); } var hub = new THREE.SphereGeometry(0.006, 6, 4); P.push({ g: hub, m: new THREE.Matrix4(), c: C('#dfe4e8') }); o.turbineBlades = mergeParts(P);
+    P = []; var bale = new THREE.CylinderGeometry(0.016, 0.016, 0.024, 10); bale.rotateZ(Math.PI / 2); bale.translate(0, 0.014, 0); P.push({ g: bale, m: new THREE.Matrix4(), c: C('#d8b65a') }); o.hay = mergeParts(P);
+    P = []; Blob(P, 0.015, 0.75, 0, 0.02, 0, '#f2efe6'); bx(P, 0.009, 0.009, 0.008, 0.017, 0.024, 0, '#3b3330'); [[-0.007, -0.005], [-0.007, 0.005], [0.007, -0.005], [0.007, 0.005]].forEach(function (l) { bx(P, 0.003, 0.012, 0.003, l[0], 0.006, l[1], '#3b3330'); }); o.sheep = mergeParts(P);
+    P = []; bx(P, 0.034, 0.016, 0.015, 0, 0.02, 0, '#7a4b2e'); bx(P, 0.012, 0.011, 0.01, 0.021, 0.026, 0, '#5e3a24'); [[-0.012, -0.005], [-0.012, 0.005], [0.012, -0.005], [0.012, 0.005]].forEach(function (l) { bx(P, 0.004, 0.014, 0.004, l[0], 0.007, l[1], '#4a2f1d'); }); o.cow = mergeParts(P);
+    P = []; Cyl(P, 0.018, 0.018, 0.016, 0, 0, 0, '#9e9a90', 10); Cyl(P, 0.014, 0.014, 0.017, 0, 0, 0, '#2e4f63', 10); bx(P, 0.004, 0.04, 0.004, -0.015, 0.02, 0, '#6b4a33'); bx(P, 0.004, 0.04, 0.004, 0.015, 0.02, 0, '#6b4a33'); Roof(P, 0.04, 0.015, 0.03, 0, 0.04, 0, '#7a4e35', Math.PI / 2); o.well = mergeParts(P);
+    ['#c0392b', '#2e86de', '#e1b12c'].forEach(function (aw, i) {
+      P = []; [[-0.022, -0.014], [0.022, -0.014], [-0.022, 0.014], [0.022, 0.014]].forEach(function (l) { bx(P, 0.003, 0.032, 0.003, l[0], 0.016, l[1], '#6b4a33'); });
+      bx(P, 0.044, 0.014, 0.012, 0, 0.007, 0.008, '#a77a4c'); bx(P, 0.012, 0.008, 0.008, -0.01, 0.018, 0.008, ['#e67e22', '#27ae60', '#f4d03f'][i]); bx(P, 0.012, 0.008, 0.008, 0.008, 0.018, 0.008, ['#8e44ad', '#c0392b', '#27ae60'][i]);
+      Roof(P, 0.054, 0.012, 0.04, 0, 0.032, 0, aw, 0); o['stall' + i] = mergeParts(P);
+    });
+    P = []; Cyl(P, 0.005, 0.007, 0.035, 0, 0, 0, '#6b4a33', 5); Blob(P, 0.03, 0.9, 0, 0.058, 0, '#5c8f3c'); Blob(P, 0.02, 0.9, 0.012, 0.072, 0.006, '#6fa346'); o.gtree = mergeParts(P);
+    P = []; Cyl(P, 0.004, 0.006, 0.1, 0, 0, 0, '#8d6e63', 5, 0.12); Blob(P, 0.04, 0.3, -0.012, 0.1, 0, '#3e8e41'); o.palm = mergeParts(P);
+    P = []; var hs = new THREE.Shape([new THREE.Vector2(-0.05, -0.016), new THREE.Vector2(0.03, -0.016), new THREE.Vector2(0.058, 0), new THREE.Vector2(0.03, 0.016), new THREE.Vector2(-0.05, 0.016)]);
+    var hg = new THREE.ExtrudeGeometry(hs, { depth: 0.016, bevelEnabled: false }); hg.rotateX(-Math.PI / 2); hg.translate(0, -0.006, 0); P.push({ g: hg, m: new THREE.Matrix4(), c: C('#7b5236') });
+    bx(P, 0.09, 0.003, 0.026, -0.004, 0.01, 0, '#a57b52'); Cyl(P, 0.0018, 0.0018, 0.085, 0.004, 0.01, 0, '#5a3d2b', 5);
+    var ss = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(0, 0.07), new THREE.Vector2(-0.045, 0)]); var sg = new THREE.ExtrudeGeometry(ss, { depth: 0.002, bevelEnabled: false }); sg.translate(0.002, 0.018, -0.001); P.push({ g: sg, m: new THREE.Matrix4(), c: C('#f6f1e4') }); o.boat = mergeParts(P);
+    P = []; Blob(P, 0.02, 0.6, 0, 0.003, 0, '#8f897c'); Blob(P, 0.012, 0.7, 0.016, 0.0, 0.007, '#7f796d'); o.rock = mergeParts(P);
+    return o;
+  })();
+  var DECO = {}; Object.keys(DECO_GEO).forEach(function (t) { DECO[t] = []; });
+  (function placeDeco() {
+    // 집과 겹치지 않게: 0.12 칸 격자에 집 자리를 넣어 둔다
+    var HG2 = new Map(), GC = 0.12;
+    function hk(i, j) { return i + ',' + j; }
+    HOUSES.forEach(function (h) { var key = hk(Math.floor(h.x / GC), Math.floor(h.z / GC)); var a = HG2.get(key); if (!a) HG2.set(key, a = []); a.push(h); });
+    function free(x, z, rad) {
+      for (var ai = 0; ai < AIRPORTS.length; ai++) if (Math.hypot(AIRPORTS[ai].x - x, AIRPORTS[ai].z - z) < RWL / 2 + 0.3 + rad) return false;
+      var i0 = Math.floor(x / GC), j0 = Math.floor(z / GC);
+      for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var a = HG2.get(hk(i0 + di, j0 + dj)); if (!a) continue; for (var k = 0; k < a.length; k++) { var h = a[k], hr = Math.max(h.w, h.d) * (h.v === 2 ? 0.9 : 0.6); if (Math.hypot(h.x - x, h.z - z) < hr + rad) return false; } }
+      return true;
+    }
+    function put(t, x, z, ry, s, extra) { var a = [x, heightAt(x, z), z, ry, s]; if (extra) a.push.apply(a, extra); DECO[t].push(a); }
+    function dry(x, z) { return landAt(x, z) > 0.05 && !riverAt(x, z, 0.05); }
+    var GRASS = { temperate: 1, plains: 1, boreal: 1, island: 1, outback: 1, tropical: 1 };
+    SETTLE.forEach(function (s, si) {
+      var r = rng32(si * 5113 + 77), st = STYLES[s.n.biome], b = s.n.biome, h0 = heightAt(s.x, s.z), ang = s.ang || 0, mod = MODERN[s.n.key] || 0.2;
+      var farR = st.farm ? s.R + st.farmW * (s.capital ? 1.2 : 0.8) : s.R + 1.2, t, k, a, d, x, z;
+      // 장터와 우물 (가운데 광장 둘레)
+      var ring = USE_MODELS ? (s.capital ? 0.44 : 0.27) : (s.capital ? 0.24 : 0.17), ns = s.capital ? 7 : 3 + Math.floor(r() * 2);
+      for (k = 0; k < ns; k++) { a = ang + (k + 0.5) / ns * Math.PI * 2; x = s.x + Math.cos(a) * ring; z = s.z + Math.sin(a) * ring; if (dry(x, z) && free(x, z, 0.02)) put('stall' + (k % 3), x, z, -a + Math.PI / 2, 1); }
+      for (t = 0; t < 20; t++) { a = r() * Math.PI * 2; x = s.x + Math.cos(a) * (ring + 0.06); z = s.z + Math.sin(a) * (ring + 0.06); if (dry(x, z) && free(x, z, 0.02)) { put('well', x, z, r() * 6.28, 1); break; } }
+      // 정원 나무 (집 사이)
+      var tree = b === 'tropical' || b === 'desert' || b === 'island' ? 'palm' : 'gtree', nt = Math.round((s.capital ? 18 : 10) * (b === 'outback' ? 0.4 : 1));
+      for (t = 0, k = 0; t < nt * 8 && k < nt; t++) { a = r() * Math.PI * 2; d = s.R * (0.3 + r() * 0.85); x = s.x + Math.cos(a) * d; z = s.z + Math.sin(a) * d; if (!dry(x, z) || !free(x, z, 0.03)) continue; put(tree, x, z, r() * 6.28, 0.8 + r() * 0.5); k++; }
+      // 풍차(밀밭 마을) / 풍력 발전기(산업이 발달한 나라)
+      if (st.farm && !s.port && (b === 'temperate' || b === 'plains' || b === 'boreal')) {
+        var nm = s.capital ? 2 : 1;
+        for (t = 0, k = 0; t < 80 && k < nm; t++) { a = r() * Math.PI * 2; d = lerp(s.R + 0.3, farR * 0.85, r()); x = s.x + Math.cos(a) * d; z = s.z + Math.sin(a) * d; if (!dry(x, z) || Math.abs(heightAt(x, z) - h0) > 0.45) continue; FOR[cellIdx(x, z)] = 0; put('mill', x, z, r() * 6.28, 1.15, [r() * 6.28, 0.9 + r() * 0.5]); k++; }
+      }
+      if (mod >= 0.6 && !s.port) {
+        for (t = 0, k = 0; t < 120 && k < (s.capital ? 4 : 2); t++) { a = r() * Math.PI * 2; d = farR + 0.4 + r() * 1.2; x = s.x + Math.cos(a) * d; z = s.z + Math.sin(a) * d; if (!dry(x, z) || nationAt(x, z) !== s.n.i || !farFromSettle(x, z, 0.3)) continue; FOR[cellIdx(x, z)] = 0; put('turbine', x, z, r() * 6.28, 1, [r() * 6.28, 1.6 + r() * 0.6]); k++; }
+      }
+      // 건초 더미 (밭 위에 몇 개씩 모여)
+      if (st.farm && !s.port && b !== 'tropical' && b !== 'desert') {
+        for (t = 0, k = 0; t < 60 && k < (s.capital ? 7 : 4); t++) {
+          a = r() * Math.PI * 2; d = lerp(s.R + 0.2, farR, r()); x = s.x + Math.cos(a) * d; z = s.z + Math.sin(a) * d; if (!dry(x, z) || sampleArr(FLD, x, z) < 0.3) continue;
+          var nb = 3 + Math.floor(r() * 4), ry0 = r() * 6.28; for (var q = 0; q < nb; q++) put('hay', x + (r() - 0.5) * 0.14, z + (r() - 0.5) * 0.14, ry0 + (r() - 0.5) * 0.4, 0.9 + r() * 0.3); k++;
+        }
+      }
+      // 가축 (풀밭에 무리 지어)
+      if (GRASS[b] && !s.port) {
+        var herds = s.capital ? 3 : 2;
+        for (t = 0, k = 0; t < 80 && k < herds; t++) {
+          a = r() * Math.PI * 2; d = lerp(s.R + 0.25, farR + 0.5, r()); x = s.x + Math.cos(a) * d; z = s.z + Math.sin(a) * d;
+          if (!dry(x, z) || FOR[cellIdx(x, z)] > 0.25 || Math.abs(heightAt(x, z) - h0) > 0.5) continue;
+          var kind = b === 'plains' || b === 'tropical' ? 'cow' : b === 'island' ? 'sheep' : r() < 0.5 ? 'sheep' : 'cow', na = 4 + Math.floor(r() * 4);
+          for (q = 0; q < na; q++) { var ax = x + (r() - 0.5) * 0.22, az = z + (r() - 0.5) * 0.22; if (dry(ax, az)) { FOR[cellIdx(ax, az)] *= 0.3; put(kind, ax, az, r() * 6.28, 1); } }
+          k++;
+        }
+      }
+      // 고깃배 (마을 앞바다)
+      var boats = [];
+      for (t = 0; t < 140 && boats.length < (s.capital ? 3 : 2); t++) {
+        a = r() * Math.PI * 2; d = s.R + 0.3 + r() * 3.2; x = s.x + Math.cos(a) * d; z = s.z + Math.sin(a) * d; var lf = landAt(x, z);
+        if (lf > -0.05 || lf < -0.3) continue; var ok = true; for (q = 0; q < boats.length; q++) if (Math.hypot(boats[q][0] - x, boats[q][1] - z) < 0.35) ok = false; if (!ok) continue;
+        boats.push([x, z]); DECO.boat.push([x, 0, z, r() * 6.28, 1, r() * 6.28, 0.2 + r() * 0.25]);
+      }
+    });
+    // 농가 마당: 건초 몇 개, 나무 한두 그루, 가끔 가축
+    FARMS.forEach(function (f, fi) {
+      var r = rng32(fi * 811 + 5), b = f.s.n.biome, c = Math.cos(f.ry), sn = Math.sin(f.ry), x, z, k;
+      for (k = 0; k < 3; k++) { x = f.x - 0.12 * sn + (r() - 0.5) * 0.08 + 0.06 * c; z = f.z - 0.12 * c + (r() - 0.5) * 0.08 - 0.06 * sn; if (dry(x, z) && free(x, z, 0.015)) put(b === 'desert' || b === 'tropical' ? 'palm' : 'hay', x, z, f.ry + (r() - 0.5) * 0.5, 1); }
+      for (k = 0; k < 2; k++) { x = f.x + (r() - 0.5) * 0.36; z = f.z + (r() - 0.5) * 0.36; if (dry(x, z) && free(x, z, 0.03)) put(b === 'tropical' || b === 'desert' || b === 'island' ? 'palm' : 'gtree', x, z, r() * 6.28, 0.9 + r() * 0.4); }
+      if (GRASS[b] && r() < 0.5) for (k = 0; k < 3; k++) { x = f.x + 0.2 * sn + (r() - 0.5) * 0.12; z = f.z + 0.2 * c + (r() - 0.5) * 0.12; if (dry(x, z) && free(x, z, 0.02)) put(b === 'plains' ? 'cow' : 'sheep', x, z, r() * 6.28, 1); }
+    });
+    // 바위: 산·언덕에 많이, 해안·들판에 조금
+    var rr = rng32(4242), nr = 0, CAPR = 2200;
+    for (var t2 = 0; t2 < 60000 && nr < CAPR; t2++) {
+      var x2 = (rr() * 2 - 1) * WX, z2 = (rr() * 2 - 1) * WZ, f = landAt(x2, z2); if (f < 0.012) continue;
+      var h = heightAt(x2, z2), pr = sstep(0.6, 1.1, h) * 0.8 + (f < 0.04 ? 0.14 : 0.003);
+      if (rr() > pr || riverAt(x2, z2, 0.04) || !farFromSettle(x2, z2, 0.25) || AIRPORTS.some(function (ap) { return Math.hypot(ap.x - x2, ap.z - z2) < RWL / 2 + 0.4; })) continue;
+      var nearPort = false; for (var pi2 = 0; pi2 < NATIONS.length; pi2++) if (Math.hypot(NATIONS[pi2].port.x - x2, NATIONS[pi2].port.z - z2) < 2.6) { nearPort = true; break; } if (nearPort) continue;
+      put('rock', x2, z2, rr() * 6.28, (0.6 + rr() * 0.9) * (h > 0.9 ? 1.8 : 1)); nr++;
+    }
+  })();
+  var decoMesh = {}, ANIM = { millBlades: 'mill', turbineBlades: 'turbine' };
+  function setInst(m, i, x, y, z, rx, ry, s) { _he.set(rx, ry, 0, 'YXZ'); _hq.setFromEuler(_he); _hv.set(x, y, z); m.setMatrixAt(i, new THREE.Matrix4().compose(_hv, _hq, _hs.set(s, s, s))); _hs.set(1, 1, 1); }
+  Object.keys(DECO_GEO).forEach(function (t) {
+    var src = ANIM[t] || t, list = DECO[src]; if (!list.length) return;
+    var m = new THREE.InstancedMesh(DECO_GEO[t], lambertVC, list.length);
+    if (!ANIM[t]) list.forEach(function (a, i) { setInst(m, i, a[0], a[1] - 0.004, a[2], 0, a[3], a[4]); });
+    m.instanceMatrix.needsUpdate = true; m.frustumCulled = false; m.castShadow = t !== 'rock' && t !== 'hay'; m.receiveShadow = true; m.visible = false;
+    if (ANIM[t] || t === 'boat') m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    scene.add(m); cityMeshes.push(m); decoMesh[t] = m;
+  });
+  // 풍차·발전기 날개는 돌고, 고깃배는 천천히 떠다닌다
+  var HUB = { millBlades: [0.072, 0.2, 1.15], turbineBlades: [0.025, 0.267, 1] };
+  function updateDeco(t) {
+    Object.keys(ANIM).forEach(function (bt) {
+      var m = decoMesh[bt]; if (!m) return; var hb = HUB[bt];
+      DECO[ANIM[bt]].forEach(function (a, i) { var s = a[4], c = Math.cos(a[3]), sn = Math.sin(a[3]); setInst(m, i, a[0] + hb[0] * c * s, a[1] - 0.004 + hb[1] * s, a[2] - hb[0] * sn * s, t * a[6] + a[5], a[3], s); });
+      m.instanceMatrix.needsUpdate = true;
+    });
+    var bm = decoMesh.boat; if (!bm) return;
+    DECO.boat.forEach(function (a, i) { var th = t * a[6] * 0.25 + a[5], R = 0.09; setInst(bm, i, a[0] + Math.cos(th) * R, Math.sin(t * 1.7 + a[5]) * 0.003, a[2] + Math.sin(th) * R, Math.sin(t * 1.3 + a[5]) * 0.06, -th - Math.PI / 2, 1); });
+    bm.instanceMatrix.needsUpdate = true;
+  }
+
   // ───────────────────────── 무역로 (게임 거래에서 만듦) ─────────────────────────
-  var routeW = { value: 0.2 }, routes = [], routeGroup = new THREE.Group(); scene.add(routeGroup);
-  var dotGeo = new THREE.SphereGeometry(1, 12, 8);
-  function clearRoutes() { routes.forEach(function (r) { r.tube.geometry.dispose(); r.mat.dispose(); r.dots.forEach(function (d) { d.m.material.dispose(); }); }); routes = []; while (routeGroup.children.length) routeGroup.remove(routeGroup.children[0]); }
+  var routeW = { value: 0.2 }, routes = [], routeGroup = new THREE.Group(), traffic = new THREE.Group(); scene.add(routeGroup); scene.add(traffic);
+  // 바닷길: 0.5칸 격자에서 A*로 항구 앞바다끼리 잇고(해안 가까이는 비싸게), 보이는 데까지 곧게 편 뒤 부드럽게 만든다
+  var SG = 0.5, SGW = Math.ceil(2 * WX / SG), SGH = Math.ceil(2 * WZ / SG), SEA = null, seaCache = {};
+  function seaGrid() {
+    if (SEA) return SEA; SEA = new Float32Array(SGW * SGH);
+    for (var j = 0; j < SGH; j++) for (var i = 0; i < SGW; i++) {
+      var x = -WX + (i + 0.5) * SG, z = -WZ + (j + 0.5) * SG, k = j * SGW + i; if (landAt(x, z) > -0.05) continue;
+      var near = 0; for (var a = 0; a < 8; a++) if (landAt(x + Math.cos(a * 0.785) * 0.9, z + Math.sin(a * 0.785) * 0.9) > -0.02) near++;
+      SEA[k] = 1 + near * 0.6;
+    }
+    return SEA;
+  }
+  function portFront(n) { return [n.port.x + n.port.sx * 1.45, n.port.z + n.port.sz * 1.45]; }
+  function seaOpen(ax, az, bx, bz) { var L = Math.hypot(bx - ax, bz - az), n = Math.ceil(L / 0.2); for (var k = 1; k < n; k++) if (landAt(lerp(ax, bx, k / n), lerp(az, bz, k / n)) > -0.035) return false; return true; }
+  function seaPath(na, nb) {
+    var key = na.key + '>' + nb.key; if (seaCache[key]) return seaCache[key];
+    var G = seaGrid(), A = portFront(na), B = portFront(nb);
+    function cellOf(p) { var i0 = clamp(Math.floor((p[0] + WX) / SG), 0, SGW - 1), j0 = clamp(Math.floor((p[1] + WZ) / SG), 0, SGH - 1); for (var r = 0; r < 8; r++) for (var dj = -r; dj <= r; dj++) for (var di = -r; di <= r; di++) { var i = i0 + di, j = j0 + dj; if (i >= 0 && j >= 0 && i < SGW && j < SGH && G[j * SGW + i] > 0) return j * SGW + i; } return -1; }
+    var s0 = cellOf(A), e0 = cellOf(B), pts = [A];
+    if (s0 >= 0 && e0 >= 0) {
+      var N = SGW * SGH, g = new Float32Array(N).fill(1e9), came = new Int32Array(N).fill(-1), closed = new Uint8Array(N), heap = [], ex = e0 % SGW, ez = (e0 / SGW) | 0;
+      function hval(k) { return Math.hypot(k % SGW - ex, ((k / SGW) | 0) - ez); }
+      function push(k, f) { heap.push([f, k]); var c = heap.length - 1; while (c > 0) { var pa = (c - 1) >> 1; if (heap[pa][0] <= heap[c][0]) break; var t = heap[pa]; heap[pa] = heap[c]; heap[c] = t; c = pa; } }
+      function pop() { var top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; var c = 0; for (;;) { var l = 2 * c + 1, r = l + 1, m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; var t = heap[m]; heap[m] = heap[c]; heap[c] = t; c = m; } } return top[1]; }
+      g[s0] = 0; push(s0, hval(s0)); var found = false;
+      while (heap.length) {
+        var k = pop(); if (closed[k]) continue; closed[k] = 1; if (k === e0) { found = true; break; }
+        var ci = k % SGW, cj = (k / SGW) | 0;
+        for (var dj = -1; dj <= 1; dj++) for (var di = -1; di <= 1; di++) {
+          if (!di && !dj) continue; var ni = ci + di, nj = cj + dj; if (ni < 0 || nj < 0 || ni >= SGW || nj >= SGH) continue;
+          var nk = nj * SGW + ni; if (!G[nk] || closed[nk]) continue;
+          var ng = g[k] + (di && dj ? 1.414 : 1) * G[nk]; if (ng < g[nk]) { g[nk] = ng; came[nk] = k; push(nk, ng + hval(nk)); }
+        }
+      }
+      if (found) {
+        var cells = []; for (var c = e0; c >= 0; c = came[c]) cells.push([-WX + (c % SGW + 0.5) * SG, -WZ + (((c / SGW) | 0) + 0.5) * SG]); cells.reverse();
+        var raw = [A].concat(cells, [B]), q = 0; pts = [A];
+        while (q < raw.length - 1) { var far = q + 1; for (var t2 = raw.length - 1; t2 > q + 1; t2--) if (seaOpen(raw[q][0], raw[q][1], raw[t2][0], raw[t2][1])) { far = t2; break; } pts.push(raw[far]); q = far; }
+      } else pts.push(B);
+    } else pts.push(B);
+    if (pts[pts.length - 1] !== B) pts.push(B);
+    // 긴 직선은 중간 점을 넣어 부드러운 곡선이 땅을 덜 스치게
+    var dense = [pts[0]]; for (var k2 = 1; k2 < pts.length; k2++) { var a2 = pts[k2 - 1], b2 = pts[k2], L2 = Math.hypot(b2[0] - a2[0], b2[1] - a2[1]), ns = Math.max(1, Math.ceil(L2 / 3)); for (var u = 1; u <= ns; u++) dense.push([lerp(a2[0], b2[0], u / ns), lerp(a2[1], b2[1], u / ns)]); }
+    seaCache[key] = dense; return dense;
+  }
+  var SHIPGEO = {}, _pose = {};
+  function clearRoutes() {
+    routes.forEach(function (r) { r.tube.geometry.dispose(); r.mat.dispose(); r.vehicles.forEach(function (v) { if (v.own) v.m.geometry.dispose(); var pi = PLANE_MESHES.indexOf(v.m); if (pi >= 0) PLANE_MESHES.splice(pi, 1); }); });
+    routes = []; while (routeGroup.children.length) routeGroup.remove(routeGroup.children[0]); while (traffic.children.length) traffic.remove(traffic.children[0]);
+  }
   function setTrades(trades) {
     clearRoutes();
     var agg = {}, order = [];
     (trades || []).forEach(function (t) { (t.legs || []).forEach(function (l) { if (!NK[l.seller] || !NK[l.buyer] || l.seller === l.buyer) return; var k = l.seller + '>' + l.buyer + '>' + l.good; if (!agg[k]) { agg[k] = { s: l.seller, b: l.buyer, good: l.good, qty: 0 }; order.push(k); } agg[k].qty += l.qty || 1; }); });
     var pairCount = {};
-    order.forEach(function (k) {
-      var a0 = agg[k], A = NK[a0.s].port, B = NK[a0.b].port, info = GOODS[a0.good] || { color: '#888888' };
-      var pk = [a0.s, a0.b].sort().join('|'), slot = pairCount[pk] = (pairCount[pk] || 0) + 1;
-      var a = new THREE.Vector3(A.x, 0.35, A.z), b = new THREE.Vector3(B.x, 0.35, B.z), len = a.distanceTo(b);
-      var mid = a.clone().add(b).multiplyScalar(0.5); mid.y = len * 0.16 + (slot - 1) * Math.max(1.2, len * 0.05);
-      var side = new THREE.Vector3(-(b.z - a.z), 0, b.x - a.x).normalize().multiplyScalar((slot - 1) * 0.8 * (a0.s < a0.b ? 1 : -1)); mid.add(side);
-      var curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+    order.forEach(function (k, ri) {
+      var a0 = agg[k], NA = NK[a0.s], NB = NK[a0.b], info = GOODS[a0.good] || { color: '#888888', port: 'container' };
+      // 전자제품은 비행기(가볍고 비싼 물건), 나머지는 배
+      var air = a0.good === 'electronics' && APK[a0.s] && APK[a0.b], pk = [a0.s, a0.b].sort().join('|') + (air ? 'A' : 'S'), slot = pairCount[pk] = (pairCount[pk] || 0) + 1;
+      var curve, pts3 = [];
+      if (air) { for (var q = 0; q <= 48; q++) { planePose(APK[a0.s], APK[a0.b], q / 48, _pose); pts3.push(new THREE.Vector3(_pose.x, _pose.y + (slot - 1) * 0.15, _pose.z)); } }
+      else {
+        var sp = seaPath(NA, NB), off = (slot - 1) * 0.22 * (a0.s < a0.b ? 1 : -1);
+        for (var q2 = 0; q2 < sp.length; q2++) {
+          var a = sp[Math.max(0, q2 - 1)], b = sp[Math.min(sp.length - 1, q2 + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, o = q2 === 0 || q2 === sp.length - 1 ? 0 : off;
+          pts3.push(new THREE.Vector3(sp[q2][0] - dz / l * o, 0.03, sp[q2][1] + dx / l * o));
+        }
+      }
+      pts3 = pts3.filter(function (v) { return isFinite(v.x) && isFinite(v.z); }); var kept = []; pts3.forEach(function (v) { if (!kept.length || v.distanceTo(kept[kept.length - 1]) > 0.05) kept.push(v); }); pts3 = kept; if (!pts3.length) pts3.push(new THREE.Vector3(NA.port.x, 0.03, NA.port.z)); if (pts3.length < 2) pts3.push(pts3[0].clone().add(new THREE.Vector3(0.1, 0, 0))); // 겹친 점이 있으면 곡선 길이가 NaN이 된다
+      curve = new THREE.CatmullRomCurve3(pts3, false, 'centripetal');
       var mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(info.color), transparent: true, opacity: 0.8, depthWrite: false });
       mat.onBeforeCompile = function (sh) { sh.uniforms.uW = routeW; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uW;').replace('#include <begin_vertex>', 'vec3 transformed = position - normal + normal * uW;'); };
-      var tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, 1, 6, false), mat); tube.frustumCulled = false; tube.renderOrder = 2; routeGroup.add(tube);
-      var dots = [], nd = clamp(Math.ceil(a0.qty / 2), 1, 4);
-      for (var i = 0; i < nd; i++) { var d = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(info.color), transparent: true })); d.renderOrder = 3; routeGroup.add(d); dots.push({ m: d, off: i / nd }); }
-      routes.push({ curve: curve, tube: tube, mat: mat, dots: dots, speed: 1.2 / Math.max(len, 8), info: a0 });
+      var tube = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(64, pts3.length * 6), 1, 6, false), mat); tube.frustumCulled = false; tube.renderOrder = 2; routeGroup.add(tube);
+      var vehicles = [], nd = clamp(Math.ceil(a0.qty / 2), 1, 3), len = curve.getLength(); if (!isFinite(len)) { curve = new THREE.LineCurve3(pts3[0], pts3[pts3.length - 1]); len = curve.getLength(); } var rr = rng32(ri * 131 + 7);
+      for (var i = 0; i < nd; i++) {
+        var v;
+        if (air) { v = { m: newPlane(NA.color), own: !PLANE_MODEL, plane: true }; }
+        else {
+          var type = info.port || 'container', mname = SHIP_MODEL[type], sm;
+          if (SHIPGEO[mname]) { sm = new THREE.Mesh(SHIPGEO[mname].geo, SHIPGEO[mname].mat); v = { m: sm, own: false }; } else { sm = makeShip(type, rr); v = { m: sm, own: true }; }
+          v.model = mname; addFoam(sm, true); sm.rotation.order = 'YXZ';
+        }
+        v.off = i / nd; traffic.add(v.m); vehicles.push(v);
+      }
+      routes.push({ curve: curve, tube: tube, mat: mat, vehicles: vehicles, air: !!air, A: APK[a0.s], B: APK[a0.b], speed: air ? PSPEED / flightLen(APK[a0.s], APK[a0.b]) : 0.9 / Math.max(len, 1), info: a0 });
     });
     legendDirty = true;
+  }
+  var _tp = new THREE.Vector3(), _tt = new THREE.Vector3();
+  function updateTraffic(rOp) {
+    var sc = clamp(dist * 0.05, 1, 6), ssc = sc * SHIP_SCALE;
+    routes.forEach(function (r) {
+      r.tube.visible = rOp > 0.01; r.mat.opacity = 0.75 * rOp;
+      r.vehicles.forEach(function (v) {
+        var u = (((clock * r.speed + v.off) % 1) + 1) % 1 /* 시작 직후 clock이 음수여도 0~1 */, env = sstep(0, 0.025, u) * (1 - sstep(0.975, 1, u));
+        if (r.air) { planePose(r.A, r.B, u, _pose); v.m.position.set(_pose.x, _pose.y, _pose.z); v.m.rotation.set(0, Math.atan2(-_pose.hz, _pose.hx), _pose.pitch); v.m.scale.setScalar(Math.max(0.001, sc * Math.max(env, 0.35))); return; }
+        r.curve.getPointAt(u, _tp); r.curve.getTangentAt(u, _tt);
+        v.m.position.set(_tp.x, Math.sin(clock * 1.6 + v.off * 9) * 0.0015, _tp.z); v.m.rotation.set(Math.sin(clock * 1.1 + v.off * 7) * 0.035, Math.atan2(-_tt.z, _tt.x), 0); v.m.scale.setScalar(Math.max(0.001, ssc * env));
+      });
+    });
   }
 
   // ───────────────────────── 숲 (인스턴싱 + 구역별 생성) ─────────────────────────
@@ -787,9 +1458,10 @@ function createWorldMap(container, THREE, opts) {
   var PROP_MODEL = { factory: 'prop_factory', tech: 'prop_tech', pump: 'prop_oilfield', mine: 'prop_mine', farm: 'prop_farm', palm: 'prop_plantation' };
   var MODEL_FIT = {
     port_container: { size: 1.9, rot: 0 }, port_fruit: { size: 1.9, rot: 0 }, port_oil: { size: 1.9, rot: 0 }, port_ore: { size: 1.9, rot: 0 }, port_grain: { size: 1.9, rot: Math.PI },
-    ship_container: { size: 0.36, ship: true, y: -0.1 }, ship_oil: { size: 0.38, ship: true, y: -0.1 }, ship_bulk: { size: 0.36, ship: true, y: -0.1 },
+    ship_container: { size: 0.36, ship: true, y: -0.2 }, ship_oil: { size: 0.38, ship: true, y: -0.2 }, ship_bulk: { size: 0.36, ship: true, y: -0.2 },
     prop_factory: { size: 0.36 }, prop_tech: { size: 0.32 }, prop_oilfield: { size: 0.36 }, prop_mine: { size: 0.38 }, prop_farm: { size: 0.38 }, prop_plantation: { size: 0.38 },
-    city_capital: { size: 0.72, rot: 0 }, city_harbor_town: { size: 0.44, rot: 0 }
+    city_capital: { size: 0.72, rot: 0 }, city_harbor_town: { size: 0.44, rot: 0 },
+    airport_terminal: { size: 0.5, rot: 0 }, plane_cargo: { size: 0.14, plane: true }
   };
   if (opts.modelFit) Object.keys(opts.modelFit).forEach(function (k) { MODEL_FIT[k] = Object.assign({}, MODEL_FIT[k], opts.modelFit[k]); });
   var modelGroups = [], modelsLoaded = 0, modelsFailed = 0;
@@ -820,6 +1492,13 @@ function createWorldMap(container, THREE, opts) {
       for (var i = 0; i < p.count; i++) if (p.getY(i) > hy) { if (p.getX(i) > cx) front++; else back++; }
       if ((front > back) !== !!fit.flip) geo.rotateY(Math.PI);
     }
+    if (fit.plane) {
+      // 꼬리 날개(가장 높은 부분)가 있는 쪽이 뒤: 동체를 x축으로, 기수를 +x로 돌린다
+      var pp = geo.attributes.position, ty = b.min.y + (b.max.y - b.min.y) * 0.7, mx = (b.min.x + b.max.x) / 2, mz = (b.min.z + b.max.z) / 2, sx = 0, sz = 0, nt = 0;
+      for (var pi3 = 0; pi3 < pp.count; pi3++) if (pp.getY(pi3) > ty) { sx += pp.getX(pi3) - mx; sz += pp.getZ(pi3) - mz; nt++; }
+      if (nt) { sx /= nt; sz /= nt; if (Math.abs(sz) > Math.abs(sx)) { geo.rotateY(Math.PI / 2); var tmp = sx; sx = sz; sz = -tmp; } if (sx > 0) geo.rotateY(Math.PI); }
+      geo.computeBoundingBox(); b = geo.boundingBox;
+    }
     if (fit.rot) geo.rotateY(fit.rot);
     geo.computeBoundingBox(); b = geo.boundingBox;
     var sc = fit.size / Math.max(b.max.x - b.min.x, b.max.z - b.min.z, 1e-6), hgt = (b.max.y - b.min.y) * sc;
@@ -841,6 +1520,14 @@ function createWorldMap(container, THREE, opts) {
       }
       if (SHIP_MODEL[p.type] === name) p.ships.forEach(function (s) { s.m.geometry = m.geo; s.m.material = m.mat; });
     });
+    if (name.indexOf('ship_') === 0) { SHIPGEO[name] = m; routes.forEach(function (r) { r.vehicles.forEach(function (v) { if (v.model === name) { if (v.own) v.m.geometry.dispose(); v.m.geometry = m.geo; v.m.material = m.mat; v.own = false; } }); }); }
+    if (name === 'plane_cargo') { PLANE_MODEL = m; PLANE_MESHES.forEach(function (pm) { pm.geometry.dispose(); pm.geometry = m.geo; pm.material = m.mat; }); routes.forEach(function (r) { r.vehicles.forEach(function (v) { if (v.plane) v.own = false; }); }); }
+    if (name === 'airport_terminal' && AIRPORTS.length) {
+      var ag = new THREE.Group();
+      AIRPORTS.forEach(function (ap) { var am = new THREE.Mesh(m.geo, m.mat), c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry); am.castShadow = true; am.receiveShadow = true; am.position.set(ap.x + 0.05 * c0 + 0.36 * s0, ap.h - 0.004, ap.z - 0.05 * s0 + 0.36 * c0); am.rotation.y = ap.ry; ag.add(am); });
+      if (AP_BLD) { AP_BLD.visible = false; var bi = cityMeshes.indexOf(AP_BLD); if (bi >= 0) cityMeshes.splice(bi, 1); }
+      scene.add(ag); cityMeshes.push(ag); modelGroups.push(ag);
+    }
     if (name === 'city_capital' || name === 'city_harbor_town') {
       var grp = new THREE.Group();
       SETTLE.forEach(function (s) {
@@ -1017,26 +1704,26 @@ function createWorldMap(container, THREE, opts) {
     var z = layerZ(), polMix = POLITICAL ? sstep(0.55, 0.78, z) : 0, detail = 1 - sstep(0.3, 0.6, z);
     terrU.uMix.value = polMix; terrU.uRelief.value = POLITICAL ? 0 : sstep(0.25, 0.6, z); terrU.uDetail.value = detail; terrU.uBorder.value = sstep(0.3, 0.5, z);
     oceanMat.color.copy(OCEAN_POL).lerp(OCEAN_NAT, 1 - polMix); oceanMat.opacity = POLITICAL ? lerp(0.72, 0.96, polMix) : lerp(0.72, 0.9, sstep(0.35, 0.7, z));
+    seaU.uGame.value = 1 - polMix; seaU.uTime.value = clock; updateClouds(z, dt);
     oceanMat.specular.setScalar(0.35 * detail); oceanMat.normalScale.set(0.6 * detail, 0.6 * detail);
-    waveTex.offset.x += dt * 0.004; waveTex.offset.y += dt * 0.0025;
+    waveTex.offset.x += dt * 0.004; waveTex.offset.y += dt * 0.0025; riverTex.offset.x -= dt * 0.35; riverMat.normalScale.set(0.3 * detail + 0.05, 0.3 * detail + 0.05); riverW.value = Math.min(0.2, dist * 0.0022);
     scene.fog.near = dist * 1.7; scene.fog.far = dist * 5.5;
     var sh = clamp(dist * 0.75, 1.2, 9); sun.shadow.camera.left = -sh; sun.shadow.camera.right = sh; sun.shadow.camera.top = sh; sun.shadow.camera.bottom = -sh; sun.shadow.camera.near = 0.1; sun.shadow.camera.far = 60; sun.shadow.camera.updateProjectionMatrix();
     sun.position.set(target.x + SUN_DIR.x * 25, SUN_DIR.y * 25, target.z + SUN_DIR.z * 25); sun.target.position.set(target.x, 0, target.z); sun.target.updateMatrixWorld();
-    var rOp = sstep(0.38, 0.55, z), dotS = dist * 0.0045; routeW.value = dist * 0.0017;
-    routes.forEach(function (r) { r.tube.visible = rOp > 0.01; r.mat.opacity = 0.75 * rOp; r.dots.forEach(function (d) { d.m.visible = rOp > 0.01; d.m.material.opacity = rOp; r.curve.getPoint((clock * r.speed + d.off) % 1, d.m.position); d.m.scale.setScalar(dotS); }); });
+    var rOp = sstep(0.38, 0.55, z); routeW.value = dist * 0.0017;
+    updateTraffic(rOp);
     legend.style.display = rOp > 0.3 && opts.legend !== false ? 'block' : 'none'; if (legendDirty) refreshLegend();
     updateTrees(z);
     if (growT < 1) growT = Math.min(1, growT + dt * 2.2); growU.value = sstep(0, 1, growT);
-    var pScale = sstep(0.46, 0.38, z), propVis = pScale > 0.001;
+    var propVis = z < 0.63; // 항구·산업 건물도 마을 집과 같은 거리에서 함께 보인다(따로 튀어나오지 않게)
     PROP_TYPES.forEach(function (t) { propMesh[t].visible = propVis; });
     ports.forEach(function (p) {
       var dx = p.n.port.x - target.x, dz = p.n.port.z - target.z; p.g.visible = propVis && dx * dx + dz * dz < Math.pow(dist * 2.2 + 4, 2);
       if (!p.g.visible) return;
-      p.g.scale.set(1, Math.max(0.001, pScale), 1);
-      p.ships.forEach(function (s) { var th = clock * s.sp * 2 * Math.PI + s.ph, ax = 0.78, bz = 0.34; s.m.position.set(Math.cos(th) * ax, 0, 1.38 + Math.sin(th) * bz); s.m.rotation.y = Math.atan2(-(Math.cos(th) * bz), -Math.sin(th) * ax); });
       if (p.flame) { var f = 0.85 + Math.sin(clock * 23 + p.n.i) * 0.12 + Math.sin(clock * 37) * 0.08; p.flame.scale.set(f, f * 1.2, f); }
     });
-    var cityVis = z < 0.63; cityMeshes.forEach(function (m) { m.visible = cityVis; });
+    var cityVis = z < 0.63; cityMeshes.forEach(function (m) { m.visible = cityVis; }); if (cityVis) updateDeco(clock);
+    var farVis = !POLITICAL && z >= 0.6; FAR_CITY.forEach(function (m) { m.visible = farVis; }); farCityU.value = Math.max(1, dist / 24); // 가까이서는 진짜 집, 멀리서는 커지는 집 덩어리
     var capOp = sstep(0.28, 0.36, z) * (1 - sstep(0.56, 0.64, z));
     capLabels.forEach(function (l) { if (capOp < 0.01) { l.el.style.display = 'none'; return; } project(l.pos, _pp); if (!_pp.ok) { l.el.style.display = 'none'; return; } l.el.style.display = 'block'; l.el.style.opacity = capOp; l.el.style.transform = 'translate(' + _pp.x.toFixed(1) + 'px,' + _pp.y.toFixed(1) + 'px) translate(-50%,-100%)'; });
     var cOp = sstep(0.5, 0.62, z);
@@ -1065,10 +1752,13 @@ function createWorldMap(container, THREE, opts) {
     flyTo: flyTo, flyToNation: flyToNation, selectNation: function (key) { selectNation(NK[key] ? NK[key].i : -1); },
     setView: function (x, z, d) { fly = null; target.x = x; target.z = z; dist = d; updateCamera(); },
     home: HOME.slice(), worldScale: S,
-    getState: function () { return { x: target.x, z: target.z, dist: dist, zoom: zoomT(), trees: treeCount, calls: renderer.info.render.calls, routes: routes.length, buildings: bldCount, settlements: SETTLE.length, props: PROP_TYPES.reduce(function (s, t) { return s + propMesh[t].count; }, 0) }; },
+    getState: function () { return { x: target.x, z: target.z, dist: dist, zoom: zoomT(), trees: treeCount, calls: renderer.info.render.calls, routes: routes.length, buildings: bldCount, deco: Object.keys(DECO).reduce(function (n, t) { return n + DECO[t].length; }, 0), settlements: SETTLE.length, airports: AIRPORTS.length, traffic: routes.reduce(function (n, r) { return n + r.vehicles.length; }, 0), airRoutes: routes.filter(function (r) { return r.air; }).length, vehicles: [].concat.apply([], routes.map(function (r) { return r.vehicles.map(function (v) { return [Math.round(v.m.position.x * 10) / 10, Math.round(v.m.position.y * 100) / 100, Math.round(v.m.position.z * 10) / 10, r.air ? 1 : 0]; }); })), rivers: RIVERS.map(function (r) { return [Math.round(r.pts[0][0] * 10) / 10, Math.round(r.pts[0][1] * 10) / 10, r.pts.length]; }), props: PROP_TYPES.reduce(function (s, t) { return s + propMesh[t].count; }, 0) }; },
     nations: NATIONS.map(function (n) { return { key: n.key, ko: n.ko, good: n.good, port: { x: n.port.x, z: n.port.z }, center: { x: n.cx, z: n.cz }, cells: n.cells }; }),
-    settlements: SETTLE.map(function (s) { return { nation: s.n.key, capital: s.capital, x: s.x, z: s.z, r: s.R }; }),
+    settlements: SETTLE.map(function (s) { return { nation: s.n.key, capital: s.capital, port: !!s.port, noRoad: !!s.noRoad, x: s.x, z: s.z, r: s.R }; }),
+    roads: function () { return ROADS.filter(function (r) { return r.pts; }).map(function (r) { return { w: r.w, pts: r.pts }; }); },
     loadFile: loadFile, placeModel: placeModel,
+    landAt: landAt, // 확인용: 0보다 크면 땅
+    decoSpots: function (t) { return (DECO[t] || []).map(function (a) { return [a[0], a[2]]; }); }, // 확인용: 풍경 물건 자리
     setRoutesVisible: function (v) { routeGroup.visible = !!v; legend.style.visibility = v ? '' : 'hidden'; },
     models: function () { return { loaded: modelsLoaded, failed: modelsFailed, total: USE_MODELS ? Object.keys(MODEL_FIT).length : 0 }; },
     dispose: function () {
