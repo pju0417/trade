@@ -1060,7 +1060,7 @@ function createWorldMap(container, THREE, opts) {
     if (t < tr) { var u = t / tr; out.x = lerp(A0[0], A1[0], u); out.z = lerp(A0[1], A1[1], u); out.y = A.h + 0.012 + Math.max(0, u - 0.6) * 0.3; out.hx = A1[0] - A0[0]; out.hz = A1[1] - A0[1]; out.pitch = u > 0.6 ? 0.15 : 0; return out; }
     if (t > 1 - tr) { var u2 = (t - (1 - tr)) / tr; out.x = lerp(B0[0], B1[0], u2); out.z = lerp(B0[1], B1[1], u2); out.y = B.h + 0.012 + Math.max(0, 0.4 - u2) * 0.3; out.hx = B1[0] - B0[0]; out.hz = B1[1] - B0[1]; return out; }
     var v = (t - tr) / (1 - 2 * tr), sx = A1[0], sz = A1[1], ex = B0[0], ez = B0[1];
-    function at(vv, o) { var bend = Math.sin(Math.PI * vv) * L * 0.06; o[0] = lerp(sx, ex, vv) - dz / L * bend; o[1] = lerp(sz, ez, vv) + dx / L * bend; o[2] = lerp(A.h + 0.12, B.h + 0.12, vv) + (CRUISE - 0.12) * sstep(0, 0.22, vv) * (1 - sstep(0.78, 1, vv)); return o; }
+    function at(vv, o) { var bend = Math.sin(Math.PI * vv) * L * 0.06; o[0] = lerp(sx, ex, vv) - dz / L * bend; o[1] = lerp(sz, ez, vv) + dx / L * bend; o[2] = lerp(A.h + 0.12, B.h + 0.12, vv) + (CRUISE - 0.12) * sstep(0, 0.22, vv) * (1 - sstep(0.5, 1, vv)); return o; }
     var p0 = at(v, [0, 0, 0]), p1 = at(Math.min(1, v + 0.01), [0, 0, 0]), p2 = at(Math.max(0, v - 0.01), [0, 0, 0]);
     out.x = p0[0]; out.z = p0[1]; out.y = p0[2]; out.hx = p1[0] - p2[0]; out.hz = p1[1] - p2[1];
     out.pitch = clamp(Math.atan2(p1[2] - p2[2], Math.hypot(p1[0] - p2[0], p1[1] - p2[1]) + 1e-6), -0.25, 0.25); return out;
@@ -1068,10 +1068,11 @@ function createWorldMap(container, THREE, opts) {
   function flightLen(A, B) { return Math.hypot(B.x - A.x, B.z - A.z) + 2; }
   // 시간으로 보는 비행 한 구간(A→B): 활주로 끝에서 대기 → 천천히 가속하며 활주 → 이륙·상승 → 순항 → 하강·착륙 → 감속 → 대기
   var P_WAIT = 3, P_ROLL = 6.5;
-  function planeLeg(A, B) { return 2 * P_WAIT + 2 * P_ROLL + Math.hypot(B.x - A.x, B.z - A.z) / PSPEED; }
+  var P_APP = 0.3, P_SLOW = 0.45, P_DN = 1 - P_APP + P_APP * (1 + P_SLOW) / 2; // 마지막 30%는 속도를 45%까지 줄이며 천천히 내려온다
+  function planeLeg(A, B) { return 2 * P_WAIT + 2 * P_ROLL + Math.hypot(B.x - A.x, B.z - A.z) / PSPEED / P_DN; }
   function planeAt(A, B, t, out) {
     var dx = B.x - A.x, dz = B.z - A.z, sa = (dx * Math.cos(A.ry) - dz * Math.sin(A.ry)) > 0 ? 1 : -1, sb = (dx * Math.cos(B.ry) - dz * Math.sin(B.ry)) > 0 ? 1 : -1;
-    var A0 = runEnd(A, -sa), A1 = runEnd(A, sa), B0 = runEnd(B, -sb), B1 = runEnd(B, sb), tf = Math.hypot(dx, dz) / PSPEED, k;
+    var A0 = runEnd(A, -sa), A1 = runEnd(A, sa), B0 = runEnd(B, -sb), B1 = runEnd(B, sb), tf = Math.hypot(dx, dz) / PSPEED / P_DN, k;
     out.pitch = 0;
     if (t < P_WAIT + P_ROLL) { // 출발 공항: 활주로 끝에서 기다렸다가 점점 빨라지며 달리고, 끝 무렵 떠오른다
       k = Math.max(0, t - P_WAIT) / P_ROLL; k = k * k;
@@ -1082,7 +1083,8 @@ function createWorldMap(container, THREE, opts) {
       k = Math.min(1, (t - tf) / P_ROLL); k = 1 - (1 - k) * (1 - k);
       out.x = lerp(B0[0], B1[0], k); out.z = lerp(B0[1], B1[1], k); out.y = B.h + 0.012 + Math.max(0, 0.3 - k) * 0.35; out.hx = B1[0] - B0[0]; out.hz = B1[1] - B0[1]; out.pitch = k < 0.3 ? -0.05 : 0; return out;
     }
-    return planePose(A, B, 0.9 / (Math.hypot(dx, dz) + 2) + t / tf * (1 - 1.8 / (Math.hypot(dx, dz) + 2)), out);
+    var tau = t / tf, e = tau - (1 - P_APP), dd = e > 0 ? 1 - P_APP + e - (1 - P_SLOW) * e * e / (2 * P_APP) : tau, fv = dd / P_DN;
+    return planePose(A, B, 0.9 / (Math.hypot(dx, dz) + 2) + fv * (1 - 1.8 / (Math.hypot(dx, dz) + 2)), out);
   }
 
   // ───────────────────────── 마을 풍경 (풍차·풍력 발전기·건초·가축·장터·우물·정원 나무·고깃배·바위) ─────────────────────────
