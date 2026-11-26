@@ -1255,10 +1255,14 @@ function createWorldMap(container, THREE, opts) {
       if (air) { for (var q = 0; q <= 48; q++) { planePose(APK[a0.s], APK[a0.b], q / 48, _pose); pts3.push(new THREE.Vector3(_pose.x, _pose.y + (slot - 1) * 0.15, _pose.z)); } }
       else {
         var sp = seaPath(NA, NB), off = (slot - 1) * 0.22 * (a0.s < a0.b ? 1 : -1);
+        // 부두에서 출발해 부두에 닿는다: 항구 바로 앞(정박 자리)에서 바다 쪽으로 곧게 나간다
+        function berth(n, d) { return new THREE.Vector3(n.port.x + n.port.sx * d, 0.03, n.port.z + n.port.sz * d); }
+        pts3.push(berth(NA, 0.4), berth(NA, 0.9));
         for (var q2 = 0; q2 < sp.length; q2++) {
           var a = sp[Math.max(0, q2 - 1)], b = sp[Math.min(sp.length - 1, q2 + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, o = q2 === 0 || q2 === sp.length - 1 ? 0 : off;
           pts3.push(new THREE.Vector3(sp[q2][0] - dz / l * o, 0.03, sp[q2][1] + dx / l * o));
         }
+        pts3.push(berth(NB, 0.9), berth(NB, 0.4));
       }
       pts3 = pts3.filter(function (v) { return isFinite(v.x) && isFinite(v.z); }); var kept = []; pts3.forEach(function (v) { if (!kept.length || v.distanceTo(kept[kept.length - 1]) > 0.05) kept.push(v); }); pts3 = kept; if (!pts3.length) pts3.push(new THREE.Vector3(NA.port.x, 0.03, NA.port.z)); if (pts3.length < 2) pts3.push(pts3[0].clone().add(new THREE.Vector3(0.1, 0, 0))); // 겹친 점이 있으면 곡선 길이가 NaN이 된다
       curve = new THREE.CatmullRomCurve3(pts3, false, 'centripetal');
@@ -1276,7 +1280,7 @@ function createWorldMap(container, THREE, opts) {
         }
         v.off = i / nd; traffic.add(v.m); vehicles.push(v);
       }
-      routes.push({ curve: curve, tube: tube, mat: mat, vehicles: vehicles, air: !!air, A: APK[a0.s], B: APK[a0.b], speed: air ? PSPEED / flightLen(APK[a0.s], APK[a0.b]) : 0.9 / Math.max(len, 1), info: a0 });
+      routes.push({ curve: curve, tube: tube, mat: mat, vehicles: vehicles, air: !!air, A: APK[a0.s], B: APK[a0.b], speed: air ? PSPEED / flightLen(APK[a0.s], APK[a0.b]) : 0.45 / Math.max(len, 1), dwell: air ? 0 : Math.min(0.12, 2.5 / Math.max(len, 1)), ease: air ? 0 : Math.min(0.3, 1.2 / Math.max(len, 1)), info: a0 });
     });
     legendDirty = true;
   }
@@ -1288,8 +1292,11 @@ function createWorldMap(container, THREE, opts) {
       r.vehicles.forEach(function (v) {
         var u = (((clock * r.speed + v.off) % 1) + 1) % 1 /* 시작 직후 clock이 음수여도 0~1 */, env = sstep(0, 0.025, u) * (1 - sstep(0.975, 1, u));
         if (r.air) { planePose(r.A, r.B, u, _pose); v.m.position.set(_pose.x, _pose.y, _pose.z); v.m.rotation.set(0, Math.atan2(-_pose.hz, _pose.hx), _pose.pitch); v.m.scale.setScalar(Math.max(0.001, sc * Math.max(env, 0.35))); return; }
-        r.curve.getPointAt(u, _tp); r.curve.getTangentAt(u, _tt);
-        v.m.position.set(_tp.x, Math.sin(clock * 1.6 + v.off * 9) * 0.0015, _tp.z); v.m.rotation.set(Math.sin(clock * 1.1 + v.off * 7) * 0.035, Math.atan2(-_tt.z, _tt.x), 0); v.m.scale.setScalar(Math.max(0.001, ssc * env));
+        // 배는 두 항구 사이를 오간다(갈 때 u 0~0.5, 올 때 0.5~1). 부두에서 잠깐 멈췄다가 천천히 출발·도착한다
+        var ph = u * 2, fwd = ph < 1, pp = fwd ? ph : 2 - ph, dw = r.dwell;
+        pp = clamp((pp - dw) / (1 - 2 * dw), 0, 1); var ea = r.ease; pp = pp < ea ? pp * pp / (2 * ea) / (1 - ea) : pp > 1 - ea ? 1 - (1 - pp) * (1 - pp) / (2 * ea) / (1 - ea) : (pp - ea / 2) / (1 - ea);
+        r.curve.getPointAt(pp, _tp); r.curve.getTangentAt(pp, _tt);
+        v.m.position.set(_tp.x, Math.sin(clock * 1.6 + v.off * 9) * 0.0015, _tp.z); v.m.rotation.set(Math.sin(clock * 1.1 + v.off * 7) * 0.035, Math.atan2(-_tt.z, _tt.x) + (fwd ? 0 : Math.PI), 0); v.m.scale.setScalar(ssc);
       });
     });
   }
