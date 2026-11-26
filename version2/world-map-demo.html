@@ -1067,7 +1067,7 @@ function createWorldMap(container, THREE, opts) {
   }
   function flightLen(A, B) { return Math.hypot(B.x - A.x, B.z - A.z) + 2; }
   // 시간으로 보는 비행 한 구간(A→B): 활주로 끝에서 대기 → 천천히 가속하며 활주 → 이륙·상승 → 순항 → 하강·착륙 → 감속 → 대기
-  var P_WAIT = 2.5, P_ROLL = 3.2;
+  var P_WAIT = 3, P_ROLL = 6.5;
   function planeLeg(A, B) { return 2 * P_WAIT + 2 * P_ROLL + Math.hypot(B.x - A.x, B.z - A.z) / PSPEED; }
   function planeAt(A, B, t, out) {
     var dx = B.x - A.x, dz = B.z - A.z, sa = (dx * Math.cos(A.ry) - dz * Math.sin(A.ry)) > 0 ? 1 : -1, sb = (dx * Math.cos(B.ry) - dz * Math.sin(B.ry)) > 0 ? 1 : -1;
