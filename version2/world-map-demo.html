@@ -1298,7 +1298,7 @@ function createWorldMap(container, THREE, opts) {
         }
         v.off = i / nd; traffic.add(v.m); vehicles.push(v);
       }
-      routes.push({ curve: curve, tube: tube, mat: mat, vehicles: vehicles, air: !!air, A: APK[a0.s], B: APK[a0.b], speed: air ? 1 / (2 * planeLeg(APK[a0.s], APK[a0.b])) : 0.45 / Math.max(len, 1), dwell: air ? 0 : Math.min(0.12, 2.5 / Math.max(len, 1)), ease: air ? 0 : Math.min(0.3, 1.2 / Math.max(len, 1)), info: a0 });
+      routes.push({ curve: curve, tube: tube, mat: mat, vehicles: vehicles, air: !!air, A: APK[a0.s], B: APK[a0.b], speed: air ? 1 / (2 * planeLeg(APK[a0.s], APK[a0.b])) : 0.45 / Math.max(len, 1), dwell: air ? 0 : Math.min(0.15, 3 / Math.max(len, 1)), ease: air ? 0 : Math.min(0.38, 5.5 / Math.max(len, 1)) /* 항구를 떠날 때·닿을 때 천천히 */, info: a0 });
     });
     legendDirty = true;
   }
