@@ -38,7 +38,7 @@
 
 1. 학생 3명 시범 수업으로 이해도·진행 시간 확인하기(`docs/student_rules_summary.md`, `docs/teacher_guide.md` 사용)
 2. 시범 수업 뒤 수출 목표 숫자 다시 보기(지금은 잠정). 학생 7명 이상이면 추가 3개국 목표도 정하기
-3. 웹앱: 기능 구현과 검증 완료(`webapp/README.md`). 여러 방·서버(Firebase 프로젝트)·진행 방식(교사/준비 완료/시간 제한) 지원. 주소 `https://pju0417.github.io/trade/webapp/`, 1서버 연결 확인. 남은 것은 디자인(GPT), 학교 기기·여러 기기 동시 접속 시험, 서버 추가(`webapp/FIREBASE_SETUP.md`)
+3. 웹앱: 기능 구현과 검증 완료(`webapp/README.md`). 여러 방·서버(Firebase 프로젝트)·진행 방식(교사/준비 완료/시간 제한) 지원. 주소 `https://pju0417.github.io/trade/webapp/`, 1서버 연결 확인. 혼자 해 보기(`webapp/play.html`, AI와 시뮬레이션 플레이) 추가(2026-11-26). 남은 것은 디자인(GPT), 학교 기기·여러 기기 동시 접속 시험, 서버 추가(`webapp/FIREBASE_SETUP.md`)
 4. 세계 지도: `version2/world-map-demo.html`의 엔진을 `webapp/js/world-engine.js`로 옮겨 학생·교사 화면에 붙임(2026-11-25). Tripo 모델 16개(항구·화물선·산업 건물·수도·마을) 포함. 지도 디자인은 Claude가 맡는다. 남은 것은 실제 iPad·크롬북 확인, 실제 수업 흐름 확인
 
 ## 실행 방법

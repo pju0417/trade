@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무역 게임 · 혼자 해 보기</title>
+<link rel="stylesheet" href="trade.css">
+<link rel="stylesheet" href="atlas.css">
+<meta name="theme-color" content="#132e3d">
+<style>
+  /* Solo play: the engine runs in this page, the student screens are iframes below the bar. */
+  body.play-page { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+  .play-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 16px;
+    background: #132e3d; color: #f3ead2; position: sticky; top: 0; z-index: 10; }
+  .play-bar b { color: #fff; }
+  .play-bar .grow { flex: 1; }
+  .play-bar button, .play-tabs button { font: inherit; }
+  .play-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .play-tabs button[aria-pressed="true"] { outline: 2px solid #efd08b; font-weight: 700; }
+  .play-frames { flex: 1; display: flex; }
+  .play-frames iframe { flex: 1; border: 0; width: 100%; min-height: calc(100vh - 56px); }
+  .play-frames iframe[hidden] { display: none; }
+  .play-world { padding: 0 16px 16px; }
+</style>
+</head>
+<body class="play-page">
+<header id="bar" class="play-bar" hidden></header>
+<main id="app" class="shell">불러오는 중…</main>
+<div id="frames" class="play-frames"></div>
+<script type="module" src="js/play.js"></script>
+</body>
+</html>
