@@ -744,6 +744,7 @@ function createWorldMap(container, THREE, opts) {
   var natBar = el('div', 'position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);display:flex;gap:6px;overflow-x:auto;padding:6px;background:rgba(255,255,255,0.94);border:1px solid #d5dce3;border-radius:14px;box-shadow:0 4px 16px rgba(20,30,40,0.14);pointer-events:auto;' + (opts.nationBar === false ? 'display:none;' : ''));
   var natBtns = NATIONS.map(function (n) { var b = el('button', 'flex:none;border:none;background:#f1f4f7;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700;color:#1f2933;cursor:pointer;white-space:nowrap;font-family:inherit;border-bottom:4px solid ' + n.color + ';'); b.addEventListener('click', function () { flyToNation(n.key); }); natBar.appendChild(b); return b; });
   function refreshNatBar() { natBtns.forEach(function (b, i) { var n = NATIONS[i]; b.innerHTML = GOODS[n.good].icon + ' ' + esc(names[n.key] || n.ko) + (me === n.key ? ' ★' : ''); }); }
+  if (opts.natBar === false) natBar.style.display = 'none'; // 게임 화면이 좁을 때 아래쪽 나라 버튼 줄을 숨긴다
   ui.appendChild(natBar);
 
   var card = el('div', 'position:absolute;left:12px;bottom:78px;min-width:210px;background:#ffffff;border:1px solid #d5dce3;border-radius:14px;box-shadow:0 4px 16px rgba(20,30,40,0.16);padding:12px 14px;pointer-events:auto;display:none;font-size:12px;'); ui.appendChild(card);

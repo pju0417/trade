@@ -6,12 +6,20 @@
 <title>무역 게임 · 학생</title>
 <link rel="stylesheet" href="trade.css">
 <link rel="stylesheet" href="atlas.css">
+<link rel="stylesheet" href="game.css">
 <meta name="theme-color" content="#132e3d">
 </head>
 <body class="student-page">
 <div id="entry-map" class="entry-background" aria-hidden="true"></div>
-<header id="status" class="status" hidden><div class="status-inner"><div id="identity"></div><div id="bar"></div></div></header>
-<main class="student-workspace"><section id="student-atlas" class="student-atlas" hidden aria-label="세계 지도와 나라 정보"><div id="student-world-map"></div></section><div id="app" class="shell">불러오는 중…</div></main>
+<div id="game" class="game" hidden>
+  <div id="world" class="game-world" aria-label="세계 지도"></div>
+  <header id="hud-top" class="hud-top"></header>
+  <nav id="hud-menu" class="hud-menu" aria-label="게임 메뉴"></nav>
+  <aside id="toasts" class="hud-toasts" aria-live="polite"></aside>
+  <section id="window" class="hud-window" hidden></section>
+  <div id="hud-turn" class="hud-turn"></div>
+</div>
+<div id="app" class="shell">불러오는 중…</div>
 <script type="module" src="js/student-ui.js"></script>
 </body>
 </html>
