@@ -124,4 +124,5 @@ map.update(state);   // names, country, profiles, world_trades, round, phase_lab
 
 - `profiles[나라].levels`에 따라 산업 건물 수가, 산업 하나라도 레벨 3이 되면 산을 넘던 길이 터널로 바뀌고(`map.tunnels()`로 확인), `world_trades`에 따라 이번 라운드 무역로가 바뀐다.
 - 선택: `natBar: false`(아래쪽 나라 버튼 줄 숨김, 좁은 화면). `map.flyTo(x, z, 거리, 초)`와 `map.nations[i].center`로 처음 시점을 정할 수 있다.
+- 점검: `map.audit()`가 지형에 뜨거나 묻힌 집·풍경 물건, 비탈에 걸친 공항, 끊긴 길, 물 위의 길을 목록으로 돌려준다(지도 코드를 고친 뒤 0인지 확인).
 - `map.flyToNation('Oilia')`, `map.selectNation('Oilia')`, `opts.onSelect(나라)`로 다른 화면과 연결한다.

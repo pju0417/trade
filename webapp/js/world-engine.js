@@ -92,13 +92,13 @@ function createWorldMap(container, THREE, opts) {
 
   // ───────────────────────── 세계 만들기 (항상 같은 모양) ─────────────────────────
   var N = NATIONS.length, BDV = new Float32Array(FW * FH), FLD = new Float32Array(FW * FH), F = new Float32Array(FW * FH), ID = new Int8Array(FW * FH), HG = new Float32Array(FW * FH), FOR = new Float32Array(FW * FH), CON = new Uint8Array(FW * FH);
-  var natData = new Uint8Array(FW * FH * 4), polData = new Uint8Array(FW * FH * 4);
+  var natData = new Uint8Array(FW * FH * 4), polData = new Uint8Array(FW * FH * 4), CLF = new Float32Array(FW * FH), CLH = new Float32Array(FW * FH), CD = new Float32Array(FW * FH); // CLF 해안 절벽 정도(0 모래사장 ~ 1 절벽), CLH 절벽 높이, CD 바다까지 거리
   var cSum = NATIONS.map(function () { return [0, 0, 0]; });
   (function generate() {
     var COS = NATIONS.map(function (n, k) { return Math.cos(k * 2.1 + 0.4); }), SIN = NATIONS.map(function (n, k) { return Math.sin(k * 2.1 + 0.4); });
     var BR = CONTINENTS.map(function (c) { var a = NK[c[0]], b = NK[c[1]]; return [a.x, a.z, b.x, b.z, Math.min(a.r, b.r) * 0.55]; });
     var dn = new Float32Array(N), bAmt = new Float32Array(BIOMES.length), POLC = NATIONS.map(function (n) { return hexRGB(n.color); });
-    var SAND = [0.9, 0.84, 0.64], ROCK = [0.55, 0.52, 0.47], SNOW = [0.94, 0.96, 0.98], FORC = [0.18, 0.36, 0.19];
+    var SAND = [0.9, 0.84, 0.64], ROCK = [0.55, 0.52, 0.47], CLIFF = [0.5, 0.45, 0.39], SNOW = [0.94, 0.96, 0.98], FORC = [0.18, 0.36, 0.19];
     for (var j = 0; j < FH; j++) {
       var z = -WZ + (j + 0.5) * CELL;
       for (var i = 0; i < FW; i++) {
@@ -142,6 +142,10 @@ function createWorldMap(container, THREE, opts) {
           FOR[idx] = prob; CON[idx] = (bAmt[2] > 0.4 || h > 0.55) ? 1 : 0;
           c = mixc(c, FORC, prob * 0.35);
           c = mixc(SAND, c, sstep(0.012, 0.05, f));
+          // 해안: 모래사장과 절벽이 번갈아 나온다. 산이 많고 추운 나라는 절벽이, 사막·열대·섬 나라는 모래사장이 많다
+          var cliffBias = clamp(0.2 + mnt * 1.1 + bAmt[2] * 0.35 + bAmt[0] * 0.15 - bAmt[3] * 0.25 - bAmt[4] * 0.3 - bAmt[6] * 0.2, 0, 1);
+          var cliff = sstep(0.5, 0.62, vnoise(xd * 0.07 + 31, zd * 0.07 - 17, 41) * 0.65 + cliffBias * 0.5);
+          CLF[idx] = cliff; CLH[idx] = (0.2 + 0.14 * vnoise(xd * 0.3 + 5, zd * 0.3, 42)) * cliff; // 해안 모양은 아래 coast()에서 바다까지 거리로 만든다
           c = mixc(c, ROCK, sstep(0.7, 1.1, h));
           c = mixc(c, SNOW, sstep(1.45, 1.85, h + (n1 - 0.5) * 0.4));
           var bn = 0.92 + 0.16 * vnoise(x * 0.6, z * 0.6, 12); c = [c[0] * bn, c[1] * bn, c[2] * bn];
@@ -150,6 +154,28 @@ function createWorldMap(container, THREE, opts) {
         HG[idx] = h;
         natData[o] = clamp(c[0] * 255, 0, 255); natData[o + 1] = clamp(c[1] * 255, 0, 255); natData[o + 2] = clamp(c[2] * 255, 0, 255);
       }
+    }
+  })();
+  // ───────────────────────── 해안 (모래사장·절벽) ─────────────────────────
+  // CD = 땅 칸에서 가장 가까운 바다까지 실제 거리(대각선까지 보는 2회 훑기). 해안 폭을 거리로 정해야 어디서나 같은 폭이 된다
+  (function coast() {
+    var i, j, k, D2 = CELL * Math.SQRT2, BIG = 1e9;
+    for (k = 0; k < FW * FH; k++) CD[k] = F[k] > 0 ? BIG : 0;
+    for (j = 0; j < FH; j++) for (i = 0; i < FW; i++) { k = j * FW + i; var v = CD[k]; if (!v) continue;
+      if (i > 0) v = Math.min(v, CD[k - 1] + CELL); if (j > 0) { v = Math.min(v, CD[k - FW] + CELL); if (i > 0) v = Math.min(v, CD[k - FW - 1] + D2); if (i < FW - 1) v = Math.min(v, CD[k - FW + 1] + D2); } CD[k] = v; }
+    for (j = FH - 1; j >= 0; j--) for (i = FW - 1; i >= 0; i--) { k = j * FW + i; v = CD[k]; if (!v) continue;
+      if (i < FW - 1) v = Math.min(v, CD[k + 1] + CELL); if (j < FH - 1) { v = Math.min(v, CD[k + FW] + CELL); if (i < FW - 1) v = Math.min(v, CD[k + FW + 1] + D2); if (i > 0) v = Math.min(v, CD[k + FW - 1] + D2); } CD[k] = v; }
+    var SAND = [0.9, 0.84, 0.64], CLIFF = [0.5, 0.45, 0.39];
+    for (k = 0; k < FW * FH; k++) {
+      if (F[k] <= 0) continue; var d = CD[k] - CELL * 0.5 + F[k] * 0.5; if (d > 1.8) continue; // 물가 칸의 거리는 반 칸 + 해안선 위치 보정
+      var cl = CLF[k], be = 1 - cl, o = k * 4, h = HG[k];
+      // 모래사장: 물가에서 0.7까지 낮고 평평한 모래, 숲·밭 없음
+      var bw = be * (1 - sstep(0.45, 0.9, d)); h = lerp(h, Math.min(h, 0.006 + d * 0.06), bw);
+      var sw = be * (1 - sstep(0.45, 0.8, d)); natData[o] = lerp(natData[o], SAND[0] * 255, sw); natData[o + 1] = lerp(natData[o + 1], SAND[1] * 255, sw); natData[o + 2] = lerp(natData[o + 2], SAND[2] * 255, sw);
+      // 절벽: 물가에서 0.15 안에 바위 벽이 솟고, 위는 풀밭. 안쪽(1.0~1.8)으로 원래 지형과 이어진다
+      if (cl > 0) { var fade = sstep(1.0, 1.8, d); h = Math.max(h, CLH[k] * sstep(0.0, 0.16, d) * (1 - fade) + h * fade);
+        var rw = cl * (1 - sstep(0.12, 0.3, d)) * 0.95; natData[o] = lerp(natData[o], CLIFF[0] * 255, rw); natData[o + 1] = lerp(natData[o + 1], CLIFF[1] * 255, rw); natData[o + 2] = lerp(natData[o + 2], CLIFF[2] * 255, rw); }
+      HG[k] = h; FOR[k] *= 1 - be * (1 - sstep(0.5, 1.0, d));
     }
   })();
   function sampleArr(A, x, z) {
@@ -163,8 +189,9 @@ function createWorldMap(container, THREE, opts) {
   function heightAt(x, z) { return sampleArr(HG, x, z); }
   function nationAt(x, z) { return ID[cellIdx(x, z)]; }
   // 화면에 그려지는 지형 표면 높이(지형 메시는 0.5 간격 삼각형). 강물·길은 이 높이에 붙여야 산등성이에서 뜨거나 골짜기에서 묻히지 않는다
+  var MESH_STEP = 1; // 지형 메시 간격(칸). 1 = 높이 자료와 같은 0.25 간격 → 물건·길이 그려진 지형과 맞는다
   function meshH(x, z) {
-    var st = CELL * 2, gx = (x + WX) / st, gz = (z + WZ) / st, i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, x0 = -WX + i * st, z0 = -WZ + j * st;
+    var st = CELL * MESH_STEP, gx = (x + WX) / st, gz = (z + WZ) / st, i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, x0 = -WX + i * st, z0 = -WZ + j * st;
     var ha = heightAt(x0, z0), hb = heightAt(x0 + st, z0), hc = heightAt(x0, z0 + st), hd = heightAt(x0 + st, z0 + st);
     return fx + fz < 1 ? ha + (hb - ha) * fx + (hc - ha) * fz : hd + (hc - hd) * (1 - fx) + (hb - hd) * (1 - fz);
   }
@@ -327,6 +354,15 @@ function createWorldMap(container, THREE, opts) {
       SETTLE.push({ n: n, x: x, z: z, R: tr, capital: false }); made++;
     }
   });
+  // 마을 터 고르기: 마을 안은 가운데 높이로 평평하게, 바깥으로 갈수록 원래 지형으로 이어진다(비탈 마을에서 집이 반쯤 묻히지 않게)
+  SETTLE.forEach(function (s) {
+    var h0 = Math.max(heightAt(s.x, s.z), s.port ? 0.03 : 0.02), out = s.R + 0.7, c = Math.ceil(out / CELL), i0 = Math.floor((s.x + WX) / CELL), j0 = Math.floor((s.z + WZ) / CELL);
+    for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) {
+      var i = i0 + di, j = j0 + dj; if (i < 0 || j < 0 || i >= FW || j >= FH) continue;
+      var idx = j * FW + i; if (F[idx] <= 0.005) continue;
+      var w = 1 - sstep(s.R * 0.9, out, Math.hypot(di * CELL, dj * CELL)); if (w > 0) HG[idx] = lerp(HG[idx], h0, w);
+    }
+  });
   // 길: 수도↔항구, 마을↔가장 가까운 수도·항구·마을(같은 나라)
   function clearForest(x, z, rad) { var c = Math.ceil(rad / CELL); var i0 = Math.floor((x + WX) / CELL), j0 = Math.floor((z + WZ) / CELL); for (var dj = -c; dj <= c; dj++) for (var di = -c; di <= c; di++) { var i = i0 + di, j = j0 + dj; if (i >= 0 && j >= 0 && i < FW && j < FH) FOR[j * FW + i] = 0; } }
   function makeRoad(ax, az, bx, bz, w, seed) {
@@ -394,7 +430,12 @@ function createWorldMap(container, THREE, opts) {
   // 집: 종류(HV) 0 오두막(박공) 1 2층 목조 주택 2 ㄱ자 집 3 모임지붕 4 평지붕 5 유리 빌딩 6 둥근 초가
   // 벽·지붕 색은 집마다 따로, 창문·문·목재 무늬는 셰이더가 실제 크기에 맞춰 그린다. HSINK = 땅에 묻는 깊이(비탈에서 틈이 안 보이게)
   var HOUSES = [], HSINK = 0.015;
-  function addH(v, x, y, z, w, h, d, ry, wall, roof) { HOUSES.push({ v: v, x: x, y: y, z: z, w: w, h: h, d: d, ry: ry, wall: Array.isArray(wall) ? wall : hexRGB(wall), roof: Array.isArray(roof) ? roof : hexRGB(roof) }); }
+  function addH(v, x, y, z, w, h, d, ry, wall, roof) {
+    // 그려진 지형(meshH) 네 귀퉁이 중 가장 낮은 곳에 바닥을 맞춘다(뜨지 않게). 지붕 높이는 그대로 두고 벽을 늘린다. 너무 가파르면 짓지 않는다(반쯤 묻히지 않게)
+    var c = Math.cos(ry), sn = Math.sin(ry), lo = 1e9, hi = -1e9;
+    for (var q = 0; q < 4; q++) { var lx = (q & 1 ? 0.5 : -0.5) * w, lz = (q & 2 ? 0.5 : -0.5) * d, g = meshH(x + lx * c + lz * sn, z - lx * sn + lz * c); lo = Math.min(lo, g); hi = Math.max(hi, g); }
+    var base = Math.min(y, lo - 0.006); if (hi - base > h * 0.5) return; h += y - base; y = base;
+    HOUSES.push({ v: v, x: x, y: y, z: z, w: w, h: h, d: d, ry: ry, wall: Array.isArray(wall) ? wall : hexRGB(wall), roof: Array.isArray(roof) ? roof : hexRGB(roof) }); }
   function house(st, x, z, ry, r, capital) {
     var y = heightAt(x, z) - HSINK, w = 0.07 + r() * 0.04, d = 0.06 + r() * 0.035, h = 0.035 + r() * 0.03 + HSINK, wall = pick(st.walls, r), roof = pick(st.roofs, r);
     if (st.hut && !capital && r() < 0.75) { addH(6, x, y, z, w, h, w, r() * 6.283, wall, [0.72, 0.6, 0.38]); return; }
@@ -424,7 +465,7 @@ function createWorldMap(container, THREE, opts) {
       ROADS.push({ disc: [s.x, s.z, 0.34] });
     } else if (s.port) {
       // 로컬 x축 = 바다 쪽. 4칸마다 길, 길 사이에 집이 빽빽하고 바다 쪽 줄은 창고
-      var P2 = 0.13, n2 = Math.ceil(s.R / P2);
+      var P2 = 0.13, n2 = Math.ceil(s.R / P2), built = [];
       for (var i2 = -n2; i2 <= n2; i2++) for (var j2 = -n2; j2 <= n2; j2++) {
         if (i2 % 4 === 0 || j2 % 4 === 0) continue;
         var lx2 = i2 * P2, lz2 = j2 * P2, d2 = Math.hypot(lx2, lz2) / s.R;
@@ -432,13 +473,21 @@ function createWorldMap(container, THREE, opts) {
         if (USE_MODELS && Math.hypot(lx2, lz2) < 0.22) continue;
         var x3 = s.x + lx2 * ca - lz2 * sa, z3 = s.z + lx2 * sa + lz2 * ca;
         if (landAt(x3, z3) < 0.03 || riverAt(x3, z3, 0.06) || Math.abs(heightAt(x3, z3) - h0) > 0.4) continue;
+        var nh = HOUSES.length;
         if (lx2 > s.R * 0.4 && r() < 0.75) addH(4, x3, heightAt(x3, z3) - HSINK, z3, 0.11 + r() * 0.025, 0.045 + r() * 0.015 + HSINK, 0.085, ang, ['#c9c2b4', '#b8b0a2', '#d6cfc0', '#a8604a'][Math.floor(r() * 4)], '#8a8f94');
         else house(st, x3, z3, ang + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
+        if (HOUSES.length > nh) built.push([lx2, lz2]);
       }
+      // 격자 길은 양옆에 집이 있는 곳까지만 낸다(빈 모래밭으로 뻗다 끊기지 않게). 가운데 두 길은 마을 한가운데를 지나 늘 이어진다
       for (var g2 = -n2; g2 <= n2; g2++) {
         if (g2 % 4) continue; var c2 = g2 * P2; if (Math.abs(c2) >= s.R * 0.98) continue; var hl = Math.sqrt(s.R * s.R - c2 * c2);
-        ROADS.push({ pts: [[s.x - hl * ca - c2 * sa, s.z - hl * sa + c2 * ca], [s.x + hl * ca - c2 * sa, s.z + hl * sa + c2 * ca]], w: 0.055 });
-        ROADS.push({ pts: [[s.x + c2 * ca + hl * sa, s.z + c2 * sa - hl * ca], [s.x + c2 * ca - hl * sa, s.z + c2 * sa + hl * ca]], w: 0.055 });
+        [0, 1].forEach(function (fam) {
+          var lo = c2 === 0 ? 0 : 1e9, hi = c2 === 0 ? 0 : -1e9;
+          built.forEach(function (b) { var across = fam ? b[0] : b[1], along = fam ? b[1] : b[0]; if (Math.abs(across - c2) < P2 * 2.5) { lo = Math.min(lo, along); hi = Math.max(hi, along); } });
+          if (lo > hi) return; lo = Math.max(-hl, lo - P2 * 0.6); hi = Math.min(hl, hi + P2 * 0.6);
+          if (!fam) ROADS.push({ pts: [[s.x + lo * ca - c2 * sa, s.z + lo * sa + c2 * ca], [s.x + hi * ca - c2 * sa, s.z + hi * sa + c2 * ca]], w: 0.055 });
+          else ROADS.push({ pts: [[s.x + c2 * ca - lo * sa, s.z + c2 * sa + lo * ca], [s.x + c2 * ca - hi * sa, s.z + c2 * sa + hi * ca]], w: 0.055 });
+        });
       }
       ROADS.push({ pts: [[s.x, s.z], [s.n.port.x - s.n.port.sx * 0.1, s.n.port.z - s.n.port.sz * 0.1]], w: 0.075 });
     } else {
@@ -495,15 +544,27 @@ function createWorldMap(container, THREE, opts) {
     if (!best) return;
     var ap = { n: n, x: best[0], z: best[1], ry: best[2], h: Math.max(best[3], 0.03) + 0.004 }; AIRPORTS.push(ap);
     if (cap) { var ac = Math.cos(ap.ry), as = Math.sin(ap.ry), ae = capEnd(cap, ap.x + 0.5 * as, ap.z + 0.5 * ac); makeRoad(ae[0], ae[1], ap.x + 0.5 * as, ap.z + 0.5 * ac, 0.06, ni * 10 + 7); }
-    var c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry), R2 = RWL / 2 + 0.35, cc = Math.ceil(R2 / CELL), i0 = Math.floor((ap.x + WX) / CELL), j0 = Math.floor((ap.z + WZ) / CELL);
+    var c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry), R2 = RWL / 2 + 0.75, cc = Math.ceil(R2 / CELL), i0 = Math.floor((ap.x + WX) / CELL), j0 = Math.floor((ap.z + WZ) / CELL);
     for (var dj = -cc; dj <= cc; dj++) for (var di = -cc; di <= cc; di++) {
       var ii = i0 + di, jj = j0 + dj; if (ii < 0 || jj < 0 || ii >= FW || jj >= FH) continue;
       var idx = jj * FW + ii, wx = -WX + (ii + 0.5) * CELL - ap.x, wz = -WZ + (jj + 0.5) * CELL - ap.z, lx = wx * c0 - wz * s0, lz = wx * s0 + wz * c0;
-      var e = Math.max(Math.abs(lx) - RWL / 2, Math.max(-0.14 - lz, lz - 0.62)), w = 1 - sstep(0, 0.3, e); if (w <= 0) continue;
+      var e = Math.max(Math.abs(lx) - RWL / 2 - 0.08, Math.max(-0.22 - lz, lz - 0.66)), w = 1 - sstep(0, 0.55, e); if (w <= 0) continue; // 공항 둘레까지 넓게 고른다(비탈에서 활주로 판이 뜨지 않게)
       HG[idx] = lerp(HG[idx], ap.h - 0.004, w); FOR[idx] = 0; FLD[idx] *= 1 - w;
       var o = idx * 4; natData[o] = lerp(natData[o], 0.52 * 255, w * 0.35); natData[o + 1] = lerp(natData[o + 1], 0.58 * 255, w * 0.35); natData[o + 2] = lerp(natData[o + 2], 0.4 * 255, w * 0.35);
     }
   });
+
+  // 공항 터를 고른 뒤 둘레 집 다시 보기: 땅이 바뀌어 반쯤 묻히거나 뜬 집은 뺀다
+  for (var hk2 = HOUSES.length - 1; hk2 >= 0; hk2--) {
+    var H2 = HOUSES[hk2]; if (!AIRPORTS.some(function (ap) { return Math.hypot(ap.x - H2.x, ap.z - H2.z) < RWL + 1.2; })) continue;
+    var c3 = Math.cos(H2.ry), s3 = Math.sin(H2.ry), lo3 = 1e9, hi3 = -1e9;
+    for (var q3 = 0; q3 < 4; q3++) { var lx3 = (q3 & 1 ? 0.5 : -0.5) * H2.w, lz3 = (q3 & 2 ? 0.5 : -0.5) * H2.d, g3 = meshH(H2.x + lx3 * c3 + lz3 * s3, H2.z - lx3 * s3 + lz3 * c3); lo3 = Math.min(lo3, g3); hi3 = Math.max(hi3, g3); }
+    if (hi3 - H2.y > H2.h * 0.5 || H2.y - lo3 > 0.02) HOUSES.splice(hk2, 1);
+  }
+
+  // 해안 마무리: 마을 밭을 다 칠한 뒤에도 물가에는 밭이 없게(밭이 바다까지 닿지 않게), 모래사장에는 숲도 없게
+  // 물가에서 1.3까지는 밭 없음, 2.3까지 서서히
+  for (var sk = 0; sk < FW * FH; sk++) { if (F[sk] <= 0 || CD[sk] > 2.4) continue; var shr = 1 - sstep(1.3, 2.3, CD[sk]); FLD[sk] *= 1 - shr; FOR[sk] *= 1 - (1 - CLF[sk]) * (1 - sstep(0.5, 1.0, CD[sk])); }
 
   // ───────────────────────── 렌더러·장면 ─────────────────────────
   if (window.getComputedStyle(container).position === 'static') container.style.position = 'relative';
@@ -548,7 +609,7 @@ function createWorldMap(container, THREE, opts) {
   var natTex = dataTex(natData, true), polTex = dataTex(polData, false), polColTex = dataTex(polCol, true), bdTex = dataTex(bdData, true);
   var terrU = { uMix: { value: 1 }, uSel: { value: -1 }, uMe: { value: -1 }, uDetail: { value: 0 }, uBorder: { value: 1 }, uRelief: { value: 0 }, uPol: { value: polTex }, uPolC: { value: polColTex }, uBd: { value: bdTex }, uTexel: { value: new THREE.Vector2(1 / FW, 1 / FH) } };
   var terrGeo = (function () {
-    var step = 2, VW = FW / step + 1, VH = FH / step + 1, pos = new Float32Array(VW * VH * 3), uv = new Float32Array(VW * VH * 2);
+    var step = MESH_STEP, VW = FW / step + 1, VH = FH / step + 1, pos = new Float32Array(VW * VH * 3), uv = new Float32Array(VW * VH * 2);
     for (var j = 0; j < VH; j++) for (var i = 0; i < VW; i++) {
       var x = -WX + i * CELL * step, z = -WZ + j * CELL * step, k = j * VW + i;
       pos[k * 3] = x; pos[k * 3 + 1] = heightAt(x, z); pos[k * 3 + 2] = z; uv[k * 2] = (x + WX) / (2 * WX); uv[k * 2 + 1] = (z + WZ) / (2 * WZ);
@@ -918,7 +979,7 @@ function createWorldMap(container, THREE, opts) {
       order.forEach(function (g) {
         var lv = clamp(levels[g] | 0, 0, 4), want = g === n.good ? COUNT_MAIN[lv] : COUNT_OTHER[lv], t = GOODS[g].prop, m = propMesh[t];
         for (var q = 0; q < want && si < n.spots.length; q++, si++) {
-          if (cnt[t] >= PCAP) break; var sp = n.spots[si], y = heightAt(sp[0], sp[1]), s = 0.85;
+          if (cnt[t] >= PCAP) break; var sp = n.spots[si], y = meshH(sp[0], sp[1]), s = 0.85;
           var c = Math.cos(sp[2]) * s, sn = Math.sin(sp[2]) * s, e = m.instanceMatrix.array, o = cnt[t] * 16;
           e[o] = c; e[o + 1] = 0; e[o + 2] = -sn; e[o + 3] = 0; e[o + 4] = 0; e[o + 5] = s; e[o + 6] = 0; e[o + 7] = 0; e[o + 8] = sn; e[o + 9] = 0; e[o + 10] = c; e[o + 11] = 0; e[o + 12] = sp[0]; e[o + 13] = y - 0.01; e[o + 14] = sp[1]; e[o + 15] = 1;
           cnt[t]++;
@@ -954,12 +1015,24 @@ function createWorldMap(container, THREE, opts) {
     var MAIN = { pos: [], idx: [] };
     // 길은 화면에 그려지는 지형 표면(meshH)에 붙인다. 원래 높이(heightAt)나 강물 높이를 따르면 산에서 공중에 떠 보인다.
     // 강물도 지형 표면에 붙어 있으므로 다리 자리(강가)는 강물보다 조금만 높인다
-    function vtx(T, x, z) { var y = Math.max(meshH(x, z), 0.012) + 0.007, ci = cellIdx(x, z); if (RD[ci] < 0.3) y += 0.008 * (1 - sstep(0.1, 0.3, RD[ci])); T.pos.push(x, y, z); return T.pos.length / 3 - 1; }
+    function vtx(T, x, z, floor) { var y = Math.max(meshH(x, z), 0.012) + 0.007, ci = cellIdx(x, z); if (RD[ci] < 0.3) y += 0.008 * (1 - sstep(0.1, 0.3, RD[ci])); if (floor) y = Math.max(y, floor); T.pos.push(x, y, z); return T.pos.length / 3 - 1; }
+    // 다리: 강·물길을 건너는 구간은 양쪽 둑 높이를 잇는 평평한 상판(골짜기로 내려갔다 올라오지 않게)
+    function wetAt(q) { var ci = cellIdx(q[0], q[1]); return RD[ci] < 0.06 || meshH(q[0], q[1]) < 0.004; }
+    function bridgeFloor(pts) {
+      var n = pts.length, fl = new Array(n).fill(0), i = 0;
+      while (i < n) {
+        if (!wetAt(pts[i])) { i++; continue; }
+        var a = i - 1, b = i; while (b < n && wetAt(pts[b])) b++;
+        if (a >= 0 && b < n && b - a <= 25) { var ha = Math.max(meshH(pts[a][0], pts[a][1]), 0.012) + 0.012, hb = Math.max(meshH(pts[b][0], pts[b][1]), 0.012) + 0.012; for (var k = a; k <= b; k++) fl[k] = lerp(ha, hb, (k - a) / (b - a)) + 0.006 * Math.sin(Math.PI * (k - a) / (b - a)); }
+        i = b;
+      }
+      return fl;
+    }
     function strip(T, pts, w) {
-      var L = [], R = [];
+      var L = [], R = [], fl = bridgeFloor(pts);
       for (var i = 0; i < pts.length; i++) {
         var a2 = pts[Math.max(0, i - 1)], b2 = pts[Math.min(pts.length - 1, i + 1)], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l * w, nz = dx / l * w;
-        L.push(vtx(T, pts[i][0] + nx, pts[i][1] + nz)); R.push(vtx(T, pts[i][0] - nx, pts[i][1] - nz));
+        L.push(vtx(T, pts[i][0] + nx, pts[i][1] + nz, fl[i])); R.push(vtx(T, pts[i][0] - nx, pts[i][1] - nz, fl[i]));
         if (i > 0) T.idx.push(L[i - 1], R[i - 1], L[i], R[i - 1], R[i], L[i]);
       }
     }
@@ -1114,6 +1187,7 @@ function createWorldMap(container, THREE, opts) {
     AIRPORTS.forEach(function (ap) {
       var c0 = Math.cos(ap.ry), s0 = Math.sin(ap.ry);
       function ap3(g, lx, ly, lz, col) { part(P, g, ap.x + lx * c0 + lz * s0, ap.h + ly, ap.z - lx * s0 + lz * c0, 0, ap.ry, col, 0); }
+      ap3(new THREE.BoxGeometry(RWL + 0.12, 0.2, 0.62), 0, -0.1, 0.19, '#8b8572'); // 활주로·계류장 밑 흙 둑(비탈에서 판 밑이 비어 보이지 않게)
       ap3(new THREE.BoxGeometry(RWL, 0.008, 0.085), 0, 0.004, 0, '#4b5057');
       for (var k = 0; k < 9; k++) ap3(new THREE.BoxGeometry(0.05, 0.0025, 0.006), -RWL / 2 + 0.1 + k * 0.113, 0.0085, 0, '#eef0f2');
       ap3(new THREE.BoxGeometry(0.06, 0.0025, 0.07), -RWL / 2 + 0.04, 0.0085, 0, '#eef0f2'); ap3(new THREE.BoxGeometry(0.06, 0.0025, 0.07), RWL / 2 - 0.04, 0.0085, 0, '#eef0f2');
@@ -1223,7 +1297,7 @@ function createWorldMap(container, THREE, opts) {
       for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var a = HG2.get(hk(i0 + di, j0 + dj)); if (!a) continue; for (var k = 0; k < a.length; k++) { var h = a[k], hr = Math.max(h.w, h.d) * (h.v === 2 ? 0.9 : 0.6); if (Math.hypot(h.x - x, h.z - z) < hr + rad) return false; } }
       return true;
     }
-    function put(t, x, z, ry, s, extra) { var a = [x, heightAt(x, z), z, ry, s]; if (extra) a.push.apply(a, extra); DECO[t].push(a); }
+    function put(t, x, z, ry, s, extra) { var a = [x, meshH(x, z), z, ry, s]; if (extra) a.push.apply(a, extra); DECO[t].push(a); }
     function dry(x, z) { return landAt(x, z) > 0.05 && !riverAt(x, z, 0.05); }
     var GRASS = { temperate: 1, plains: 1, boreal: 1, island: 1, outback: 1, tropical: 1 };
     SETTLE.forEach(function (s, si) {
@@ -1439,7 +1513,7 @@ function createWorldMap(container, THREE, opts) {
       var x = cx * CH + (i + r()) * s, z = cy * CH + (j + r()) * s, r1 = r(), r2 = r(), r3 = r(), r4 = r();
       if (Math.abs(x) > WX || Math.abs(z) > WZ) continue;
       var ci = cellIdx(x, z); if (r1 > FOR[ci]) continue;
-      out.push(x, z, r2 * 6.283, 0.75 + r3 * 0.55, CON[ci] ? 0 : 1, r4, heightAt(x, z));
+      out.push(x, z, r2 * 6.283, 0.75 + r3 * 0.55, CON[ci] ? 0 : 1, r4, meshH(x, z));
     }
     var arr = new Float32Array(out); chunkCache.set(key, arr); return arr;
   }
@@ -1873,6 +1947,28 @@ function createWorldMap(container, THREE, opts) {
     getState: function () { return { x: target.x, z: target.z, dist: dist, zoom: zoomT(), trees: treeCount, calls: renderer.info.render.calls, routes: routes.length, buildings: bldCount, deco: Object.keys(DECO).reduce(function (n, t) { return n + DECO[t].length; }, 0), settlements: SETTLE.length, airports: AIRPORTS.length, traffic: routes.reduce(function (n, r) { return n + r.vehicles.length; }, 0), airRoutes: routes.filter(function (r) { return r.air; }).length, vehicles: [].concat.apply([], routes.map(function (r) { return r.vehicles.map(function (v) { return [Math.round(v.m.position.x * 10) / 10, Math.round(v.m.position.y * 100) / 100, Math.round(v.m.position.z * 10) / 10, r.air ? 1 : 0]; }); })), rivers: RIVERS.map(function (r) { return [Math.round(r.pts[0][0] * 10) / 10, Math.round(r.pts[0][1] * 10) / 10, r.pts.length]; }), props: PROP_TYPES.reduce(function (s, t) { return s + propMesh[t].count; }, 0) }; },
     nations: NATIONS.map(function (n) { return { key: n.key, ko: n.ko, good: n.good, port: { x: n.port.x, z: n.port.z }, center: { x: n.cx, z: n.cz }, cells: n.cells }; }),
     settlements: SETTLE.map(function (s) { return { nation: s.n.key, capital: s.capital, port: !!s.port, noRoad: !!s.noRoad, x: s.x, z: s.z, r: s.R }; }),
+    // 점검용: 지형에 뜨거나 묻힌 물건, 끊긴 길, 물 위의 길. 숫자가 0에 가까울수록 좋다(테스트에서 씀)
+    audit: function () {
+      var out = { houseFloat: [], houseBuried: [], decoFloat: [], decoBuried: [], airportFloat: [], roadDangling: [], roadOverWater: [] };
+      function corners(x, z, w, d, ry) { var c = Math.cos(ry), s = Math.sin(ry), r = []; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { var lx = q[0] * w / 2, lz = q[1] * d / 2; r.push(meshH(x + lx * c + lz * s, z - lx * s + lz * c)); }); return r; }
+      HOUSES.forEach(function (h) {
+        var g = corners(h.x, h.z, h.w, h.d, h.ry || 0), lo = Math.min.apply(null, g), hi = Math.max.apply(null, g);
+        if (h.y - lo > 0.02) out.houseFloat.push([h.x, h.z, +(h.y - lo).toFixed(3)]);
+        if (hi - (h.y + h.h * 0.5) > 0) out.houseBuried.push([h.x, h.z, +(hi - h.y).toFixed(3)]);
+      });
+      Object.keys(DECO).forEach(function (t) { if (/boat/.test(t)) return; DECO[t].forEach(function (a) { var g = meshH(a[0], a[2]); if (a[1] - g > 0.02) out.decoFloat.push([t, a[0], a[2], +(a[1] - g).toFixed(3), +(heightAt(a[0], a[2]) - g).toFixed(3)]); if (g - a[1] > 0.03) out.decoBuried.push([t, a[0], a[2], +(g - a[1]).toFixed(3)]); }); });
+      AIRPORTS.forEach(function (ap) { var g = corners(ap.x + 0.15 * Math.sin(ap.ry), ap.z + 0.15 * Math.cos(ap.ry), RWL, 0.4, ap.ry), lo = Math.min.apply(null, g), hi = Math.max.apply(null, g); if (ap.h - lo > 0.03 || hi - ap.h > 0.03) out.airportFloat.push([ap.n.key, +(ap.h - lo).toFixed(3), +(hi - ap.h).toFixed(3)]); });
+      var ends = [], pts = []; out.roadRiverCross = []; ROADS.forEach(function (r, ri) { if (!r.pts) return; r.pts.forEach(function (p) { pts.push([p[0], p[1], ri]); if (landAt(p[0], p[1]) < 0) out.roadOverWater.push([+p[0].toFixed(2), +p[1].toFixed(2)]); if (RD[cellIdx(p[0], p[1])] < 0) out.roadRiverCross.push([+p[0].toFixed(2), +p[1].toFixed(2)]); }); ends.push([r.pts[0], ri], [r.pts[r.pts.length - 1], ri]); });
+      ends.forEach(function (e) {
+        var x = e[0][0], z = e[0][1], ok = false, k;
+        for (k = 0; k < SETTLE.length && !ok; k++) if (Math.hypot(SETTLE[k].x - x, SETTLE[k].z - z) < SETTLE[k].R * 1.05) ok = true;
+        for (k = 0; k < NATIONS.length && !ok; k++) if (Math.hypot(NATIONS[k].port.x - x, NATIONS[k].port.z - z) < 0.6) ok = true;
+        for (k = 0; k < AIRPORTS.length && !ok; k++) if (Math.hypot(AIRPORTS[k].x - x, AIRPORTS[k].z - z) < RWL * 0.7) ok = true;
+        for (k = 0; k < pts.length && !ok; k++) if (pts[k][2] !== e[1] && Math.hypot(pts[k][0] - x, pts[k][1] - z) < 0.12) ok = true;
+        if (!ok) out.roadDangling.push([+x.toFixed(2), +z.toFixed(2)]);
+      });
+      return out;
+    },
     tunnels: function () { return TUNNELS.map(function (t) { return { nation: NATIONS[t.ni].key, count: t.count, open: !!t.open, portals: t.portals }; }); },
     rivers: function () { return RIVERS.map(function (rv) { return { nation: NATIONS[rv.ni] ? NATIONS[rv.ni].key : null, pts: rv.pts, wid: rv.wid, mouth: rv.mouth }; }); },
     roads: function () { return ROADS.filter(function (r) { return r.pts; }).map(function (r) { return { w: r.w, pts: r.pts }; }); },
