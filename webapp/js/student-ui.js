@@ -10,6 +10,7 @@ import { openServer, parseRoomCode, serverList, LOCAL_FLAG } from './transport.j
 import { esc, $, render, num, fmt } from './dom.js';
 import { updateWorldMap, applyMapBackground } from './world-map.js';
 import { goodIcon } from './good-icons.js';
+import { createAdvisor } from './advisor-ui.js';
 
 applyMapBackground($('#entry-map'));
 
@@ -26,6 +27,7 @@ let win = null;            // open window: market | trade | invest | goals | log
 let marketTab = 'buy';
 let nationKey = null;
 let phaseKey = null;
+let advisor = null;       // 마루 선장(조언 캐릭터)
 const toasts = [];         // {id, kind, icon, title, text, actions, until, sig}
 const dismissed = new Set();
 let toastSeq = 0;
@@ -82,6 +84,7 @@ async function join() {
     lastMsg = r.ok ? '' : r.msg;
     if (!r.ok) { me = null; transport.close(); return; }
     leavePresence = server.presence.join({ role: 'student', room: parsed.code, country });
+    advisor = createAdvisor({ root: $('#advisor'), storageKey: `trade-advisor-tour:${parsed.code}:${country}`, onAction: advisorAction });
     history.replaceState(null, '', `?room=${parsed.code}&country=${country}${LOCAL_FLAG ? '&local=1' : ''}`);
     draw();
   } catch (err) {
@@ -413,6 +416,18 @@ function draw() {
   drawTurn();
   drawWindow();
   drawToasts();
+  advisor?.update(S);
+}
+
+// 조언 버튼: 알맞은 창을 연다(게임 행동은 학생이 직접 한다)
+function advisorAction(a) {
+  if (a === 'market:sell' || a === 'market:buy') { marketTab = a.split(':')[1]; return openWin('market'); }
+  if (a.startsWith('trade:')) { // 'trade:나라:물건:수량:값' → 사기 제안서를 채워서 연다
+    const [, to, good, qty, cash] = a.split(':');
+    Object.assign(drafts, { 'of-kind': 'buy', 'of-get-good': good, 'of-get-qty': qty, 'of-cash': cash }); if (to) drafts['of-to'] = to;
+    return openWin('trade');
+  }
+  openWin(a);
 }
 
 // ---------------------------------------------------------------- actions
@@ -465,7 +480,9 @@ async function act(el) {
   if (r) result(r);
 }
 function result(r) {
-  pushToast({ kind: r.ok ? 'ok' : 'warn', icon: r.ok ? '✔' : '✖', title: r.ok ? '완료' : '안 됐어요', text: r.msg, ms: r.ok ? 3500 : 6000 });
+  // AI 나라에 보낸 제안은 ok:true여도 accepted:false면 거절이다
+  const good = r.ok && r.accepted !== false;
+  pushToast({ kind: good ? 'ok' : 'warn', icon: good ? '✔' : '✖', title: !r.ok ? '안 됐어요' : r.accepted === false ? '거절됐어요' : r.accepted ? '거래 성사!' : '완료', text: r.msg, ms: good ? 3500 : 6000 });
   draw();
 }
 
