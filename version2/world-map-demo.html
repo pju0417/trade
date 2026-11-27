@@ -435,6 +435,8 @@ function createWorldMap(container, THREE, opts) {
   SETTLE.forEach(function (s, si) {
     var r = rng32(si * 7907 + 11), st = STYLES[s.n.biome], mod = MODERN[s.n.key] || 0.2, h0 = heightAt(s.x, s.z), ang = s.port ? (r(), s.portAng) : s.roadAng != null ? (r(), s.roadAng) : r() * Math.PI, ca = Math.cos(ang), sa = Math.sin(ang), nc = hexRGB(s.n.color);
     s.ang = ang;
+    // 집 회전(three.js Y축)은 반대로 돈다: 길 방향 (cos ang, sin ang)과 나란한 집의 회전값은 -ang다
+    var hr = -ang;
     if (s.capital) {
       var P = 0.15, nn = Math.ceil(s.R / P);
       for (var i = -nn; i <= nn; i++) for (var j = -nn; j <= nn; j++) {
@@ -444,12 +446,12 @@ function createWorldMap(container, THREE, opts) {
         var x = s.x + lx * ca - lz * sa, z = s.z + lx * sa + lz * ca;
         if (landAt(x, z) < 0.03 || riverAt(x, z, 0.06) || Math.abs(heightAt(x, z) - h0) > 0.4) continue;
         var y = heightAt(x, z) - 0.03;
-        if (d < 0.45 && r() < mod * (1 - d * 1.6)) { var tw = 0.08 + r() * 0.05, th = (0.18 + r() * 0.45) * mod * (1 - d) + 0.14; addH(5, x, y, z, tw, th, tw, ang, pick(GLASS, r), [0.92, 0.94, 0.96]); }
-        else if (d < 0.6 && r() < 0.4) { var fw = 0.1 + r() * 0.04, fd = 0.09 + r() * 0.03; if (st.house === 'gable') addH(1, x, y + 0.03 - HSINK, z, fw, 0.06 + r() * 0.025, fd, ang, pick(st.walls, r), pick(st.roofs, r)); else addH(4, x, y + 0.03 - HSINK, z, fw, 0.1 + r() * 0.05, fd, ang, pick(st.walls, r), pick(st.roofs, r)); }
-        else house(st, x, z, ang + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
+        if (d < 0.45 && r() < mod * (1 - d * 1.6)) { var tw = 0.08 + r() * 0.05, th = (0.18 + r() * 0.45) * mod * (1 - d) + 0.14; addH(5, x, y, z, tw, th, tw, hr, pick(GLASS, r), [0.92, 0.94, 0.96]); }
+        else if (d < 0.6 && r() < 0.4) { var fw = 0.1 + r() * 0.04, fd = 0.09 + r() * 0.03; if (st.house === 'gable') addH(1, x, y + 0.03 - HSINK, z, fw, 0.06 + r() * 0.025, fd, hr, pick(st.walls, r), pick(st.roofs, r)); else addH(4, x, y + 0.03 - HSINK, z, fw, 0.1 + r() * 0.05, fd, hr, pick(st.walls, r), pick(st.roofs, r)); }
+        else house(st, x, z, hr + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
       }
       // 시청(지붕이 나라 색) + 깃발
-      if (!USE_MODELS) { addB('wall', s.x, h0 - 0.03, s.z, 0.26, 0.15, 0.2, ang, [0.96, 0.94, 0.88]); addB('dome', s.x, h0 + 0.12, s.z, 0.08, 0.08, 0.08, 0, nc); }
+      if (!USE_MODELS) { addB('wall', s.x, h0 - 0.03, s.z, 0.26, 0.15, 0.2, hr, [0.96, 0.94, 0.88]); addB('dome', s.x, h0 + 0.12, s.z, 0.08, 0.08, 0.08, 0, nc); }
       var fo = USE_MODELS ? 0.36 : 0.2, fx = s.x + fo * ca, fz = s.z + fo * sa; addB('cyl', fx, h0, fz, 0.005, 0.32, 0.005, 0, [0.35, 0.35, 0.35]); addB('wall', fx + 0.035, h0 + 0.26, fz, 0.07, 0.045, 0.005, 0, nc);
       ROADS.push({ pts: [[s.x - s.R * ca, s.z - s.R * sa], [s.x + s.R * ca, s.z + s.R * sa]], w: 0.1 }); ROADS.push({ pts: [[s.x + s.R * sa, s.z - s.R * ca], [s.x - s.R * sa, s.z + s.R * ca]], w: 0.1 });
       ROADS.push({ disc: [s.x, s.z, 0.34] });
@@ -464,8 +466,8 @@ function createWorldMap(container, THREE, opts) {
         var x3 = s.x + lx2 * ca - lz2 * sa, z3 = s.z + lx2 * sa + lz2 * ca;
         if (landAt(x3, z3) < 0.03 || riverAt(x3, z3, 0.06) || Math.abs(heightAt(x3, z3) - h0) > 0.4) continue;
         var nh = HOUSES.length;
-        if (lx2 > s.R * 0.4 && r() < 0.75) addH(4, x3, heightAt(x3, z3) - HSINK, z3, 0.11 + r() * 0.025, 0.045 + r() * 0.015 + HSINK, 0.085, ang, ['#c9c2b4', '#b8b0a2', '#d6cfc0', '#a8604a'][Math.floor(r() * 4)], '#8a8f94');
-        else house(st, x3, z3, ang + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
+        if (lx2 > s.R * 0.4 && r() < 0.75) addH(4, x3, heightAt(x3, z3) - HSINK, z3, 0.11 + r() * 0.025, 0.045 + r() * 0.015 + HSINK, 0.085, hr, ['#c9c2b4', '#b8b0a2', '#d6cfc0', '#a8604a'][Math.floor(r() * 4)], '#8a8f94');
+        else house(st, x3, z3, hr + (r() < 0.5 ? 0 : Math.PI / 2), r, true);
         if (HOUSES.length > nh) built.push([lx2, lz2]);
       }
       // 격자 길은 양옆에 집이 있는 곳까지만 낸다(빈 모래밭으로 뻗다 끊기지 않게). 가운데 두 길은 마을 한가운데를 지나 늘 이어진다
@@ -488,13 +490,21 @@ function createWorldMap(container, THREE, opts) {
         else { ox = Math.cos(a2) * rad; oz = Math.sin(a2) * rad; if (Math.hypot(ox, oz) < 0.12) continue; }
         if (USE_MODELS && Math.hypot(ox, oz) < 0.2) continue; // 가운데는 마을 모델 자리
         var x2 = s.x + ox, z2 = s.z + oz; if (landAt(x2, z2) < 0.03 || riverAt(x2, z2, 0.06) || Math.abs(heightAt(x2, z2) - h0) > 0.35) continue;
-        house(st, x2, z2, onStreet ? ang : r() * Math.PI, r, false); cnt--;
+        house(st, x2, z2, onStreet ? hr : hr + (r() < 0.5 ? 0 : Math.PI / 2) + (r() - 0.5) * 0.25, r, false); cnt--; // 큰길 밖 집도 큰길과 나란하거나 직각(조금씩만 틀어짐)
       }
-      if (!USE_MODELS) { addB('wall', s.x, h0 - 0.03, s.z, 0.12, 0.1, 0.1, ang, [0.95, 0.93, 0.88]); addB('roof', s.x, h0 + 0.07, s.z, 0.13, 0.06, 0.11, ang, nc); }
+      if (!USE_MODELS) { addB('wall', s.x, h0 - 0.03, s.z, 0.12, 0.1, 0.1, hr, [0.95, 0.93, 0.88]); addB('roof', s.x, h0 + 0.07, s.z, 0.13, 0.06, 0.11, hr, nc); }
       // 큰길: 바깥 길 쪽(+)으로는 그 길과 이어지고, 반대쪽은 마을 끝 집에서 멈춘다(들판 한가운데서 끊기지 않게)
       ROADS.push({ pts: [[s.x - s.R * 0.7 * ca, s.z - s.R * 0.7 * sa], [s.x + s.R * ca, s.z + s.R * sa]], w: 0.07 });
     }
   });
+  // 가까운 길(maxD 안)의 방향 각도(cos, sin 기준). 없으면 null
+  function roadAngNear(x, z, maxD) {
+    var best = maxD, ang = null;
+    ROADS.forEach(function (rd) { if (!rd.pts) return; for (var k = 0; k < rd.pts.length - 1; k++) {
+      var a = rd.pts[k], b = rd.pts[k + 1], ex = b[0] - a[0], ez = b[1] - a[1], L2 = ex * ex + ez * ez || 1, t = clamp(((x - a[0]) * ex + (z - a[1]) * ez) / L2, 0, 1), d = Math.hypot(x - a[0] - ex * t, z - a[1] - ez * t);
+      if (d < best) { best = d; ang = Math.atan2(ez, ex); } } });
+    return ang;
+  }
   // 농가: 밭 사이 곳곳에 살림집 + 헛간(빈 들판을 채운다)
   var FARMS = [];
   SETTLE.forEach(function (s, si) {
@@ -504,7 +514,7 @@ function createWorldMap(container, THREE, opts) {
       var a = r() * Math.PI * 2, d = lerp(s.R + 0.4, farR - 0.15, r()), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
       if (landAt(x, z) < 0.06 || riverAt(x, z, 0.3) || Math.abs(heightAt(x, z) - h0) > 0.5 || !farFromSettle(x, z, 0.25)) continue;
       var ok = true; for (var q = 0; q < FARMS.length; q++) if (Math.hypot(FARMS[q].x - x, FARMS[q].z - z) < 0.7) { ok = false; break; } if (!ok) continue;
-      var ry = r() * Math.PI, c = Math.cos(ry), sn = Math.sin(ry), bx2 = x + 0.13 * c, bz2 = z - 0.13 * sn;
+      var ra = roadAngNear(x, z, 0.9), ry = -(ra != null ? ra : s.ang || 0) + (r() < 0.5 ? 0 : Math.PI / 2), c = Math.cos(ry), sn = Math.sin(ry), bx2 = x + 0.13 * c, bz2 = z - 0.13 * sn; // 가까운 길(없으면 마을 큰길)과 나란하거나 직각
       if (st.house === 'gable') {
         addH(r() < 0.5 ? 2 : 0, x, heightAt(x, z) - HSINK, z, 0.08 + r() * 0.02, 0.05 + HSINK, 0.065, ry, pick(st.walls, r), pick(st.roofs, r));
         addH(0, bx2, heightAt(bx2, bz2) - HSINK, bz2, 0.07, 0.055 + HSINK, 0.13, ry, ['#9c4a32', '#8a6a4a', '#7b5a43'][Math.floor(r() * 3)], '#5b4a3f');
