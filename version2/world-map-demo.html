@@ -193,7 +193,7 @@ function createWorldMap(container, THREE, opts) {
     }
     function flow(x, z) { return sampleArr(B, x, z) + Math.max(0, landAt(x, z)) * 1.1; }
     function nearPort(x, z, d) { for (var q = 0; q < NATIONS.length; q++) if (Math.hypot(NATIONS[q].port.x - x, NATIONS[q].port.z - z) < d) return true; return false; }
-    var r = rng32(9001), srcs = [], STEP = 0.3;
+    var r = rng32(9001), srcs = [], STEP = 0.3, SEA_BLEND = 2.2;
     for (var t = 0; t < 60000 && srcs.length < 26; t++) {
       var x = (r() * 2 - 1) * WX, z = (r() * 2 - 1) * WZ, f = landAt(x, z), h = heightAt(x, z);
       if (f < 0.22 || h < 0.5 || h > 1.5 || nearPort(x, z, 6)) continue;
@@ -230,7 +230,10 @@ function createWorldMap(container, THREE, opts) {
       // 하구: 바다에 가까울수록 조금 넓어지고, 물 높이는 바다 높이 바로 위까지 내려간다. 색은 바닷가 얕은 물빛으로 바뀌고 끝에서 투명해져 바다가 이어받는다
       var mouth = [], fade = [], low = 1e9;
       for (k = 0; k < n; k++) { var m = 1 - sstep(0.0, 0.06, landAt(pts[k][0], pts[k][1])); mouth.push(m); wid[k] *= 1 + 0.8 * m * m; low = Math.min(low, lerp(surf[k], 0.002, m)); surf[k] = low; fade.push(1 - sstep(0.55, 1.0, m)); }
-      RIVERS.push({ pts: pts, surf: surf, wid: wid, mouth: mouth, fade: fade, ni: nationAt(src[0], src[1]) }); return true;
+      // 바다로 나가는 강은 끝에서 SEA_BLEND만큼 거슬러 올라가며 물빛을 바닷가 얕은 물 색으로 서서히 바꾼다(진한 강물이 하늘색 바다에 박혀 보이지 않게)
+      var sea = new Array(n).fill(0);
+      if (landAt(pts[n - 1][0], pts[n - 1][1]) < 0.02) { var back = 0; for (k = n - 1; k >= 0; k--) { if (k < n - 1) back += Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); sea[k] = 1 - sstep(0, SEA_BLEND, back); } }
+      RIVERS.push({ pts: pts, surf: surf, wid: wid, mouth: mouth, fade: fade, sea: sea, ni: nationAt(src[0], src[1]) }); return true;
     }
     srcs.forEach(trace);
     // 강이 하나도 없는 나라(평야·사막)는 나라 안쪽 높은 곳 몇 군데에서 다시 시도한다
@@ -708,7 +711,7 @@ function createWorldMap(container, THREE, opts) {
     sh.uniforms.uRW = riverW;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uRW; attribute vec3 aOff; attribute vec3 aEF; varying vec3 vEF;').replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.xz += aOff.xy * max(0.0, uRW - aOff.z); vEF = aEF;');
     // 가장자리는 흐리게(땅에 스며들게), 하구에서는 투명해져 바다 물이 이어받는다
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vEF;').replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.66, 0.68), vEF.z * 0.85);\n  diffuseColor.a *= (1.0 - smoothstep(0.45, 1.0, abs(vEF.x))) * vEF.y;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vEF;').replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.36, 0.74, 0.72), smoothstep(0.0, 1.0, vEF.z));\n  diffuseColor.a *= (1.0 - smoothstep(0.45, 1.0, abs(vEF.x))) * vEF.y;');
   };
   (function () {
     var pos = [], uv = [], idx = [], off = [], ef = [];
@@ -718,7 +721,7 @@ function createWorldMap(container, THREE, opts) {
         var a = p[Math.max(0, k - 1)], b = p[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, w = rv.wid[k], y = rv.surf[k] + 0.004;
         if (k > 0) along += Math.hypot(p[k][0] - p[k - 1][0], p[k][1] - p[k - 1][1]);
         pos.push(p[k][0] + nx * w, y, p[k][1] + nz * w, p[k][0], y, p[k][1], p[k][0] - nx * w, y, p[k][1] - nz * w); uv.push(along * 2.2, 0, along * 2.2, w * 2.2, along * 2.2, w * 4.4); off.push(nx, nz, w, 0, 0, w, -nx, -nz, w);
-        var fd = rv.fade[k] * Math.min(1, k / 4), mo = rv.mouth[k]; ef.push(-1, fd, mo, 0, fd, mo, 1, fd, mo);
+        var fd = rv.fade[k] * Math.min(1, k / 4), mo = Math.max(rv.mouth[k], rv.sea[k]); ef.push(-1, fd, mo, 0, fd, mo, 1, fd, mo);
         if (k > 0) { var q = base + k * 3; idx.push(q - 3, q - 2, q, q - 2, q + 1, q, q - 2, q - 1, q + 1, q - 1, q + 2, q + 1); }
       }
     });
