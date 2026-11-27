@@ -152,6 +152,12 @@ function createWorldMap(container, THREE, opts) {
   function landAt(x, z) { return sampleArr(F, x, z); }
   function heightAt(x, z) { return sampleArr(HG, x, z); }
   function nationAt(x, z) { return ID[cellIdx(x, z)]; }
+  // 화면에 그려지는 지형 표면 높이(지형 메시는 0.5 간격 삼각형). 강물·길은 이 높이에 붙여야 산등성이에서 뜨거나 골짜기에서 묻히지 않는다
+  function meshH(x, z) {
+    var st = CELL * 2, gx = (x + WX) / st, gz = (z + WZ) / st, i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, x0 = -WX + i * st, z0 = -WZ + j * st;
+    var ha = heightAt(x0, z0), hb = heightAt(x0 + st, z0), hc = heightAt(x0, z0 + st), hd = heightAt(x0 + st, z0 + st);
+    return fx + fz < 1 ? ha + (hb - ha) * fx + (hc - ha) * fz : hd + (hc - hd) * (1 - fx) + (hb - hd) * (1 - fz);
+  }
   NATIONS.forEach(function (n, k) { var s = cSum[k]; n.cx = s[2] ? s[0] / s[2] : n.x; n.cz = s[2] ? s[1] / s[2] : n.z; n.cells = s[2]; });
 
   // 항구 자리: 나라 해안 중 세계 가운데에 가장 가까운 곳(바다가 앞에, 땅이 뒤에 넉넉히 있는 곳)
@@ -718,9 +724,11 @@ function createWorldMap(container, THREE, opts) {
     RIVERS.forEach(function (rv) {
       var p = rv.pts, n = p.length, base = pos.length / 3, along = 0;
       for (var k = 0; k < n; k++) {
-        var a = p[Math.max(0, k - 1)], b = p[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, w = rv.wid[k], y = rv.surf[k] + 0.004;
+        var a = p[Math.max(0, k - 1)], b = p[Math.min(n - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, w = rv.wid[k];
         if (k > 0) along += Math.hypot(p[k][0] - p[k - 1][0], p[k][1] - p[k - 1][1]);
-        pos.push(p[k][0] + nx * w, y, p[k][1] + nz * w, p[k][0], y, p[k][1], p[k][0] - nx * w, y, p[k][1] - nz * w); uv.push(along * 2.2, 0, along * 2.2, w * 2.2, along * 2.2, w * 4.4); off.push(nx, nz, w, 0, 0, w, -nx, -nz, w);
+        // 강물 띠는 화면의 지형 표면에 붙인다(산에서 강물이 공중에 뜨거나 지형 밑에 묻히지 않게). 바다 쪽 끝은 바다 높이 바로 위
+        var wy = function (x, z) { return Math.max(meshH(x, z), 0.002) + 0.004; };
+        pos.push(p[k][0] + nx * w, wy(p[k][0] + nx * w, p[k][1] + nz * w), p[k][1] + nz * w, p[k][0], wy(p[k][0], p[k][1]), p[k][1], p[k][0] - nx * w, wy(p[k][0] - nx * w, p[k][1] - nz * w), p[k][1] - nz * w); uv.push(along * 2.2, 0, along * 2.2, w * 2.2, along * 2.2, w * 4.4); off.push(nx, nz, w, 0, 0, w, -nx, -nz, w);
         var fd = rv.fade[k] * Math.min(1, k / 4), mo = Math.max(rv.mouth[k], rv.sea[k]); ef.push(-1, fd, mo, 0, fd, mo, 1, fd, mo);
         if (k > 0) { var q = base + k * 3; idx.push(q - 3, q - 2, q, q - 2, q + 1, q, q - 2, q - 1, q + 1, q - 1, q + 2, q + 1); }
       }
@@ -882,6 +890,15 @@ function createWorldMap(container, THREE, opts) {
   });
   natTex.needsUpdate = true;
   var COUNT_MAIN = [0, 3, 6, 10, 15], COUNT_OTHER = [0, 1, 3, 5, 8];
+  // 터널: 나라의 산업 중 하나라도 TUNNEL_LEVEL 레벨에 오르면 산을 넘던 길이 터널로 바뀐다
+  var TUNNELS = [], TUNNEL_LEVEL = 3;
+  function updateTunnels() {
+    TUNNELS.forEach(function (t) {
+      var n = NATIONS[t.ni], prof = n && profiles ? profiles[n.key] : null, lv = prof && prof.levels ? prof.levels : {}, top = 0;
+      for (var g in lv) top = Math.max(top, lv[g] | 0);
+      var dev = top >= TUNNEL_LEVEL; t.pass.visible = !dev; t.tun.visible = dev; t.open = dev;
+    });
+  }
   function rebuildProps() {
     var cnt = {}; PROP_TYPES.forEach(function (t) { cnt[t] = 0; });
     NATIONS.forEach(function (n) {
@@ -899,6 +916,7 @@ function createWorldMap(container, THREE, opts) {
       });
     });
     PROP_TYPES.forEach(function (t) { propMesh[t].count = cnt[t]; propMesh[t].instanceMatrix.needsUpdate = true; });
+    updateTunnels();
   }
 
   // ───────────────────────── 도시 건물·길 메시 ─────────────────────────
@@ -922,28 +940,81 @@ function createWorldMap(container, THREE, opts) {
       m.instanceMatrix.needsUpdate = true; m.frustumCulled = false; m.castShadow = true; m.receiveShadow = true; m.visible = false; scene.add(m); cityMeshes.push(m);
       if (t === 'wall' || t === 'cyl') bldCount += n;
     });
-    // 길: 지형을 따라가는 띠 + 수도 광장
-    var pos = [], idx = [];
-    // 지형 메시는 0.5 간격 삼각형이라 골짜기에서는 실제 높이보다 위에 있다. 길이 그 밑에 묻혀 끊겨 보이지 않게 메시 높이도 본다
-    function meshH(x, z) {
-      var st = CELL * 2, gx = (x + WX) / st, gz = (z + WZ) / st, i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, x0 = -WX + i * st, z0 = -WZ + j * st;
-      var ha = heightAt(x0, z0), hb = heightAt(x0 + st, z0), hc = heightAt(x0, z0 + st), hd = heightAt(x0 + st, z0 + st);
-      return fx + fz < 1 ? ha + (hb - ha) * fx + (hc - ha) * fz : hd + (hc - hd) * (1 - fx) + (hb - hd) * (1 - fz);
-    }
-    function vtx(x, z) { var y = Math.max(heightAt(x, z), meshH(x, z), 0.02) + 0.02, ci = cellIdx(x, z); if (RD[ci] < 0.3) y = Math.max(y, RSF[ci] + 0.03 * (1 - sstep(0.1, 0.3, RD[ci])) + 0.008); pos.push(x, y, z); return pos.length / 3 - 1; }
-    ROADS.forEach(function (rd) {
-      if (rd.disc) { var cx = rd.disc[0], cz = rd.disc[1], rr = rd.disc[2], c0 = vtx(cx, cz), prev = -1, first = -1; for (var q = 0; q <= 16; q++) { var aa = q / 16 * Math.PI * 2, v = q === 16 ? first : vtx(cx + Math.cos(aa) * rr, cz + Math.sin(aa) * rr); if (q === 0) first = v; if (prev >= 0) idx.push(c0, v, prev); prev = v; } return; }
-      var p = rd.pts, w = rd.w / 2, L = [], R = [];
-      var dense = []; for (var i = 0; i < p.length - 1; i++) { var sl = Math.hypot(p[i + 1][0] - p[i][0], p[i + 1][1] - p[i][1]), nsub = Math.max(1, Math.ceil(sl / 0.1)); for (var u = 0; u < nsub; u++) dense.push([lerp(p[i][0], p[i + 1][0], u / nsub), lerp(p[i][1], p[i + 1][1], u / nsub)]); } dense.push(p[p.length - 1]);
-      for (i = 0; i < dense.length; i++) {
-        var a2 = dense[Math.max(0, i - 1)], b2 = dense[Math.min(dense.length - 1, i + 1)], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l * w, nz = dx / l * w;
-        L.push(vtx(dense[i][0] + nx, dense[i][1] + nz)); R.push(vtx(dense[i][0] - nx, dense[i][1] - nz));
-        if (i > 0) idx.push(L[i - 1], R[i - 1], L[i], R[i - 1], R[i], L[i]);
+    // 길: 지형을 따라가는 띠 + 수도 광장. 산을 넘는 구간은 나라가 발전하면 터널로 바뀐다(updateTunnels)
+    var MAIN = { pos: [], idx: [] };
+    // 길은 화면에 그려지는 지형 표면(meshH)에 붙인다. 원래 높이(heightAt)나 강물 높이를 따르면 산에서 공중에 떠 보인다.
+    // 강물도 지형 표면에 붙어 있으므로 다리 자리(강가)는 강물보다 조금만 높인다
+    function vtx(T, x, z) { var y = Math.max(meshH(x, z), 0.012) + 0.007, ci = cellIdx(x, z); if (RD[ci] < 0.3) y += 0.008 * (1 - sstep(0.1, 0.3, RD[ci])); T.pos.push(x, y, z); return T.pos.length / 3 - 1; }
+    function strip(T, pts, w) {
+      var L = [], R = [];
+      for (var i = 0; i < pts.length; i++) {
+        var a2 = pts[Math.max(0, i - 1)], b2 = pts[Math.min(pts.length - 1, i + 1)], dx = b2[0] - a2[0], dz = b2[1] - a2[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l * w, nz = dx / l * w;
+        L.push(vtx(T, pts[i][0] + nx, pts[i][1] + nz)); R.push(vtx(T, pts[i][0] - nx, pts[i][1] - nz));
+        if (i > 0) T.idx.push(L[i - 1], R[i - 1], L[i], R[i - 1], R[i], L[i]);
       }
+    }
+    // 터널 자리: 길 위 높은 봉우리 중 양쪽으로 TUN_DROP 이상 내려가는 곳(길이 TUN_MIN~TUN_MAX). 양쪽 발치가 터널 입구다
+    var TUN_DROP = 0.16, TUN_MIN = 0.5, TUN_MAX = 4.5;
+    function findTunnels(pts) {
+      var n = pts.length, hs = pts.map(function (q) { return meshH(q[0], q[1]); }), along = [0], out = [], i;
+      for (i = 1; i < n; i++) along.push(along[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      var order = hs.map(function (h, k) { return k; }).sort(function (a, b) { return hs[b] - hs[a]; });
+      order.forEach(function (pk) {
+        if (out.some(function (t) { return pk >= t[0] && pk <= t[1]; })) return;
+        var a = pk, b = pk; while (a > 0 && hs[a] > hs[pk] - TUN_DROP) a--; while (b < n - 1 && hs[b] > hs[pk] - TUN_DROP) b++;
+        if (hs[a] > hs[pk] - TUN_DROP || hs[b] > hs[pk] - TUN_DROP || a < 2 || b > n - 3) return; // 길 끝(마을 안)에는 터널을 두지 않는다
+        var len = along[b] - along[a]; if (len < TUN_MIN || len > TUN_MAX) return;
+        if (out.some(function (t) { return !(b < t[0] - 2 || a > t[1] + 2); })) return;
+        out.push([a, b]);
+      });
+      return out.sort(function (x, y) { return x[0] - y[0]; });
+    }
+    var PASS = {}, PORTALS = {}; // 나라 번호 → 고개 넘는 길(발전 전) / 터널 입구(발전 후)
+    ROADS.forEach(function (rd) {
+      if (rd.disc) { var cx = rd.disc[0], cz = rd.disc[1], rr = rd.disc[2], c0 = vtx(MAIN, cx, cz), prev = -1, first = -1; for (var q = 0; q <= 16; q++) { var aa = q / 16 * Math.PI * 2, v = q === 16 ? first : vtx(MAIN, cx + Math.cos(aa) * rr, cz + Math.sin(aa) * rr); if (q === 0) first = v; if (prev >= 0) MAIN.idx.push(c0, v, prev); prev = v; } return; }
+      var p = rd.pts, w = rd.w / 2;
+      var dense = []; for (var i = 0; i < p.length - 1; i++) { var sl = Math.hypot(p[i + 1][0] - p[i][0], p[i + 1][1] - p[i][1]), nsub = Math.max(1, Math.ceil(sl / 0.1)); for (var u = 0; u < nsub; u++) dense.push([lerp(p[i][0], p[i + 1][0], u / nsub), lerp(p[i][1], p[i + 1][1], u / nsub)]); } dense.push(p[p.length - 1]);
+      var tun = findTunnels(dense), from = 0;
+      tun.forEach(function (t) {
+        strip(MAIN, dense.slice(from, t[0] + 1), w);
+        var mid = dense[(t[0] + t[1]) >> 1], ni = nationAt(mid[0], mid[1]); if (ni < 0) ni = nationAt(dense[t[0]][0], dense[t[0]][1]);
+        strip(PASS[ni] || (PASS[ni] = { pos: [], idx: [] }), dense.slice(t[0], t[1] + 1), w);
+        // 입구는 터널 안쪽(봉우리 쪽)을 바라본다
+        [[t[0], t[0] + 1], [t[1], t[1] - 1]].forEach(function (e) { var a = dense[e[0]], b = dense[e[1]]; (PORTALS[ni] || (PORTALS[ni] = [])).push({ x: a[0], z: a[1], ang: Math.atan2(b[0] - a[0], b[1] - a[1]), w: rd.w }); });
+        from = t[1];
+      });
+      strip(MAIN, dense.slice(from), w);
     });
-    var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
     var roadMat = new THREE.MeshLambertMaterial({ color: 0x8c7b62, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide });
-    var rm = new THREE.Mesh(g, roadMat); rm.receiveShadow = true; rm.visible = false; scene.add(rm); cityMeshes.push(rm);
+    function roadMesh(T, parent) { var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(T.pos, 3)); g.setIndex(T.idx); g.computeVertexNormals(); var m = new THREE.Mesh(g, roadMat); m.receiveShadow = true; m.visible = false; parent.add(m); cityMeshes.push(m); return m; }
+    roadMesh(MAIN, scene);
+    // 터널 입구: 산비탈에 박힌 돌 아치 + 어두운 굴. 나라마다 묶어서 발전하면 켠다
+    var portalStone = new THREE.MeshLambertMaterial({ color: 0x7a746a }), portalDark = new THREE.MeshBasicMaterial({ color: 0x15130f, side: THREE.DoubleSide });
+    Object.keys(PORTALS).forEach(function (ni) {
+      var grpPass = new THREE.Group(), grpTun = new THREE.Group(); scene.add(grpPass); scene.add(grpTun); grpTun.visible = false;
+      if (PASS[ni]) roadMesh(PASS[ni], grpPass);
+      var stoneParts = [], darkParts = [];
+      PORTALS[ni].forEach(function (pt) {
+        // 비탈에 기대 선 돌벽(위가 산 쪽으로 기움) + 아치 모양 굴. 로컬 -z = 길이 들어오는 바깥쪽
+        var y = meshH(pt.x, pt.z) - 0.01, W = pt.w * 2.3, H = W * 0.62, R0 = W * 0.3, holeH = H * 0.32;
+        var sx = Math.sin(pt.ang), sz = Math.cos(pt.ang), rise = meshH(pt.x + sx * 0.2, pt.z + sz * 0.2) - meshH(pt.x, pt.z), lean = clamp(Math.PI / 2 - Math.atan2(rise, 0.2) - 0.14, 0.5, 1.4); // 비탈에 거의 붙여 눕힌다(조금만 더 서게)
+        var m = new THREE.Matrix4().makeRotationY(pt.ang).setPosition(pt.x, y, pt.z).multiply(new THREE.Matrix4().makeRotationX(lean));
+        var put = function (arr, geo, x, yy, z) { geo.applyMatrix4(new THREE.Matrix4().makeTranslation(x, yy, z)); geo.applyMatrix4(m); arr.push(geo); };
+        put(stoneParts, new THREE.BoxGeometry(W, H, 0.03), 0, H / 2, 0.015);                                    // 돌벽
+        put(stoneParts, new THREE.BoxGeometry(W * 1.08, H * 0.12, 0.045), 0, H * 0.94, 0.0);                     // 위 처마돌
+        put(darkParts, new THREE.PlaneGeometry(R0 * 2, holeH), 0, holeH / 2 + 0.012, -0.002);                     // 굴 아래쪽
+        put(darkParts, new THREE.CircleGeometry(R0, 12, 0, Math.PI), 0, holeH + 0.012, -0.002);                  // 굴 위 아치
+      });
+      [[stoneParts, portalStone], [darkParts, portalDark]].forEach(function (pm) {
+        var gs = pm[0].map(function (g) { return g.index ? g.toNonIndexed() : g; }), total = gs.reduce(function (s2, g) { return s2 + g.attributes.position.count; }, 0);
+        var P = new Float32Array(total * 3), Nn = new Float32Array(total * 3), o = 0;
+        gs.forEach(function (g) { P.set(g.attributes.position.array, o * 3); Nn.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; });
+        var g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(Nn, 3));
+        var mesh = new THREE.Mesh(g, pm[1]); mesh.castShadow = pm[1] === portalStone; mesh.receiveShadow = true; mesh.visible = false; grpTun.add(mesh); cityMeshes.push(mesh);
+      });
+      TUNNELS.push({ ni: +ni, pass: grpPass, tun: grpTun, count: PORTALS[ni].length / 2, portals: PORTALS[ni].map(function (q) { return [q.x, q.z]; }) });
+    });
+    updateTunnels();
   })();
 
   // ───────────────────────── 집 (종류별 인스턴스 + 창문·문·목재 무늬 셰이더) ─────────────────────────
@@ -1792,6 +1863,7 @@ function createWorldMap(container, THREE, opts) {
     getState: function () { return { x: target.x, z: target.z, dist: dist, zoom: zoomT(), trees: treeCount, calls: renderer.info.render.calls, routes: routes.length, buildings: bldCount, deco: Object.keys(DECO).reduce(function (n, t) { return n + DECO[t].length; }, 0), settlements: SETTLE.length, airports: AIRPORTS.length, traffic: routes.reduce(function (n, r) { return n + r.vehicles.length; }, 0), airRoutes: routes.filter(function (r) { return r.air; }).length, vehicles: [].concat.apply([], routes.map(function (r) { return r.vehicles.map(function (v) { return [Math.round(v.m.position.x * 10) / 10, Math.round(v.m.position.y * 100) / 100, Math.round(v.m.position.z * 10) / 10, r.air ? 1 : 0]; }); })), rivers: RIVERS.map(function (r) { return [Math.round(r.pts[0][0] * 10) / 10, Math.round(r.pts[0][1] * 10) / 10, r.pts.length]; }), props: PROP_TYPES.reduce(function (s, t) { return s + propMesh[t].count; }, 0) }; },
     nations: NATIONS.map(function (n) { return { key: n.key, ko: n.ko, good: n.good, port: { x: n.port.x, z: n.port.z }, center: { x: n.cx, z: n.cz }, cells: n.cells }; }),
     settlements: SETTLE.map(function (s) { return { nation: s.n.key, capital: s.capital, port: !!s.port, noRoad: !!s.noRoad, x: s.x, z: s.z, r: s.R }; }),
+    tunnels: function () { return TUNNELS.map(function (t) { return { nation: NATIONS[t.ni].key, count: t.count, open: !!t.open, portals: t.portals }; }); },
     rivers: function () { return RIVERS.map(function (rv) { return { nation: NATIONS[rv.ni] ? NATIONS[rv.ni].key : null, pts: rv.pts, wid: rv.wid, mouth: rv.mouth }; }); },
     roads: function () { return ROADS.filter(function (r) { return r.pts; }).map(function (r) { return { w: r.w, pts: r.pts }; }); },
     loadFile: loadFile, placeModel: placeModel,
