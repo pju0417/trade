@@ -64,7 +64,7 @@ export function adviceFor(S) {
     if (surplus.length) {
       const g = surplus[0], keep = Math.min(2, Math.floor(g.extra / 3)), sell = Math.max(1, g.extra - keep), q = S.quotes[g.good][g.gen];
       const rival = cheapest(S, g.good);
-      tips.push({ id: 'sell-' + g.good, mood: '', text: `${icon(g.good)} <b>${esc(j(g.label + genTxt(g.good, g.gen), '이', '가'))}</b> 이번 정산에 쓰고도 <b>${g.extra}개</b> 남아요. <b>${sell}개</b>쯤 시장에 내놓아 보세요. 기준 가격은 <b>${q}G</b>${rival ? `, 지금 가장 싸게 파는 나라는 ${esc(rival.seller_label)} ${rival.price}G` : ''}예요. 다른 나라가 사서 쓰면 <b>수출 점수</b>가 올라가요.`, action: ['팔러 가기', 'market:sell'] });
+      tips.push({ id: 'sell-' + g.good, mood: '', text: `${icon(g.good)} <b>${esc(j(g.label + genTxt(g.good, g.gen), '이', '가'))}</b> 이번 정산에 쓰고도 <b>${g.extra}개</b> 남아요. <b>${sell}개</b>쯤 시장에 내놓아 보세요. 기준 가격은 <b>${q}G</b>${rival ? `, 지금 가장 싸게 파는 나라는 ${esc(rival.seller_label)} ${rival.price}G` : ''}예요. 다른 나라가 사서 쓰면 <b>수출 점수</b>가 올라가요.`, action: ['팔러 가기', `market:sell:${g.good}-${g.gen}:${sell}`] });
     } else if (S.my_orders.length) tips.push({ id: 'listed', mood: 'happy', text: `좋아요! 시장에 물건을 ${S.my_orders.reduce((a, o) => a + o.qty, 0)}개 내놓았어요. 다 했으면 오른쪽 아래 <b>준비 완료</b>를 눌러요.` });
     if (short.length) tips.push({ id: 'pre-short', mood: 'warn', text: `이번 정산에 ${short.map((r) => `${icon(r.good)} <b>${esc(r.label)} ${r.short}개</b>`).join(', ')}가 모자라요. 다음 <b>거래</b> 단계에서 사면 돼요. 지금은 판매 중인 가격을 미리 봐 두세요.`, action: ['시장 가격 보기', 'market:buy'] });
   }

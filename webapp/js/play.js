@@ -31,9 +31,10 @@ let lastMsg = '';
 let cls = null;
 let S = null;
 let shown = null;
+let barOpen = null; // 위쪽 진행 막대: 나라가 하나면 처음에 접어 둔다(게임 화면을 가리지 않게)
 
 function setup() {
-  $('#bar').hidden = true;
+  $('#bar').hidden = true; $('#bar-handle').hidden = true; barOpen = null;
   $('#frames').innerHTML = '';
   $('#app').hidden = false;
   const saved = savedClasses(storage);
@@ -71,7 +72,10 @@ function bar() {
   const v = r.view;
   const mine = Object.keys(r.tokens);
   const ready = r.info.ready;
+  if (barOpen === null) barOpen = mine.length > 1;
+  $('#bar').hidden = !barOpen; $('#bar-handle').hidden = barOpen;
   render($('#bar'), `
+    <button data-act="bar" aria-label="진행 막대 접기" title="접기">▲</button>
     <span><b>${v.phase === 'finished' ? '게임 끝' : `${v.round}라운드 · ${PHASE[v.phase]}`}</b></span>
     <span>준비 ${ready.length}/${r.info.need.length}${r.info.countdown_ms !== null ? ' · 곧 넘어가요' : ''}</span>
     <span class="play-tabs">${mine.map((n) => `<button data-act="show" data-country="${n}" aria-pressed="${shown === n}">${KO[n]}${ready.includes(n) ? ' ✓' : ''}</button>`).join('')}</span>
@@ -147,6 +151,7 @@ async function act(el) {
   }
   if (!cls) return;
   const code = S.rooms[0].code;
+  if (a === 'bar') { barOpen = !barOpen; bar(); return; }
   if (a === 'show') { shown = el.dataset.country; frames(); bar(); }
   else if (a === 'adv') {
     if (S.rooms[0].view.pending_offers && !confirm('기다리는 제안이 있어요. 거래 단계가 끝나면 취소돼요. 넘어갈까요?')) return;

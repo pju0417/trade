@@ -23,10 +23,14 @@
   .play-frames iframe { flex: 1; border: 0; width: 100%; height: 100%; }
   .play-frames iframe[hidden] { display: none; }
   .play-world { padding: 0 16px 16px; }
+  /* 접었을 때: 화면 위 가운데에 작은 손잡이만 */
+  .play-handle { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 20; min-height: 0; padding: 1px 12px 3px; font-size: .75rem; border: 0; border-radius: 0 0 8px 8px; background: rgba(19, 46, 61, .9); color: #e9c46a; box-shadow: 0 2px 6px rgba(0, 0, 0, .4); cursor: pointer; }
+  .play-handle[hidden] { display: none; }
 </style>
 </head>
 <body class="play-page">
 <header id="bar" class="play-bar" hidden></header>
+<button id="bar-handle" class="play-handle" data-act="bar" hidden aria-label="진행 막대 펴기">▼ 진행</button>
 <main id="app" class="shell">불러오는 중…</main>
 <div id="frames" class="play-frames"></div>
 <script type="module" src="js/play.js"></script>

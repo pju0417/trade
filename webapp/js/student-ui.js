@@ -9,7 +9,7 @@ import { StudentClient } from './student-client.js';
 import { openServer, parseRoomCode, serverList, LOCAL_FLAG } from './transport.js';
 import { esc, $, render, num, fmt } from './dom.js';
 import { updateWorldMap, applyMapBackground } from './world-map.js';
-import { goodIcon } from './good-icons.js';
+import { goodIcon, uiIcon } from './good-icons.js';
 import { createAdvisor } from './advisor-ui.js';
 
 applyMapBackground($('#entry-map'));
@@ -39,10 +39,10 @@ const GOODS = ['wheat', 'banana', 'fuel', 'ore', 'machine', 'electronics'];
 const GEN_GOODS = ['machine', 'electronics'];
 const PARTS = { export: '수출', industry: '산업', living: '생활', trade: '무역', utilization: '물건 활용', cash: '현금' };
 const PHASE_START = {
-  listing: ['🏪', '판매 등록이 시작됐어요', '남는 물건을 시장에 내놓으세요. AI 나라 가격을 보고 정하면 좋아요.'],
-  trading: ['🤝', '거래가 시작됐어요', '필요한 물건을 사거나 다른 나라에 직접 거래를 제안하세요.'],
-  invest: ['🏭', '투자 시간이에요', '산업을 키우고 다음 라운드 주력 산업을 정하세요.'],
-  finished: ['🏁', '게임이 끝났어요', '우리 나라 목표 달성도를 확인하세요.'],
+  listing: ['listing', '판매 등록이 시작됐어요', '남는 물건을 시장에 내놓으세요. AI 나라 가격을 보고 정하면 좋아요.'],
+  trading: ['trading', '거래가 시작됐어요', '필요한 물건을 사거나 다른 나라에 직접 거래를 제안하세요.'],
+  invest: ['invest', '투자 시간이에요', '산업을 키우고 다음 라운드 주력 산업을 정하세요.'],
+  finished: ['finished', '게임이 끝났어요', '우리 나라 목표 달성도를 확인하세요.'],
 };
 
 const params = new URLSearchParams(location.search);
@@ -168,7 +168,7 @@ function drawTop() {
   }).join('');
   const phase = S.phase === 'finished' ? '게임 끝' : `${S.round}라운드 · ${S.phase_label}`;
   render($('#hud-top'), `
-    <div class="res money" title="돈">💰<b>${S.cash}G</b></div>${res}
+    <div class="res money" title="돈">${uiIcon('coin', 'coin')}<b>${S.cash}<small class="unit">G</small></b></div>${res}
     <div class="res turn"><strong>${esc(S.label)} · ${esc(phase)}</strong><span id="clock">${S.room?.paused ? '잠시 멈춤' : ''}</span></div>`, drafts);
   updateClock();
 }
@@ -177,10 +177,14 @@ function drawTurn() {
   if (!S.room || S.phase === 'finished') { render($('#hud-turn'), '', drafts); return; }
   const R = S.room; const mine = R.ready.includes(S.country);
   const next = { listing: '거래로', trading: '투자로', invest: '다음 라운드로' }[S.phase] || '다음으로';
-  const btn = !S.is_student ? '<button class="end-turn waiting" disabled>AI가 운영 중</button>'
-    : mine ? '<button class="end-turn waiting" data-act="ready" data-on="0">준비 취소</button>'
-      : `<button class="end-turn" data-act="ready" data-on="1">준비 완료 ▶<span class="next">${next}</span></button>`;
-  render($('#hud-turn'), `<div class="turn-note">${esc(MODE[R.mode])}<br>준비 <b>${R.ready.length}/${R.need.length}</b> 나라 <b id="countdown"></b></div>${btn}`, drafts);
+  // 턴 다이얼: 바깥 고리 = 준비한 나라 수, 가운데 = 지금 단계 그림, 아래 = 누르면 할 일
+  const C = 2 * Math.PI * 46, frac = R.need.length ? R.ready.length / R.need.length : 0;
+  const ring = `<svg class="turn-ring" viewBox="0 0 104 104" aria-hidden="true"><circle cx="52" cy="52" r="46" class="track"/><circle cx="52" cy="52" r="46" class="fill" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}"/></svg>`;
+  const dial = (cls, attrs, label, sub) => `<button class="turn-dial ${cls}" ${attrs}>${ring}<span class="dial-core">${uiIcon(mine ? 'check' : S.phase)}</span><span class="dial-label">${label}${sub ? `<small>${sub}</small>` : ''}</span></button>`;
+  const btn = !S.is_student ? dial('waiting', 'disabled', 'AI 운영 중', '')
+    : mine ? dial('waiting', 'data-act="ready" data-on="0"', '준비 끝', '누르면 취소')
+      : dial('', 'data-act="ready" data-on="1"', '준비 완료', next);
+  render($('#hud-turn'), `<div class="turn-note">${esc(MODE[R.mode])} · 준비 <b>${R.ready.length}/${R.need.length}</b><b id="countdown"></b></div>${btn}`, drafts);
   updateClock();
 }
 
@@ -189,7 +193,7 @@ function updateClock() {
   const R = S.room;
   const dl = left(R.deadline_ms); const cd = left(R.countdown_ms);
   const clock = $('#clock'); const countdown = $('#countdown');
-  const time = R.paused ? '⏸ 잠시 멈춤' : dl !== null ? `⏳ 남은 시간 ${mmss(dl)}` : esc(MODE[R.mode]);
+  const time = R.paused ? '잠시 멈춤' : dl !== null ? `남은 시간 ${mmss(dl)}` : MODE[R.mode];
   if (clock && clock.textContent !== time) clock.textContent = time;
   const nx = cd !== null ? ` · ${Math.ceil(cd / 1000)}초 뒤 넘어가요` : '';
   if (countdown && countdown.textContent !== nx) countdown.textContent = nx;
@@ -200,15 +204,15 @@ setInterval(updateClock, 1000);
 function drawMenu() {
   const inc = S.offers.filter(incoming).length;
   const items = [
-    ['market', '🏪', '시장', selling(), 0],
-    ['trade', '🤝', '거래', trading(), inc],
-    ['invest', '🏭', '투자', S.phase === 'invest', 0],
-    ['goals', '🎯', '목표', false, shortages().length],
-    ['log', '📜', '기록', false, 0],
+    ['market', 'market', '시장', selling(), 0],
+    ['trade', 'trade', '거래', trading(), inc],
+    ['invest', 'invest', '투자', S.phase === 'invest', 0],
+    ['goals', 'goals', '목표', false, shortages().length],
+    ['log', 'log', '기록', false, 0],
   ];
-  if (S.phase === 'finished') items.unshift(['result', '🏁', '결과', true, 0]);
+  if (S.phase === 'finished') items.unshift(['result', 'result', '결과', true, 0]);
   render($('#hud-menu'), items.map(([k, ico, t, hot, badge]) => `<button data-act="win" data-win="${k}" aria-pressed="${win === k}" class="${hot ? 'hot' : ''}">
-    <span class="ico">${ico}</span>${t}${badge ? `<span class="badge">${badge}</span>` : ''}</button>`).join(''), drafts);
+    <span class="ico">${uiIcon(ico)}</span>${t}${badge ? `<span class="badge">${badge}</span>` : ''}</button>`).join(''), drafts);
 }
 
 // ---------------------------------------------------------------- notifications
@@ -220,17 +224,17 @@ function pushToast(t) {
 }
 function persistentToasts() {
   const out = [];
-  if (S.room?.paused) out.push({ sig: 'paused', kind: 'warn', icon: '⏸', title: '잠시 멈췄어요', text: '선생님이 게임을 멈췄어요. 시간도 멈춰 있어요.' });
-  if (!S.is_student && S.phase !== 'finished') out.push({ sig: 'ai', kind: 'warn', icon: '🤖', title: 'AI가 운영 중', text: '지금은 선생님이 우리 나라를 AI에게 맡겼어요.' });
+  if (S.room?.paused) out.push({ sig: 'paused', kind: 'warn', icon: 'pause', title: '잠시 멈췄어요', text: '선생님이 게임을 멈췄어요. 시간도 멈춰 있어요.' });
+  if (!S.is_student && S.phase !== 'finished') out.push({ sig: 'ai', kind: 'warn', icon: 'ai', title: 'AI가 운영 중', text: '지금은 선생님이 우리 나라를 AI에게 맡겼어요.' });
   const sh = shortages();
   if (sh.length) {
     const sig = 'short:' + S.round + ':' + sh.map((r) => `${r.good}${r.short}`).join(',');
-    out.push({ sig, kind: 'warn', icon: '⚠️', title: '정산 때 모자라요',
+    out.push({ sig, kind: 'warn', icon: 'warn', title: '정산 때 모자라요',
       text: sh.map((r) => `${r.label} ${r.short}개 (${r.purpose})`).join(', ') + (trading() ? '. 시장에서 사거나 거래를 제안하세요.' : '. 거래 단계에서 구할 수 있어요.'),
       actions: [['시장 열기', 'market'], ['자세히', 'goals']] });
   }
   for (const o of S.offers.filter(incoming)) {
-    out.push({ sig: 'offer:' + o.id, kind: '', icon: '📨', title: `${gname(o.from)}의 제안`, text: offerText(o),
+    out.push({ sig: 'offer:' + o.id, kind: '', icon: 'mail', title: `${gname(o.from)}의 제안`, text: offerText(o),
       actions: [['수락', `respond:${o.id}:1`], ['거절', `respond:${o.id}:0`]] });
   }
   return out.filter((t) => !dismissed.has(t.sig));
@@ -238,7 +242,7 @@ function persistentToasts() {
 function drawToasts() {
   if (!S) return;
   const list = [...persistentToasts(), ...toasts];
-  render($('#toasts'), list.map((t) => `<div class="toast ${t.kind || ''}" role="status"><span class="t-ico">${t.icon || '🔔'}</span>
+  render($('#toasts'), list.map((t) => `<div class="toast ${t.kind || ''}" role="status"><span class="t-ico">${uiIcon(t.icon || 'bell')}</span>
     <div class="t-body"><b>${esc(t.title)}</b>${esc(t.text || '')}
     ${t.actions ? `<div class="t-actions">${t.actions.map(([txt, a]) => `<button class="btn ${a.endsWith(':0') ? 'ghost' : ''}" data-act="toast" data-do="${esc(a)}">${esc(txt)}</button>`).join('')}</div>` : ''}</div>
     <button class="x" data-act="dismiss" data-sig="${esc(t.sig || '')}" data-id="${t.id || ''}" aria-label="알림 닫기">×</button></div>`).join(''), drafts);
@@ -259,18 +263,18 @@ function marketWindow() {
     const cls = o.price < o.reference ? 'cheap' : o.price > o.reference ? 'dear' : '';
     return `<li class="row"><div class="name"><b>${esc(o.seller_label)}</b><small>${o.seller_is_student ? '학생 · ' : ''}${genTxt(o.good, o.gen).trim() ? genTxt(o.good, o.gen).trim() + ' · ' : ''}${o.qty}개 판매 중</small></div>
       <div class="price ${cls}">${o.price}G<small>기준 ${o.reference}G</small></div>
-      ${trading() ? `<div class="controls"><input aria-label="구매 수량" data-k="bq-${o.oid}" type="number" min="1" max="${o.qty}" value="1"><button class="btn" data-act="buy" data-oid="${o.oid}">사기</button></div>` : ''}</li>`;
+      ${trading() ? `<div class="controls">${stepper('bq-' + o.oid, { max: o.qty, label: '구매 수량', unit: '개' })}<button class="btn" data-act="buy" data-oid="${o.oid}">사기</button></div>` : ''}</li>`;
   }).join('')}</ul>`).join('');
   const sell = S.stock.filter((r) => r.free > 0).map((r) => {
     const k = `${r.good}-${r.gen}`;
     return `<li class="row">${icon(r.good)}<div class="name"><b>${esc(r.label)}${genTxt(r.good, r.gen)}</b><small>창고 ${r.free}개 · 기준 ${S.quotes[r.good][r.gen]}G</small></div>
-      <div class="controls"><label class="inline">수량<input data-k="lq-${k}" type="number" min="1" max="${r.free}"></label>
-      <label class="inline">개당<input data-k="lp-${k}" type="number" min="1" placeholder="${S.quotes[r.good][r.gen]}"></label>
+      <div class="controls"><label class="inline">수량${stepper('lq-' + k, { max: r.free, label: '내놓을 수량', unit: '개' })}</label>
+      <label class="inline">개당${stepper('lp-' + k, { max: 999, value: S.quotes[r.good][r.gen], label: '개당 가격', unit: 'G' })}</label>
       <button class="btn" data-act="list" data-good="${r.good}" data-gen="${r.gen}">내놓기</button></div></li>`;
   }).join('');
   const mine = S.my_orders.map((o) => `<li class="row">${icon(o.good)}<div class="name"><b>${esc(o.label)}${genTxt(o.good, o.gen)} ${o.qty}개</b><small>기준 ${o.reference}G</small></div>
     <div class="price">${o.price}G</div>
-    <div class="controls"><input data-k="rp-${o.oid}" type="number" min="1" placeholder="새 가격"><button class="btn ghost" data-act="reprice" data-oid="${o.oid}">가격 변경</button>
+    <div class="controls">${stepper('rp-' + o.oid, { max: 999, value: o.price, label: '새 가격', unit: 'G' })}<button class="btn ghost" data-act="reprice" data-oid="${o.oid}">가격 변경</button>
     <button class="btn ghost" data-act="cancel" data-oid="${o.oid}">거두기</button></div></li>`).join('');
   const tab = selling() ? marketTab : 'buy';
   const body = tab === 'buy'
@@ -281,11 +285,16 @@ function marketWindow() {
   return [`시장 · ${S.phase_label}`, `${selling() ? `<div class="subtabs"><button data-act="mtab" data-tab="buy" aria-pressed="${tab === 'buy'}">사기</button><button data-act="mtab" data-tab="sell" aria-pressed="${tab === 'sell'}">팔기 (${S.my_orders.length})</button></div>` : '<p class="win-note">시장은 판매 등록·거래 단계에 열려요.</p>'}${body}`];
 }
 
+// [−] 값 [+] : 숫자 칸을 직접 치지 않고 눌러서 정한다(칸에 직접 쳐도 된다)
+function stepper(key, { min = 1, max = 999, value = 1, step = 1, unit = '', label = '' } = {}) {
+  return `<span class="stepper" data-min="${min}" data-max="${max}" data-step="${step}"${label ? ` aria-label="${esc(label)}"` : ''}>
+    <button type="button" data-act="step" data-k="${key}" data-d="-1" aria-label="${esc(label)} 줄이기">−</button><input data-k="${key}" type="number" inputmode="numeric" min="${min}" max="${max}" value="${value}"${label ? ` aria-label="${esc(label)}"` : ''}>${unit ? `<i>${unit}</i>` : ''}<button type="button" data-act="step" data-k="${key}" data-d="1" aria-label="${esc(label)} 늘리기">+</button></span>`;
+}
 function offerSide(side, title, selected) {
   return `<div class="line offer-${side}"><b style="min-width:84px">${title}</b>
     <label>물건 <select data-k="of-${side}-good">${goodOptions(selected)}</select></label>
-    <label class="generation">세대 <input data-k="of-${side}-gen" type="number" min="1" max="3" value="1"></label>
-    <label>수량 <input data-k="of-${side}-qty" type="number" min="1" value="1"></label></div>`;
+    <label class="generation">세대 ${stepper(`of-${side}-gen`, { max: 3, label: '세대' })}</label>
+    <label>수량 ${stepper(`of-${side}-qty`, { label: '수량', unit: '개' })}</label></div>`;
 }
 function tradeWindow() {
   const others = S.countries.filter((n) => n !== S.country);
@@ -301,7 +310,7 @@ function tradeWindow() {
       <div class="line"><label>나라 <select data-k="of-to">${others.map((n) => `<option value="${n}">${esc(gname(n))}${S.students.includes(n) ? ' (학생)' : ''}</option>`).join('')}</select></label>
       <label>방법 <select data-k="of-kind"><option value="sell">팔기</option><option value="buy">사기</option><option value="barter">물물교환</option></select></label></div>
       ${offerSide('give', '내가 줄 것', 'banana')}${offerSide('get', '내가 받을 것', 'wheat')}
-      <div class="line"><label class="offer-cash">물건값 전체(G) <input data-k="of-cash" type="number" min="1"></label>
+      <div class="line"><label class="offer-cash">물건값 전체 ${stepper('of-cash', { max: 9999, value: 10, step: 5, label: '물건값 전체', unit: 'G' })}</label>
       <button class="btn" data-act="offer">제안하기</button></div></div>`
     : '<p class="win-note">직접 거래는 거래 단계에서 할 수 있어요. 지도에서 나라를 누르면 그 나라 정보를 볼 수 있어요.</p>';
   return ['직접 거래', `${form}<h3>주고받은 제안</h3><ul class="rows">${offers || '<li class="row">아직 제안이 없어요.</li>'}</ul>`];
@@ -330,7 +339,7 @@ function goalsWindow() {
   return ['우리 나라 목표', `
     <h3>수출 목표</h3><p>다른 나라에서 쓰인 우리 물건 <b>${fmt(p.export_value, 0)}</b> / ${p.export_target}G</p>
     <div class="bar"><i style="width:${pct}%"></i></div>
-    <div class="stat"><span>대표 산업(${esc(label(S.main))})을 키웠나요?</span><b>${p.main_levelled ? '키웠어요 ✔' : '아직이에요'}</b></div>
+    <div class="stat"><span>대표 산업(${esc(label(S.main))})을 키웠나요?</span><b>${p.main_levelled ? '키웠어요' : '아직이에요'}</b></div>
     <div class="stat"><span>평균 만족도</span><b>${fmt(p.avg_happy)}</b></div>
     <div class="stat"><span>운영 자원 부족</span><b>${p.operating_short_days}일</b></div>
     <div class="stat"><span>급히 산 자원 비용</span><b>${p.emergency_paid}G</b></div>
@@ -352,7 +361,7 @@ function nationWindow() {
   return [gname(key), `<p>${p.student ? '학생이 운영해요' : 'AI가 운영해요'}${p.evaluated === false ? ' · AI 전용 나라' : ''}</p>
     <p>대표 산업 <b>${esc(label(p.main) || '-')}</b> · 주력 <b>${esc(label(p.focus) || '-')}</b></p><p>${levels}</p>
     <h3>시장에 내놓은 물건</h3><ul class="rows">${listings.map((o) => `<li class="row">${icon(o.good)}<div class="name"><b>${esc(o.label)}${genTxt(o.good, o.gen)}</b><small>${o.qty}개</small></div>
-      <div class="price">${o.price}G<small>기준 ${o.reference}G</small></div>${trading() ? `<div class="controls"><input data-k="bq-${o.oid}" type="number" min="1" max="${o.qty}" value="1"><button class="btn" data-act="buy" data-oid="${o.oid}">사기</button></div>` : ''}</li>`).join('') || '<li class="row">지금 내놓은 물건이 없어요.</li>'}</ul>
+      <div class="price">${o.price}G<small>기준 ${o.reference}G</small></div>${trading() ? `<div class="controls">${stepper('bq-' + o.oid, { max: o.qty, label: '구매 수량', unit: '개' })}<button class="btn" data-act="buy" data-oid="${o.oid}">사기</button></div>` : ''}</li>`).join('') || '<li class="row">지금 내놓은 물건이 없어요.</li>'}</ul>
     ${S.countries.includes(key) ? `<p style="margin-top:12px"><button class="btn" data-act="propose" data-to="${key}" ${canTrade ? '' : 'disabled'}>${canTrade ? '직접 거래 제안하기' : '거래 단계에서 제안할 수 있어요'}</button></p>` : '<p class="win-note">이 나라와는 직접 거래할 수 없어요.</p>'}`];
 }
 
@@ -368,8 +377,9 @@ function drawWindow() {
   const el = $('#window');
   if (!win || !S || !WINDOWS[win] || (win === 'nation' && !nationKey)) { el.hidden = true; render(el, '', drafts); return; }
   const [title, body] = WINDOWS[win]();
-  el.hidden = false;
-  render(el, `<header class="win-head"><h2>${esc(title)}</h2><button class="close" data-act="close" aria-label="창 닫기">×</button></header>
+  el.hidden = false; el.className = `hud-window win-${win}`;
+  const emblem = { market: 'market', trade: 'trade', invest: 'invest', goals: 'goals', log: 'log', result: 'result', nation: 'nation' }[win];
+  render(el, `<header class="win-head"><span class="win-emblem">${uiIcon(emblem)}</span><h2>${esc(title)}</h2><button class="close" data-act="close" aria-label="창 닫기">×</button></header>
     <div class="win-body">${lastMsg ? `<p class="win-note" role="status">${esc(lastMsg)}</p>` : ''}${body}</div>`, drafts);
   syncOfferForm();
 }
@@ -419,13 +429,20 @@ function draw() {
   advisor?.update(S);
 }
 
+// 입력값을 바꿀 때 화면에 이미 있는 칸에도 바로 넣는다(창이 열려 있으면 다시 그리지 않으므로)
+function setDraft(k, v) {
+  drafts[k] = String(v);
+  for (const el of document.querySelectorAll(`[data-k="${CSS.escape(k)}"]`)) el.value = String(v);
+}
 // 조언 버튼: 알맞은 창을 연다(게임 행동은 학생이 직접 한다)
 function advisorAction(a) {
-  if (a === 'market:sell' || a === 'market:buy') { marketTab = a.split(':')[1]; return openWin('market'); }
+  if (a.startsWith('market:')) { // 'market:sell:물건-세대:수량' → 팔기 탭에 수량을 채워 연다
+    const [, tab, gk, qty] = a.split(':'); marketTab = tab; openWin('market'); if (gk && qty) setDraft('lq-' + gk, qty); return; }
   if (a.startsWith('trade:')) { // 'trade:나라:물건:수량:값' → 사기 제안서를 채워서 연다
     const [, to, good, qty, cash] = a.split(':');
-    Object.assign(drafts, { 'of-kind': 'buy', 'of-get-good': good, 'of-get-qty': qty, 'of-cash': cash }); if (to) drafts['of-to'] = to;
-    return openWin('trade');
+    openWin('trade');
+    for (const [k, v] of Object.entries({ 'of-kind': 'buy', 'of-get-good': good, 'of-get-qty': qty, 'of-cash': cash, ...(to ? { 'of-to': to } : {}) })) setDraft(k, v);
+    syncOfferForm(); return;
   }
   openWin(a);
 }
@@ -436,6 +453,12 @@ async function act(el) {
   if (a === 'join') return join();
   if (!me) return;
   if (a === 'win') { win = win === el.dataset.win ? null : el.dataset.win; return draw(); }
+  if (a === 'step') {
+    const box = el.closest('.stepper'), input = box.querySelector('input'), lo = Number(box.dataset.min), hi = Number(box.dataset.max), st = Number(box.dataset.step) || 1;
+    let v = num(input.value); if (!Number.isFinite(v)) v = lo;
+    v = Math.max(lo, Math.min(hi, v + st * Number(el.dataset.d))); input.value = v; drafts[el.dataset.k] = String(v);
+    return;
+  }
   if (a === 'close') { win = null; return draw(); }
   if (a === 'mtab') { marketTab = el.dataset.tab; return drawWindow(); }
   if (a === 'propose') { openTrade(el.dataset.to); return; }
@@ -451,7 +474,7 @@ async function act(el) {
     return openWin(d);
   }
   let r;
-  const d = (k) => drafts[k];
+  const d = (k) => (drafts[k] !== undefined ? drafts[k] : document.querySelector(`[data-k="${CSS.escape(k)}"]`)?.value);
   if (a === 'list') {
     const k = `${el.dataset.good}-${el.dataset.gen}`;
     const price = d('lp-' + k) === undefined || d('lp-' + k) === '' ? S.quotes[el.dataset.good][el.dataset.gen] : num(d('lp-' + k));
@@ -482,13 +505,13 @@ async function act(el) {
 function result(r) {
   // AI 나라에 보낸 제안은 ok:true여도 accepted:false면 거절이다
   const good = r.ok && r.accepted !== false;
-  pushToast({ kind: good ? 'ok' : 'warn', icon: good ? '✔' : '✖', title: !r.ok ? '안 됐어요' : r.accepted === false ? '거절됐어요' : r.accepted ? '거래 성사!' : '완료', text: r.msg, ms: good ? 3500 : 6000 });
+  pushToast({ kind: good ? 'ok' : 'warn', icon: good ? 'check' : 'cross', title: !r.ok ? '안 됐어요' : r.accepted === false ? '거절됐어요' : r.accepted ? '거래 성사!' : '완료', text: r.msg, ms: good ? 3500 : 6000 });
   draw();
 }
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
-  if (el) { e.preventDefault(); el.disabled = true; act(el).catch((err) => { if (S) pushToast({ kind: 'warn', icon: '✖', title: '오류', text: err.message, ms: 6000 }); else { lastMsg = err.message; joinForm(); } }).finally(() => { el.disabled = false; }); }
+  if (el) { e.preventDefault(); el.disabled = true; act(el).catch((err) => { if (S) pushToast({ kind: 'warn', icon: 'cross', title: '오류', text: err.message, ms: 6000 }); else { lastMsg = err.message; joinForm(); } }).finally(() => { el.disabled = false; }); }
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && win) { win = null; draw(); } });
 
