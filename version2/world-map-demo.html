@@ -1550,6 +1550,33 @@ function createWorldMap(container, THREE, opts) {
 
   // ───────────────────────── 화면 UI ─────────────────────────
   var profiles = {}, me = null, legendDirty = true;
+  // 게임 테마(opts.theme === 'game'): 학생 HUD와 같은 어두운 청록·금색, 이모지 대신 선 아이콘. 기본(데모)은 밝은 카드 그대로
+  var GAME = opts.theme === 'game';
+  var TH = GAME ? {
+    panel: 'background:rgba(14,32,42,0.92);border:1px solid rgba(217,184,106,0.55);color:#f3ead2;box-shadow:0 6px 20px rgba(0,0,0,0.35);',
+    btn: 'background:rgba(14,32,42,0.92);border:1px solid rgba(217,184,106,0.55);color:#f3ead2;box-shadow:0 4px 14px rgba(0,0,0,0.3);border-radius:10px;',
+    chip: 'background:rgba(255,255,255,0.06);color:#f3ead2;', title: '#e9c46a', text: '#f3ead2', muted: '#b9c6bd', body: '#d7dccf', soft: 'rgba(255,255,255,0.08)',
+    accent: '#e9c46a', accentText: '#1b2a26', main: '#8fd694', focus: '#f4a261',
+    label: 'background:linear-gradient(115deg,rgba(242,229,188,0.95),rgba(215,199,154,0.95));border:1px solid rgba(138,122,82,0.9);color:#1f2a24;border-radius:5px;box-shadow:0 2px 8px rgba(7,28,40,0.35);'
+  } : {
+    panel: 'background:rgba(255,255,255,0.94);border:1px solid #d5dce3;color:#1f2933;box-shadow:0 2px 8px rgba(20,30,40,0.12);',
+    btn: 'background:#ffffff;border:1px solid #d5dce3;color:#1f2933;box-shadow:0 2px 8px rgba(20,30,40,0.12);border-radius:12px;',
+    chip: 'background:#f1f4f7;color:#1f2933;', title: '#14202b', text: '#1f2933', muted: '#7b8794', body: '#3a4652', soft: '#eef2f6',
+    accent: '#2f6fd6', accentText: '#ffffff', main: '#2f6fd6', focus: '#d35400', label: ''
+  };
+  var GPATH = {
+    wheat: '<path d="M12 22V4m0 5C5 9 5 3 5 3s7 0 7 6Zm0 6c-7 0-7-6-7-6s7 0 7 6Zm0-3c7 0 7-6 7-6s-7 0-7 6Zm0 7c7 0 7-6 7-6s-7 0-7 6Z"/>',
+    banana: '<path d="M4 4c2 10 8 14 16 8-1 8-13 12-17 2C1 10 2 7 4 4Zm0 0 2-2m12 10 3-2"/>',
+    fuel: '<path d="M7 5h9v16H5V7a2 2 0 0 1 2-2Zm1 0V2h6v3M8 9h5m3 0 3 3v6c0 3 3 3 3 0v-7l-3-4"/>',
+    ore: '<path d="m3 16 5-11 9-2 5 11-7 8-10-2Zm5-11 4 8 5-10M3 16l9-3 10 1m-10-1 3 9"/>',
+    machine: '<path d="m9 3 6 0 1 4 4 1 2 5-3 3-1 5-6 1-3-4-4-1-3-5 3-4 4-1Z"/><circle cx="12" cy="12" r="4"/>',
+    electronics: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M9 6h6M9 9h6m-6 3h6m-6 3h6m-4 4h2"/>',
+    capital: '<path d="M3 21h18M5 21V10m4 11V10m6 11V10m4 11V10M3 10l9-6 9 6Z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
+    home: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>'
+  };
+  function svgI(name, px, color, sw) { return '<svg viewBox="0 0 24 24" width="' + px + '" height="' + px + '" fill="none" stroke="' + (color || 'currentColor') + '" stroke-width="' + (sw || 2) + '" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex:none;">' + GPATH[name] + '</svg>'; }
+  function gi(g, px) { return GAME ? svgI(g, px || 14, GOODS[g].color, 2.2) : GOODS[g].icon; } // 물건 아이콘
   var ui = el('div', 'position:absolute;inset:0;pointer-events:none;font-family:' + FONT + ';color:#1f2933;'); container.appendChild(ui);
   var labelLayer = el('div', 'position:absolute;inset:0;pointer-events:none;overflow:hidden;'); ui.appendChild(labelLayer);
   var nationLabels = NATIONS.map(function (n) {
@@ -1559,18 +1586,18 @@ function createWorldMap(container, THREE, opts) {
     labelLayer.appendChild(d); return { el: d, n: n, pos: new THREE.Vector3(n.cx, 0.4, n.cz) };
   });
   var capLabels = SETTLE.filter(function (s) { return s.capital; }).map(function (s) {
-    var d = el('div', 'position:absolute;left:0;top:0;background:rgba(255,255,255,0.92);border-radius:10px;padding:1px 8px;font-weight:800;font-size:12px;color:#1d2731;box-shadow:0 1px 3px rgba(0,0,0,0.18);white-space:nowrap;pointer-events:none;border-left:5px solid ' + s.n.color + ';');
+    var d = el('div', 'position:absolute;left:0;top:0;background:rgba(255,255,255,0.92);border-radius:10px;padding:1px 8px;font-weight:800;font-size:12px;color:#1d2731;box-shadow:0 1px 3px rgba(0,0,0,0.18);white-space:nowrap;pointer-events:none;' + TH.label + 'border-left:5px solid ' + s.n.color + ';');
     labelLayer.appendChild(d); return { el: d, s: s, pos: new THREE.Vector3(s.x, heightAt(s.x, s.z) + 0.55, s.z) };
   });
   var portLabels = ports.map(function (p) {
-    var d = el('div', 'position:absolute;left:0;top:0;background:#ffffff;border:2px solid ' + GOODS[p.n.good].color + ';border-radius:14px;padding:2px 9px 2px 6px;font-weight:700;font-size:12px;color:#1f2933;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;cursor:pointer;pointer-events:auto;user-select:none;-webkit-user-select:none;');
+    var d = el('div', 'position:absolute;left:0;top:0;background:#ffffff;border:2px solid ' + GOODS[p.n.good].color + ';border-radius:14px;padding:2px 9px 2px 6px;font-weight:700;font-size:12px;color:#1f2933;box-shadow:0 1px 4px rgba(0,0,0,0.2);white-space:nowrap;cursor:pointer;pointer-events:auto;user-select:none;-webkit-user-select:none;' + (GAME ? TH.label + 'border-left:5px solid ' + GOODS[p.n.good].color + ';display:flex;align-items:center;gap:4px;' : ''));
     d.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
     d.addEventListener('click', function (ev) { ev.stopPropagation(); flyToNation(p.n.key); });
     labelLayer.appendChild(d); return { el: d, p: p };
   });
   function levelsLine(n) {
-    var prof = profiles[n.key]; if (!prof || !prof.levels) return GOODS[n.good].icon + ' ' + GOODS[n.good].ko;
-    return GOOD_KEYS.filter(function (g) { return prof.levels[g] > 0; }).sort(function (a, b) { return (b === n.good) - (a === n.good); }).map(function (g) { return GOODS[g].icon + prof.levels[g]; }).join(' ');
+    var prof = profiles[n.key]; if (!prof || !prof.levels) return gi(n.good) + ' ' + GOODS[n.good].ko;
+    return GOOD_KEYS.filter(function (g) { return prof.levels[g] > 0; }).sort(function (a, b) { return (b === n.good) - (a === n.good); }).map(function (g) { return gi(g) + prof.levels[g]; }).join(' ');
   }
   function refreshLabels() {
     nationLabels.forEach(function (l) {
@@ -1580,14 +1607,14 @@ function createWorldMap(container, THREE, opts) {
         l.el.style.minWidth = '104px'; l.el.style.padding = '6px 9px 6px 8px'; l.el.style.borderRadius = '5px'; l.el.style.textAlign = 'left'; l.el.style.boxShadow = '0 3px 12px rgba(7,28,40,0.35)';
         l.el.style.background = isMe ? 'linear-gradient(115deg,rgba(56,92,67,0.94),rgba(33,62,53,0.94))' : 'linear-gradient(115deg,rgba(242,229,188,0.93),rgba(215,199,154,0.93))';
         l.el.style.border = isMe ? '2px solid #efd08b' : '1px solid rgba(147,167,135,0.8)'; l.el.style.color = isMe ? '#fff1c6' : '#1f2a24';
-        l.el.innerHTML = '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;"><span style="font-weight:800;font-size:14px;">' + esc(names[n.key] || n.ko) + '</span><span style="font-size:10px;font-weight:600;opacity:0.75;">' + kind + '</span></div><div style="font-size:12px;font-weight:600;margin-top:2px;">' + (GOODS[main] ? GOODS[main].icon + ' ' + GOODS[main].ko : '') + (lv ? ' <b>Lv.' + lv + '</b>' : '') + '</div>';
+        l.el.innerHTML = '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;"><span style="font-weight:800;font-size:14px;">' + esc(names[n.key] || n.ko) + '</span><span style="font-size:10px;font-weight:600;opacity:0.75;">' + kind + '</span></div><div style="font-size:12px;font-weight:600;margin-top:2px;">' + (GOODS[main] ? gi(main) + ' ' + GOODS[main].ko : '') + (lv ? ' <b>Lv.' + lv + '</b>' : '') + '</div>';
         return;
       }
       var badge = isMe ? '<span style="display:inline-block;margin-left:4px;padding:0 6px;border-radius:8px;background:#2f6fd6;color:#ffffff;font-size:10px;vertical-align:2px;">우리 나라</span>' : stu ? '<span style="display:inline-block;margin-left:4px;padding:0 6px;border-radius:8px;background:#1f2933;color:#ffffff;font-size:10px;vertical-align:2px;">학생</span>' : '';
       l.el.innerHTML = '<div style="font-weight:800;font-size:14px;letter-spacing:0.5px;color:#1d2731;text-shadow:0 0 3px #ffffff,0 0 3px #ffffff,0 0 2px #ffffff;">' + esc(names[n.key] || n.ko) + badge + '</div><div style="font-size:11px;font-weight:700;color:#3a4652;text-shadow:0 0 3px #ffffff,0 0 3px #ffffff;">' + levelsLine(n) + '</div>';
     });
-    portLabels.forEach(function (l) { var n = l.p.n; l.el.innerHTML = GOODS[n.good].icon + ' ' + esc(names[n.key] || n.ko) + ' 항구'; });
-    capLabels.forEach(function (l) { l.el.innerHTML = '🏛️ ' + esc(names[l.s.n.key] || l.s.n.ko) + ' 수도'; });
+    portLabels.forEach(function (l) { var n = l.p.n; l.el.innerHTML = gi(n.good) + ' ' + esc(names[n.key] || n.ko) + ' 항구'; });
+    capLabels.forEach(function (l) { l.el.innerHTML = (GAME ? svgI('capital', 13, '#5b4a2f') : '🏛️') + ' ' + esc(names[l.s.n.key] || l.s.n.ko) + ' 수도'; });
   }
   var hasPanel = opts.panel !== false;
   var panel = el('div', 'position:absolute;left:12px;top:12px;width:258px;background:rgba(255,255,255,0.94);border:1px solid #d5dce3;border-radius:14px;box-shadow:0 4px 16px rgba(20,30,40,0.14);padding:12px 14px;pointer-events:auto;font-size:12px;line-height:1.5;' + (hasPanel ? '' : 'display:none;'));
@@ -1602,41 +1629,41 @@ function createWorldMap(container, THREE, opts) {
   function applyFold() { q('body').style.display = folded ? 'none' : 'block'; q('fold').textContent = folded ? '펼치기' : '접기'; }
   q('fold').addEventListener('click', function () { folded = !folded; applyFold(); }); applyFold();
 
-  var btnCss = 'width:44px;height:44px;border-radius:12px;border:1px solid #d5dce3;background:#ffffff;color:#1f2933;font-size:22px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(20,30,40,0.12);display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0;';
+  var btnCss = 'width:44px;height:44px;font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0;' + TH.btn;
   var zoomBox = el('div', 'position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:8px;pointer-events:auto;'); ui.appendChild(zoomBox);
-  [['＋', function () { zoomBy(0.45); }], ['－', function () { zoomBy(2.2); }], ['🌍', function () { flyTo(HOME[0], HOME[1], HOME[2]); }]].forEach(function (b) { var e = el('button', btnCss, b[0]); e.addEventListener('click', b[1]); zoomBox.appendChild(e); });
+  [[svgI('plus', 22), function () { zoomBy(0.45); }, '확대'], [svgI('minus', 22), function () { zoomBy(2.2); }, '축소'], [svgI('home', 22, null, 1.8), function () { flyTo(HOME[0], HOME[1], HOME[2]); }, '세계 전체 보기']].forEach(function (b) { var e = el('button', btnCss, b[0]); e.setAttribute('aria-label', b[2]); e.title = b[2]; e.addEventListener('click', b[1]); zoomBox.appendChild(e); });
 
-  var legend = el('div', 'position:absolute;right:12px;top:172px;background:rgba(255,255,255,0.94);border:1px solid #d5dce3;border-radius:12px;padding:8px 10px;font-size:11px;font-weight:600;pointer-events:none;box-shadow:0 2px 8px rgba(20,30,40,0.12);display:none;'); ui.appendChild(legend);
+  var legend = el('div', 'position:absolute;right:12px;top:172px;border-radius:' + (GAME ? 10 : 12) + 'px;padding:8px 10px;font-size:11px;font-weight:600;pointer-events:none;display:none;' + TH.panel); ui.appendChild(legend);
   function refreshLegend() {
     var used = {}; routes.forEach(function (r) { used[r.info.good] = (used[r.info.good] || 0) + r.info.qty; });
     var keys = GOOD_KEYS.filter(function (g) { return used[g]; });
-    legend.innerHTML = '<div style="font-weight:800;margin-bottom:4px;color:#14202b;">이번 라운드 거래</div>' + (keys.length ? keys.map(function (g) { return '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:16px;height:4px;border-radius:2px;background:' + GOODS[g].color + ';"></span>' + GOODS[g].icon + ' ' + GOODS[g].ko + ' ' + used[g] + '개</div>'; }).join('') : '<div style="color:#7b8794;">아직 없음</div>');
+    legend.innerHTML = '<div style="font-weight:800;margin-bottom:4px;color:' + TH.title + ';">이번 라운드 거래</div>' + (keys.length ? keys.map(function (g) { return '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:16px;height:4px;border-radius:2px;background:' + GOODS[g].color + ';"></span>' + gi(g) + ' ' + GOODS[g].ko + ' ' + used[g] + '개</div>'; }).join('') : '<div style="color:' + TH.muted + ';">아직 없음</div>');
     legendDirty = false;
   }
 
-  var natBar = el('div', 'position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);display:flex;gap:6px;overflow-x:auto;padding:6px;background:rgba(255,255,255,0.94);border:1px solid #d5dce3;border-radius:14px;box-shadow:0 4px 16px rgba(20,30,40,0.14);pointer-events:auto;' + (opts.nationBar === false ? 'display:none;' : ''));
-  var natBtns = NATIONS.map(function (n) { var b = el('button', 'flex:none;border:none;background:#f1f4f7;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700;color:#1f2933;cursor:pointer;white-space:nowrap;font-family:inherit;border-bottom:4px solid ' + n.color + ';'); b.addEventListener('click', function () { flyToNation(n.key); }); natBar.appendChild(b); return b; });
-  function refreshNatBar() { natBtns.forEach(function (b, i) { var n = NATIONS[i]; b.innerHTML = GOODS[n.good].icon + ' ' + esc(names[n.key] || n.ko) + (me === n.key ? ' ★' : ''); }); }
+  var natBar = el('div', 'position:absolute;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);display:flex;gap:6px;overflow-x:auto;padding:6px;border-radius:' + (GAME ? 10 : 14) + 'px;pointer-events:auto;' + TH.panel + (opts.nationBar === false ? 'display:none;' : ''));
+  var natBtns = NATIONS.map(function (n) { var b = el('button', 'flex:none;border:none;border-radius:' + (GAME ? 6 : 10) + 'px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;display:flex;align-items:center;gap:5px;' + TH.chip + 'border-bottom:4px solid ' + n.color + ';'); b.addEventListener('click', function () { flyToNation(n.key); }); natBar.appendChild(b); return b; });
+  function refreshNatBar() { natBtns.forEach(function (b, i) { var n = NATIONS[i]; b.innerHTML = gi(n.good) + ' ' + esc(names[n.key] || n.ko) + (me === n.key ? (GAME ? '' : ' ★') : ''); if (GAME) b.style.outline = me === n.key ? '2px solid #e9c46a' : 'none'; }); }
   if (opts.natBar === false) natBar.style.display = 'none'; // 게임 화면이 좁을 때 아래쪽 나라 버튼 줄을 숨긴다
   ui.appendChild(natBar);
 
-  var card = el('div', 'position:absolute;left:12px;bottom:78px;min-width:210px;background:#ffffff;border:1px solid #d5dce3;border-radius:14px;box-shadow:0 4px 16px rgba(20,30,40,0.16);padding:12px 14px;pointer-events:auto;display:none;font-size:12px;'); ui.appendChild(card);
-  var toast = el('div', 'position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#1f2933;color:#ffffff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;'); ui.appendChild(toast);
+  var card = el('div', 'position:absolute;left:12px;bottom:78px;min-width:210px;border-radius:' + (GAME ? 10 : 14) + 'px;padding:12px 14px;pointer-events:auto;display:none;font-size:12px;' + TH.panel); ui.appendChild(card);
+  var toast = el('div', 'position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#1f2933;color:#ffffff;' + (GAME ? TH.panel : '') + 'padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;'); ui.appendChild(toast);
   var toastTimer = null;
   function showToast(t) { toast.textContent = t; toast.style.opacity = '1'; clearTimeout(toastTimer); toastTimer = setTimeout(function () { toast.style.opacity = '0'; }, 2600); }
-  var help = el('div', 'position:absolute;right:12px;bottom:78px;background:rgba(31,41,51,0.82);color:#ffffff;padding:7px 11px;border-radius:10px;font-size:11px;transition:opacity 1s;pointer-events:none;', isTouch ? '한 손가락: 이동 · 두 손가락: 확대/축소 · 탭: 나라 보기' : '드래그: 이동 · 휠: 확대/축소 · 클릭: 나라 보기 · 더블클릭: 확대');
+  var help = el('div', (GAME ? 'position:absolute;left:50%;transform:translateX(-50%);bottom:72px;' : 'position:absolute;right:12px;bottom:78px;') + 'background:rgba(31,41,51,0.82);color:#ffffff;' + (GAME ? TH.panel : '') + 'padding:7px 11px;border-radius:10px;font-size:11px;transition:opacity 1s;pointer-events:none;', isTouch ? '한 손가락: 이동 · 두 손가락: 확대/축소 · 탭: 나라 보기' : '드래그: 이동 · 휠: 확대/축소 · 클릭: 나라 보기 · 더블클릭: 확대');
   ui.appendChild(help); setTimeout(function () { help.style.opacity = '0'; }, 7000);
 
   function selectNation(i) {
     if (i == null || i < 0) { card.style.display = 'none'; terrU.uSel.value = -1; return; }
     var n = NATIONS[i], prof = profiles[n.key] || {}; terrU.uSel.value = i;
-    var lv = prof.levels || {}, rows = GOOD_KEYS.filter(function (g) { return lv[g] > 0; }).map(function (g) { return '<div style="display:flex;justify-content:space-between;gap:10px;"><span>' + GOODS[g].icon + ' ' + GOODS[g].ko + (g === prof.main || (!prof.main && g === n.good) ? ' <b style="color:#2f6fd6;">대표</b>' : '') + (g === prof.focus ? ' <b style="color:#d35400;">주력</b>' : '') + '</span><span style="font-weight:800;">Lv' + lv[g] + '</span></div>'; }).join('');
+    var lv = prof.levels || {}, rows = GOOD_KEYS.filter(function (g) { return lv[g] > 0; }).map(function (g) { return '<div style="display:flex;justify-content:space-between;gap:10px;"><span>' + gi(g) + ' ' + GOODS[g].ko + (g === prof.main || (!prof.main && g === n.good) ? ' <b style="color:' + TH.main + ';">대표</b>' : '') + (g === prof.focus ? ' <b style="color:' + TH.focus + ';">주력</b>' : '') + '</span><span style="font-weight:800;">Lv' + lv[g] + '</span></div>'; }).join('');
     var sold = 0, bought = 0; routes.forEach(function (r) { if (r.info.s === n.key) sold += r.info.qty; if (r.info.b === n.key) bought += r.info.qty; });
-    card.innerHTML = '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;"><div><div style="font-weight:800;font-size:16px;color:#14202b;"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + n.color + ';margin-right:6px;"></span>' + esc(names[n.key] || n.ko) + '</div><div style="color:#7b8794;font-size:11px;">대표 산업 ' + GOODS[prof.main || n.good].icon + ' ' + GOODS[prof.main || n.good].ko + (me === n.key ? ' · 우리 나라' : prof.student ? ' · 학생' : prof.evaluated === false ? ' · AI 전용' : ' · AI') + '</div></div><button data-x style="border:none;background:#eef2f6;border-radius:8px;width:26px;height:26px;cursor:pointer;font-size:14px;color:#4a5866;">✕</button></div>' +
+    card.innerHTML = '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;"><div><div style="font-weight:800;font-size:16px;color:' + TH.title + ';"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + n.color + ';margin-right:6px;"></span>' + esc(names[n.key] || n.ko) + '</div><div style="color:' + TH.muted + ';font-size:11px;">대표 산업 ' + gi(prof.main || n.good) + ' ' + GOODS[prof.main || n.good].ko + (me === n.key ? ' · 우리 나라' : prof.student ? ' · 학생' : prof.evaluated === false ? ' · AI 전용' : ' · AI') + '</div></div><button data-x style="border:none;color:' + TH.text + ';background:' + TH.soft + ';border-radius:8px;width:26px;height:26px;cursor:pointer;font-size:14px;color:#4a5866;">✕</button></div>' +
       (rows ? '<div style="margin-top:8px;display:flex;flex-direction:column;gap:2px;">' + rows + '</div>' : '') +
-      '<div style="margin-top:8px;color:#3a4652;">이번 라운드: 판 물건 <b>' + sold + '</b>개 · 산 물건 <b>' + bought + '</b>개</div>' +
-      '<button data-go style="margin-top:10px;width:100%;border:none;background:#2f6fd6;color:#ffffff;border-radius:10px;padding:8px 0;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;">항구로 가기</button>';
-    card.style.display = 'block';
+      '<div style="margin-top:8px;color:' + TH.body + ';">이번 라운드: 판 물건 <b>' + sold + '</b>개 · 산 물건 <b>' + bought + '</b>개</div>' +
+      '<button data-go style="margin-top:10px;width:100%;border:none;background:' + TH.accent + ';color:' + TH.accentText + ';border-radius:' + (GAME ? 7 : 10) + 'px;padding:8px 0;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;">항구로 가기</button>';
+    card.style.display = opts.card === false ? 'none' : 'block';
     card.querySelector('[data-x]').onclick = function () { selectNation(-1); };
     card.querySelector('[data-go]').onclick = function () { flyToNation(n.key); };
     if (opts.onSelect) opts.onSelect(n.key);

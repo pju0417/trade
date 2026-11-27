@@ -140,7 +140,7 @@ class WorldMap {
       if (!this.element.isConnected || !this.want3D) return;
       const host = this.worldHost = document.createElement('div'); host.className = 'world-engine-host'; this.surface.append(host);
       const world = await createWorld(host, {
-        panel: false, political: false, me: this.state?.country || null,
+        panel: false, political: false, theme: 'game', me: this.state?.country || null,
         onSelect: key => { if (this.selected !== key) { this.selected = key; this.update(this.state); } },
       });
       if (!this.element.isConnected) { world.dispose(); return; }

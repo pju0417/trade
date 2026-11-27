@@ -131,7 +131,7 @@ async function ensureWorld() {
   try {
     const { createWorld } = await import('./world-engine.js');
     world = await createWorld($('#world'), {
-      panel: false, political: false, me: S.country, natBar: !matchMedia('(max-width: 700px)').matches,
+      panel: false, political: false, theme: 'game', card: false, me: S.country, natBar: !matchMedia('(max-width: 700px)').matches,
       onSelect: (key) => { if (key && key !== S?.country) openNation(key); },
     });
     world.update(S);
