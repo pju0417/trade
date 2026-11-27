@@ -4,9 +4,14 @@ import { ClassHost, ORIGINAL, DEFAULT_SETTINGS, browserStorage, savedClasses } f
 import { openServer, serverList, countOnline, LOCAL_FLAG } from './transport.js';
 import { esc, $, render, fmt, num } from './dom.js';
 import { updateWorldMap } from './world-map.js';
+import { goodIcon, uiIcon } from './good-icons.js';
 
 const KO = { Tropia: '트로피아', Grainia: '그레니아', Oilia: '오일리아', Mechania: '메카니아', Mineria: '미네리아', Technia: '테크니아' };
 const PHASE = { listing: '판매 등록', trading: '거래', invest: '투자', finished: '끝' };
+// 나라 토큰: 대표 물건과 지도 색
+const NATION = { Tropia: ['banana', '#b9e08c'], Grainia: ['wheat', '#f0d27a'], Oilia: ['fuel', '#f4a978'], Mechania: ['machine', '#9fc7e0'], Mineria: ['ore', '#e8a3a0'], Technia: ['electronics', '#a9d8b8'], Novia: ['electronics', '#f5b6c4'], Agrea: ['banana', '#9fd6cf'], Ferria: ['ore', '#c3b6d9'] };
+const token = (n, label) => `<span class="nation-token" style="--nc:${(NATION[n] || [])[1] || '#9fb'}">${NATION[n] ? goodIcon(NATION[n][0]) : ''}${esc(label || KO[n] || n)}</span>`;
+const h2 = (icon, text) => `<h2 class="host-h2"><span class="h2-ico">${uiIcon(icon)}</span>${text}</h2>`;
 const MODE = { teacher: '선생님이 넘김', ready: '모두 준비하면 넘어감', ready_timer: '모두 준비하거나 시간이 끝나면 넘어감' };
 const drafts = {};
 let engine = null;
@@ -40,19 +45,19 @@ function setup() {
   render($('#app'), `
     <header class="cover host-cover">
       <a class="back" href="index.html${LOCAL_FLAG ? '?local=1' : ''}">← 첫 화면</a>
-      <p class="eyebrow">무역 게임 · 선생님</p><h1>수업 준비</h1>
+      <div class="cover-title"><span class="host-emblem">${uiIcon('ship')}</span><div><p class="eyebrow">무역 게임 · 선생님</p><h1>수업 준비</h1></div></div>
       <p role="status">${esc(status)}</p>
     </header>
     <section class="panel">
     ${isLocal ? '<p><b>로컬 시험 모드</b> — 같은 브라우저의 다른 탭에서 학생 화면을 열어 주세요.</p>' : ''}
-    <h2>서버</h2>
+    ${h2('nation', '서버')}
     <div class="card-grid">${servers.map((s) => `<label class="choice good-card"><input type="radio" name="srv" value="${s.id}" ${drafts.server === s.id ? 'checked' : ''}>
       <span><strong>${esc(s.name)}</strong><small>지금 접속 ${typeof counts[s.id] === 'number' ? counts[s.id] + '명' : '확인 중 또는 알 수 없음'} · 정원 ${s.capacity}명</small></span></label>`).join('')}</div>
     <p><button data-act="counts">접속 인원 새로 보기</button></p>
-    </section><section class="panel"><h2>새 수업</h2>
+    </section><section class="panel">${h2('ship', '새 수업')}
     <p><label>방 개수 <input data-k="rooms" type="number" min="1" max="20" size="3"></label>
        (한 방 = 한 게임. 학생이 많으면 방을 여러 개 만들고, 한 나라를 모둠이 함께 맡을 수 있어요)</p>
-    <fieldset><legend>방마다 학생이 맡을 나라</legend><div class="choices">${ORIGINAL.map((n, i) => `<label class="choice"><input type="checkbox" class="stu" data-k="stu-${n}" value="${n}" ${i % 2 === 0 ? 'checked' : ''}> ${KO[n]}</label>`).join('')}</div></fieldset>
+    <fieldset><legend>방마다 학생이 맡을 나라</legend><div class="choices">${ORIGINAL.map((n, i) => `<label class="choice nation-choice"><input type="checkbox" class="stu" data-k="stu-${n}" value="${n}" ${i % 2 === 0 ? 'checked' : ''}> ${token(n)}</label>`).join('')}</div></fieldset>
     <p><label>예상 학생 수(접속 기기 수) <input data-k="expected" type="number" min="1" size="4" placeholder="자동"></label></p>
     <div class="fields"><label>진행 방식 <select data-k="mode">${Object.entries(MODE).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
        <label>첫 라운드 <select data-k="first"><option value="yes">1라운드는 선생님이 넘김</option><option value="no">1라운드도 같은 방식</option></select></label></div>
@@ -62,8 +67,8 @@ function setup() {
       <label>투자 <input data-k="t_invest" type="number" min="0"></label>
       <label>모두 준비 후 기다림 <input data-k="countdown" type="number" min="0" max="30"></label>
     </div></fieldset>
-    <p><button data-act="new" ${engine ? '' : 'disabled'}>수업 만들기</button></p>
-    </section>${saved.length ? `<section class="panel"><h2>이어하기</h2><ul class="saved-list">${saved.map((m) => `<li>수업 ${esc(m.cls)} · 서버 ${esc(m.server)} · 방 ${m.rooms.length}개 · ${esc(m.saved)}
+    <p><button class="big" data-act="new" ${engine ? '' : 'disabled'}>${uiIcon('ship')} 수업 만들기</button></p>
+    </section>${saved.length ? `<section class="panel">${h2('log', '이어하기')}<ul class="saved-list">${saved.map((m) => `<li>수업 ${esc(m.cls)} · 서버 ${esc(m.server)} · 방 ${m.rooms.length}개 · ${esc(m.saved)}
       <button data-act="resume" data-cls="${esc(m.cls)}" ${engine ? '' : 'disabled'}>이어하기</button>
       <button data-act="forget" data-cls="${esc(m.cls)}">기록 삭제</button></li>`).join('')}</ul></section>` : ''}
     <p id="msg" role="status">${esc(lastMsg)}</p>`, drafts);
@@ -87,30 +92,32 @@ function dashboard() {
   const srv = servers.find((s) => s.id === S.server) || servers[0];
   const rows = S.rooms.map((r, i) => {
     const v = r.view; const info = r.info;
-    return `<article class="room-card">
-      <header><h3>${i + 1}번 방</h3><span class="tag">${esc(r.code)}</span></header>
-      <p class="room-phase">${v.round}R ${PHASE[v.phase]}</p>
-      <p>${esc(MODE[info.mode])}</p>
+    const pips = Array.from({ length: 9 }, (_, k) => `<li class="${k + 1 < v.round || v.phase === 'finished' ? 'done' : k + 1 === v.round ? 'now' : ''}"></li>`).join('');
+    const readyPct = info.need.length ? Math.round(info.ready.length / info.need.length * 100) : 0;
+    return `<article class="room-card phase-${v.phase}">
+      <header><span class="room-no">${i + 1}</span><h3>${i + 1}번 방</h3><span class="tag">${esc(r.code)}</span></header>
+      <div class="room-main"><span class="phase-emblem">${uiIcon(v.phase)}</span><div><p class="room-phase">${v.round}R ${PHASE[v.phase]}</p><p class="room-mode">${esc(MODE[info.mode])}</p></div></div>
+      <ol class="round-pips" aria-label="${v.round}라운드 / 9라운드">${pips}</ol>
       <dl class="metrics"><div><dt>남은 시간</dt><dd class="clock" data-room="${esc(r.code)}" data-time="deadline_ms"></dd></div>
-      <div><dt>준비한 나라</dt><dd>${info.ready.length}/${info.need.length}</dd></div>
+      <div><dt>준비한 나라</dt><dd>${info.ready.length}/${info.need.length}<span class="ready-bar"><i style="width:${readyPct}%"></i></span></dd></div>
       <div><dt>접속</dt><dd>${r.online.length}대</dd></div><div><dt>기다리는 제안</dt><dd>${v.pending_offers}개</dd></div></dl>
       <p class="clock next-clock" data-room="${esc(r.code)}" data-time="countdown_ms"></p>
-      <div class="actions">${v.phase === 'finished' ? '' : `<button data-act="adv" data-code="${esc(r.code)}">이 방 다음 단계</button>`}
+      <div class="actions">${v.phase === 'finished' ? '' : `<button data-act="adv" data-code="${esc(r.code)}">${uiIcon('check')} 이 방 다음 단계</button>`}
       <button data-act="sel" data-code="${esc(r.code)}" aria-expanded="${selected === r.code}">자세히</button></div>
     </article>`;
   }).join('');
   const room = S.rooms.find((r) => r.code === selected);
   render($('#app'), `
-    <header class="cover host-cover"><p class="eyebrow">${esc(srv.name)} · 접속 ${S.server_online}/${srv.capacity}명</p>
-      <h1>수업 ${esc(S.cls)} ${S.paused ? '<span class="tag attention">일시정지</span>' : ''}</h1>
-      <div class="actions primary-actions"><button data-act="advall">모든 방 다음 단계</button>
-       <button data-act="${S.paused ? 'resume-all' : 'pause'}">${S.paused ? '다시 시작' : '모든 방 일시정지'}</button></div>
-      <div class="actions secondary-actions"><button data-act="pins" aria-expanded="${Boolean(drafts.showPins)}">접속 정보 전체 보기</button>
-       <button data-act="finish">수업 끝내기</button><button data-act="leave">처음 화면으로</button></div>
+    <header class="cover host-cover"><div class="cover-title"><span class="host-emblem">${uiIcon('ship')}</span><div><p class="eyebrow">${esc(srv.name)} · 접속 ${S.server_online}/${srv.capacity}명</p>
+      <h1><span class="plaque">수업 ${esc(S.cls)}</span> ${S.paused ? '<span class="tag attention">일시정지</span>' : ''}</h1></div></div>
+      <div class="actions primary-actions"><button data-act="advall">${uiIcon('check')} 모든 방 다음 단계</button>
+       <button data-act="${S.paused ? 'resume-all' : 'pause'}">${uiIcon(S.paused ? 'trading' : 'pause')} ${S.paused ? '다시 시작' : '모든 방 일시정지'}</button></div>
+      <div class="actions secondary-actions"><button data-act="pins" aria-expanded="${Boolean(drafts.showPins)}">${uiIcon('mail')} 접속 정보 전체 보기</button>
+       <button data-act="finish">${uiIcon('finished')} 수업 끝내기</button><button data-act="leave">${uiIcon('cross')} 처음 화면으로</button></div>
     </header>
     <p id="msg" role="status">${esc(lastMsg)}</p>
-    <section class="panel"><h2>방 현황</h2><div class="room-grid">${rows}</div></section>
-    <section class="panel"><h2>진행 설정</h2><div class="fields">
+    <section class="panel">${h2('ship', '방 현황')}<div class="room-grid">${rows}</div></section>
+    <section class="panel">${h2('invest', '진행 설정')}<div class="fields">
      <label>진행 방식 <select data-k="d_mode">${Object.entries(MODE).map(([k, t]) => `<option value="${k}" ${k === S.settings.mode ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
      <label>첫 라운드 <select data-k="d_first"><option value="yes" ${S.settings.firstRoundTeacher ? 'selected' : ''}>1라운드는 선생님이 넘김</option><option value="no" ${S.settings.firstRoundTeacher ? '' : 'selected'}>1라운드도 같은 방식</option></select></label>
      <label>판매 (초) <input data-k="d_tl" type="number" value="${S.settings.timer.listing}"></label>
@@ -125,9 +132,9 @@ function dashboard() {
 }
 
 function pinsHtml() {
-  return `<section class="panel pins"><h2>접속 정보 (학생에게 알려 주세요)</h2><button data-act="print-pins">방별 접속 정보 인쇄</button>
+  return `<section class="panel pins">${h2('mail', '접속 정보 (학생에게 알려 주세요)')}<button data-act="print-pins">방별 접속 정보 인쇄</button>
     ${S.rooms.map((r, i) => `<article class="pin-sheet"><h3>${i + 1}번 방 · 방 코드 <b>${esc(r.code)}</b></h3><table><tr><th>나라</th><th>접속 번호</th></tr>
-    ${Object.entries(r.tokens).map(([n, p]) => `<tr><td>${KO[n]}</td><td><b>${p}</b></td></tr>`).join('')}</table></article>`).join('')}</section>`;
+    ${Object.entries(r.tokens).map(([n, p]) => `<tr><td>${token(n)}</td><td><b class="pin">${p}</b></td></tr>`).join('')}</table></article>`).join('')}</section>`;
 }
 
 function roomHtml(r) {
@@ -135,16 +142,16 @@ function roomHtml(r) {
   const pins = Object.entries(r.tokens).map(([n, p]) => {
     const isStu = t.students.includes(n);
     const on = r.online.filter((x) => x === n).length;
-    return `<tr><td>${KO[n]}</td><td><b>${p}</b></td><td>${isStu ? '학생' : 'AI'}</td><td>${on ? `접속 ${on}대` : '-'}</td>
+    return `<tr><td>${token(n)}</td><td><b class="pin">${p}</b></td><td>${isStu ? '학생' : 'AI'}</td><td>${on ? `접속 ${on}대` : '-'}</td>
       <td>${r.info.ready.includes(n) ? '준비 완료' : ''}</td>
       <td><button data-act="ctl" data-code="${esc(r.code)}" data-country="${n}" data-mode="${isStu ? 'ai' : 'student'}">${isStu ? 'AI에게 맡기기' : '학생에게 돌려주기'}</button></td>
       <td><a href="${esc(studentLink(r.code, n))}" target="_blank">학생 화면 열기</a></td></tr>`;
   }).join('');
-  const nations = t.nations.map((n) => `<tr><td>${esc(n.label)}${n.student ? ' (학생)' : ''}</td><td>${n.cash}G</td>
+  const nations = t.nations.map((n) => `<tr><td>${token(n.country, n.label)}${n.student ? ' <span class="tag">학생</span>' : ''}</td><td>${n.cash}G</td>
     <td>${Object.entries(n.levels).map(([g, lv]) => `${t.goods[g]} ${lv}`).join(', ')}</td><td>${t.goods[n.focus]}</td>
     <td>${fmt(n.happy, 0)}</td><td>${n.listed}</td><td>${n.progress ? `${fmt(n.progress.export_value, 0)}/${n.progress.export_target}` : '-'}</td>
     <td>${n.progress ? n.progress.operating_short_days : '-'}</td></tr>`).join('');
-  return `<section class="panel room-detail"><h2>방 ${esc(r.code)} · 시드 ${t.seed} · 기록된 행동 ${t.log_length}개</h2>
+  return `<section class="panel room-detail">${h2('nation', `방 ${esc(r.code)} · 시드 ${t.seed} · 기록된 행동 ${t.log_length}개`)}
     <div id="room-world-map" data-persist="world-map-${esc(r.code)}" class="teacher-world-map"></div>
     <div class="table-scroll"><table><tr><th>나라</th><th>접속 번호</th><th>운영</th><th>접속</th><th>준비</th><th></th><th></th></tr>${pins}</table></div>
     <div class="table-scroll"><table><tr><th>나라</th><th>돈</th><th>산업 레벨</th><th>주력</th><th>만족도</th><th>판매 중</th><th>쓰인 수출/목표</th><th>운영 부족</th></tr>${nations}</table></div>
@@ -153,9 +160,9 @@ function roomHtml(r) {
 }
 
 function resultsHtml() {
-  return `<section class="panel"><h2>결과 (나라별 목표 달성도)</h2><div class="table-scroll"><table class="host-results"><tr><th>방</th><th>나라</th><th>점수</th><th>등급</th><th>수출</th><th>산업</th><th>생활</th><th>무역</th><th>활용</th><th>현금</th></tr>
-    ${S.rooms.filter((r) => r.view.results).map((r) => Object.values(r.view.results).filter((x) => x.student).map((x) => `<tr><td>${esc(r.code)}</td><td>${esc(x.label)}</td>
-      <td>${fmt(x.total)}</td><td>${x.grade}</td>${['export', 'industry', 'living', 'trade', 'utilization', 'cash'].map((k) => `<td>${fmt(x.parts[k])}</td>`).join('')}</tr>`).join('')).join('')}</table></div></section>`;
+  return `<section class="panel">${h2('result', '결과 (나라별 목표 달성도)')}<div class="table-scroll"><table class="host-results"><tr><th>방</th><th>나라</th><th>점수</th><th>등급</th><th>수출</th><th>산업</th><th>생활</th><th>무역</th><th>활용</th><th>현금</th></tr>
+    ${S.rooms.filter((r) => r.view.results).map((r) => Object.entries(r.view.results).filter(([, x]) => x.student).map(([n, x]) => `<tr><td>${esc(r.code)}</td><td>${token(n, x.label)}</td>
+      <td class="score">${fmt(x.total)}</td><td><span class="grade grade-${esc(x.grade)}">${esc(x.grade)}</span></td>${['export', 'industry', 'living', 'trade', 'utilization', 'cash'].map((k) => `<td>${fmt(x.parts[k])}</td>`).join('')}</tr>`).join('')).join('')}</table></div></section>`;
 }
 
 function onSummary(s) { S = s; summaryAt = Date.now(); dashboard(); }

@@ -1,0 +1,114 @@
+/* Teacher screen in the game style: a harbour master's control room.
+   Same lacquer + brass look as the student HUD (game.css), Jua for titles and numbers.
+   Loaded after trade.css / atlas.css, so rules here win; everything is scoped to .host-page. */
+.host-page {
+  --hud-bg: rgba(13, 31, 41, .94); --hud-bg2: rgba(25, 50, 60, .96); --hud-gold: #e9c46a; --hud-text: #f3ead2; --hud-muted: #b9c6bd;
+  --hud-bad: #e76f51; --hud-good: #8fd694;
+  --brass: linear-gradient(180deg, #f6dc94 0%, #e2b452 55%, #b8862c 100%);
+  --frame: 0 0 0 1px #0a1820, inset 0 0 0 1px rgba(233, 196, 106, .55), inset 0 0 0 3px rgba(10, 24, 32, .9), inset 0 0 0 4px rgba(233, 196, 106, .18), 0 10px 28px rgba(0, 0, 0, .4);
+  --game-font: 'Jua', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  min-height: 100vh; background: radial-gradient(ellipse at 50% -10%, #24566a 0%, #0f2936 55%, #0a1c26 100%) fixed; color: var(--hud-text);
+}
+.host-page .ui-icon { width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
+.host-page .resource-icon { width: 1.2em; height: 1.2em; vertical-align: -.25em; }
+
+/* panels */
+.host-page .panel, .host-page .host-cover { background: var(--hud-bg); border: 0; border-radius: 14px; box-shadow: var(--frame); color: var(--hud-text); }
+.host-page .host-cover { position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(36, 86, 106, .55), rgba(13, 31, 41, .96) 60%), var(--hud-bg); }
+.host-page .cover-title { display: flex; align-items: center; gap: 14px; }
+.host-page .host-emblem { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--brass); color: #2a1e08; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45), 0 0 0 3px #0a1820, 0 4px 10px rgba(0, 0, 0, .5); }
+.host-page .host-emblem .ui-icon { width: 32px; height: 32px; }
+.host-page .host-cover h1 { font-family: var(--game-font); font-weight: 400; font-size: clamp(1.8rem, 3.4vw, 2.6rem); color: var(--hud-gold); text-shadow: 0 3px 0 #7a5a18, 0 6px 14px rgba(0, 0, 0, .5); margin: 0; letter-spacing: .01em; }
+.host-page .eyebrow { color: var(--hud-muted); font-size: .85rem; margin: 0 0 2px; }
+.host-page .plaque { display: inline-block; padding: 2px 16px 4px; border-radius: 8px; background: linear-gradient(180deg, #3b2a12, #24190a); box-shadow: inset 0 0 0 2px #c99a3a, inset 0 0 0 4px #24190a, inset 0 0 0 5px rgba(233, 196, 106, .35); }
+.host-page .back { color: var(--hud-gold); font-family: var(--game-font); }
+.host-page .host-h2 { display: flex; align-items: center; gap: 10px; font-family: var(--game-font); font-weight: 400; font-size: 1.35rem; color: var(--hud-gold); margin: 0 0 .8rem; }
+.host-page .host-h2::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217, 184, 106, .5), transparent); }
+.host-page .h2-ico { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #2f6274, #143444); color: var(--hud-gold); box-shadow: inset 0 0 0 2px #c99a3a, inset 0 0 0 4px rgba(10, 24, 32, .8); }
+.host-page .h2-ico .ui-icon { width: 19px; height: 19px; vertical-align: 0; }
+.host-page h3 { font-family: var(--game-font); font-weight: 400; color: var(--hud-gold); }
+.host-page small, .host-page legend { color: var(--hud-muted); }
+.host-page fieldset { border: 0; border-radius: 10px; background: rgba(11, 29, 38, .6); box-shadow: inset 0 0 0 1px rgba(217, 184, 106, .25); padding: .6rem .9rem .9rem; }
+.host-page legend { font-family: var(--game-font); font-size: 1rem; color: var(--hud-gold); padding: 0 .3rem; }
+.host-page #msg { font-family: var(--game-font); color: var(--hud-gold); min-height: 1.2em; }
+
+/* inputs */
+.host-page input:not([type=radio], [type=checkbox]), .host-page select { background: #0b1d26; color: var(--hud-text); border: 0; border-radius: 8px; box-shadow: inset 0 2px 5px rgba(0, 0, 0, .65), inset 0 0 0 1px rgba(217, 184, 106, .35); font-family: var(--game-font); font-size: 1.05rem; }
+.host-page input[type=radio], .host-page input[type=checkbox] { accent-color: #e2b452; width: 18px; height: 18px; }
+.host-page label { color: var(--hud-text); }
+
+/* buttons: brass for actions that move the game, dark ghost for the rest */
+.host-page button, .host-page button:hover {
+  font-family: var(--game-font); font-weight: 400; font-size: 1rem; border: 0; border-radius: 9px; padding: 8px 14px; min-height: 40px;
+  background: rgba(255, 255, 255, .06); color: var(--hud-text); box-shadow: inset 0 0 0 1px rgba(217, 184, 106, .5), 0 3px 0 rgba(0, 0, 0, .4);
+  transition: transform .06s, box-shadow .06s;
+}
+.host-page button:hover { background: rgba(255, 255, 255, .12); }
+.host-page button[data-act="new"], .host-page button[data-act="advall"], .host-page button[data-act="adv"], .host-page button[data-act="settings"],
+.host-page button[data-act="resume"], .host-page button[data-act="resume-all"], .host-page button[data-act="print-pins"],
+.host-page button[data-act="new"]:hover, .host-page button[data-act="advall"]:hover, .host-page button[data-act="adv"]:hover, .host-page button[data-act="settings"]:hover,
+.host-page button[data-act="resume"]:hover, .host-page button[data-act="resume-all"]:hover, .host-page button[data-act="print-pins"]:hover {
+  background: var(--brass); color: #2a1e08; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 3px 0 #7a5a18, 0 5px 10px rgba(0, 0, 0, .35);
+}
+.host-page button[data-act="finish"], .host-page button[data-act="forget"] { box-shadow: inset 0 0 0 1px rgba(231, 111, 81, .7), 0 3px 0 rgba(0, 0, 0, .4); color: #ffcdbf; }
+.host-page button:active { transform: translateY(2px); }
+.host-page button:disabled { opacity: .5; transform: none; }
+.host-page button.big { font-size: 1.3rem; padding: 12px 26px; min-height: 54px; border-radius: 12px; }
+.host-page .primary-actions button { font-size: 1.15rem; min-height: 52px; }
+
+/* server + nation choices */
+.host-page .choice, .host-page .good-card { background: rgba(11, 29, 38, .7); border: 0; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(217, 184, 106, .3); color: var(--hud-text); }
+.host-page .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hud-gold), 0 0 12px rgba(233, 196, 106, .25); }
+.host-page .choice strong { font-family: var(--game-font); font-weight: 400; font-size: 1.1rem; color: var(--hud-gold); }
+.host-page .nation-token { display: inline-flex; align-items: center; gap: 5px; font-family: var(--game-font); font-size: 1.02rem; color: var(--hud-text); }
+.host-page .nation-token::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--nc); box-shadow: 0 0 0 2px rgba(10, 24, 32, .9); }
+.host-page .nation-token .resource-icon { color: var(--nc); }
+.host-page .nation-choice { padding: 8px 12px; }
+
+/* room cards: one ship per room */
+.host-page .room-card { position: relative; background: linear-gradient(180deg, rgba(36, 70, 82, .96), rgba(19, 41, 51, .96)); border: 0; border-radius: 14px; box-shadow: var(--frame); color: var(--hud-text); padding: 14px 16px 16px; }
+.host-page .room-card header { display: flex; align-items: center; gap: 10px; }
+.host-page .room-card h3 { margin: 0; flex: 1; font-size: 1.25rem; }
+.host-page .room-no { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--brass); color: #2a1e08; font-family: var(--game-font); font-size: 1.1rem; box-shadow: 0 0 0 2px #0a1820; }
+.host-page .tag { font-family: var(--game-font); background: rgba(233, 196, 106, .16); color: var(--hud-gold); border: 0; border-radius: 8px; padding: 2px 8px; }
+.host-page .tag.attention { background: var(--hud-bad); color: #fff; }
+.host-page .room-main { display: flex; align-items: center; gap: 12px; }
+.host-page .phase-emblem { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; flex: none; background: radial-gradient(circle at 35% 30%, #fbe7a8, #e2b452 55%, #a9791f); color: #2a1e08; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .6), 0 0 0 3px #0a1820, 0 4px 10px rgba(0, 0, 0, .4); }
+.host-page .phase-emblem .ui-icon { width: 30px; height: 30px; vertical-align: 0; }
+.host-page .phase-finished .phase-emblem { background: radial-gradient(circle at 35% 30%, #a8e6b0, #5fae6c 60%, #2f6b3a); }
+.host-page .room-phase { font-family: var(--game-font); font-size: 1.8rem; color: var(--hud-gold); margin: 0; line-height: 1.1; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); }
+.host-page .room-mode { margin: 0; color: var(--hud-muted); font-size: .85rem; }
+.host-page .round-pips { list-style: none; display: flex; gap: 5px; padding: 0; margin: 10px 0 2px; }
+.host-page .round-pips li { flex: 1; height: 8px; border-radius: 4px; background: #0b1d26; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(217, 184, 106, .25); }
+.host-page .round-pips li.done { background: #c99a3a; }
+.host-page .round-pips li.now { background: var(--hud-good); box-shadow: 0 0 8px rgba(143, 214, 148, .7); }
+.host-page .metrics { gap: .5rem 1.2rem; }
+.host-page .metrics dt { color: var(--hud-muted); font-size: .8rem; }
+.host-page .metrics dd { font-family: var(--game-font); font-weight: 400; font-size: 1.45rem; color: var(--hud-text); }
+.host-page .metrics dd.clock { color: var(--hud-gold); font-variant-numeric: tabular-nums; }
+.host-page .ready-bar { display: block; width: 70px; height: 6px; margin-top: 3px; border-radius: 3px; background: #0b1d26; overflow: hidden; }
+.host-page .ready-bar i { display: block; height: 100%; background: var(--hud-good); }
+.host-page .next-clock { font-family: var(--game-font); color: var(--hud-good); min-height: 1.1em; margin: 4px 0; }
+
+/* tables as ledgers */
+.host-page table { border-collapse: separate; border-spacing: 0; width: 100%; }
+.host-page th { background: rgba(233, 196, 106, .1); color: var(--hud-gold); font-family: var(--game-font); font-weight: 400; border: 0; }
+.host-page td, .host-page th { border-bottom: 1px solid rgba(217, 184, 106, .18); padding: 7px 8px; color: var(--hud-text); }
+.host-page tr:nth-child(even) td { background: rgba(255, 255, 255, .025); }
+.host-page .pin { font-family: var(--game-font); font-size: 1.25rem; letter-spacing: .12em; color: var(--hud-gold); }
+.host-page td a { color: var(--hud-gold); }
+.host-page td.score { font-family: var(--game-font); font-size: 1.2rem; color: var(--hud-gold); }
+.host-page .grade { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-family: var(--game-font); font-size: 1.2rem; color: #2a1e08; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5), 0 0 0 2px #0a1820; background: #9aa5ad; }
+.host-page .grade-A { background: radial-gradient(circle at 35% 30%, #fff1b8, #e9c46a 55%, #b8862c); }
+.host-page .grade-B { background: radial-gradient(circle at 35% 30%, #f2f5f7, #c3cbd1 55%, #8a949b); }
+.host-page .grade-C { background: radial-gradient(circle at 35% 30%, #f6d1b0, #c98a55 55%, #8a5a2b); }
+.host-page .grade-D { background: radial-gradient(circle at 35% 30%, #c9d6dc, #7f939c 60%, #4f626b); color: #f3ead2; }
+.host-page .saved-list li { padding: 8px 0; border-bottom: 1px dashed rgba(217, 184, 106, .25); }
+
+/* print: access info sheets stay plain black on white */
+@media print {
+  .host-page { background: #fff; color: #000; }
+  .host-page .panel, .host-page .pin-sheet { box-shadow: none; background: #fff; color: #000; }
+  .host-page th, .host-page td, .host-page .pin, .host-page .nation-token, .host-page .host-h2 { color: #000; background: none; text-shadow: none; }
+  .host-page .h2-ico, .host-page .nation-token .resource-icon { display: none; }
+}
