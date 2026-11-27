@@ -54,6 +54,7 @@
 - 서버 1개 = Firebase 프로젝트 1개(무료 동시 접속 100). `webapp/js/config.js`의 `SERVERS` 순서가 방 코드의 서버 번호이므로 순서를 바꾸지 않는다. 교사 화면 하나가 여러 방(독립 게임)을 엔진 하나로 돌린다.
 - 화면 디자인은 GPT와 Claude가 같이 작업한다(사용자, 2026-11-26). 학생 게임 화면은 전체 화면 지도 + HUD(`webapp/student.html`, `js/student-ui.js`, `game.css`)다. 화면 코드(`*.html`, `js/*-ui.js`)와 엔진·통신 코드(`py/`, `js/engine-*`, `host.js`, `student-client.js`, `transport.js`)를 섞지 않는다. 화면이 쓰는 계약은 `webapp/API.md`다.
 - `webapp/tests/browser_e2e.py`는 학생 화면 개편(2026-11-26) 전 기준이라 새 화면 선택자로 고쳐야 한다(사용자가 이어서 작업 예정).
+- 조언 캐릭터 '마루 선장'(`webapp/js/advisor-ui.js`): 캐릭터 그림·말풍선 디자인은 GPT가 맡는다(사용자, 2026-11-27). 그림은 `face(mood)`(mood = '' | 'warn' | 'happy')와 `game.css`의 `.advisor*`만 바꾸면 된다. 조언 내용(`adviceFor`)과 안내 순서(`tour`)는 Claude가 맡는다.
 - 세계 지도의 디자인은 Claude가 맡는다(사용자, 2026-11-24). 데모는 `version2/world-map-demo.html`, 게임용은 `webapp/js/world-engine.js`이고 둘에 같은 `createWorldMap`이 들어 있으므로 함께 고친다. 게임은 `political: false`(멀리서도 자연 지형)로 쓴다. three.js는 r128 고정(`webapp/assets/world/vendor/`). Tripo 원본 4K 모델은 `version2/assets/models/`에 로컬로만 두고, 경량화본만 저장소에 넣는다.
 
 ## 저장소에 없는 대형 파일

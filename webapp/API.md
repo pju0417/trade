@@ -126,3 +126,16 @@ map.update(state);   // names, country, profiles, world_trades, round, phase_lab
 - 선택: `natBar: false`(아래쪽 나라 버튼 줄 숨김, 좁은 화면). `map.flyTo(x, z, 거리, 초)`와 `map.nations[i].center`로 처음 시점을 정할 수 있다.
 - 점검: `map.audit()`가 지형에 뜨거나 묻힌 집·풍경 물건, 비탈에 걸친 공항, 끊긴 길, 물 위의 길을 목록으로 돌려준다(지도 코드를 고친 뒤 0인지 확인).
 - `map.flyToNation('Oilia')`, `map.selectNation('Oilia')`, `opts.onSelect(나라)`로 다른 화면과 연결한다.
+
+## 조언 캐릭터 (`js/advisor-ui.js`)
+
+학생 화면 왼쪽 아래의 '마루 선장'. 상태를 읽고 조언만 한다(게임 행동은 하지 않는다).
+
+```js
+const adv = createAdvisor({ root: element, storageKey: 'trade-advisor-tour:방:나라', onAction: (a) => {} });
+adv.update(state);   // 상태가 바뀔 때마다
+```
+
+- 그림 바꾸기(디자인 담당): `face(mood)`가 SVG 문자열을 돌려준다. `mood`는 `''`(보통), `'warn'`(걱정), `'happy'`(기쁨). 눈 깜빡임은 `.eye` 클래스, 크기·말풍선은 `game.css`의 `.advisor`, `.advisor-face`, `.advisor-bubble`, `.advisor-focus`(안내 중 강조 테두리).
+- `onAction` 값: `'market:sell'`, `'market:buy'`, `'invest'`, `'trade'`, `'goals'`, `'result'`, `'trade:나라:물건:수량:값'`(사기 제안서 채워서 열기).
+- 조언 목록은 `adviceFor(state)`가 `{id, mood, text(HTML), action?: [버튼 글, onAction 값]}`로 만든다.
