@@ -1,6 +1,6 @@
 # 무역 게임 웹앱
 
-검증한 v17 엔진(확정 규칙 v1)을 그대로 쓰는 수업용 웹앱이다. 화면은 기능 확인용이며 디자인은 따로 입힌다(`API.md`).
+검증한 v17 엔진(확정 규칙 v1)을 그대로 쓰는 수업용 웹앱이다. 화면은 게임식(전체 화면 3D 지도 + HUD, 놋쇠·청록 톤, 주아 글꼴)이고 GPT와 Claude가 같이 만든다. 화면이 쓰는 계약은 `API.md`.
 
 ## 구조
 
@@ -101,7 +101,11 @@ python3 -m http.server 8000
 | `node_class.mjs` | 방 3개(가짜 시계): 방마다 다른 게임, 1라운드 교사 진행, 준비 완료→5초 뒤 진행·취소, 시간 초과 진행, 일시정지(시간 멈춤), 교사 방식 전환, 모둠(같은 나라 2대), 접속 인원, 다른 방 번호 거부, 이어하기 | 통과 |
 | `node_firebase_mock.mjs` | Firebase 연결 코드(가짜 DB): 교사 화면 연결 1개로 방 2개, 요청·결과·정리, 접속 인원과 연결 끊김 시 자동 삭제, 접속 인원 읽기(REST), 교사 화면 재시작, 수업 끝내기 시 자료 삭제 | 통과 |
 | 실제 서버 수동 확인 | 1서버 + GitHub Pages(`https://pju0417.github.io/trade/webapp/`): 학생 접속·행동·진행·접속 인원·수업 끝내기 | 통과(방 1개) |
-| 학생 게임 화면 (Playwright, 2026-11-26, `play.html`) | 1280×860·390×844: 시장 창 자동 열림, 자원 줄·부족 표시, 내놓기·사기 결과 알림, 거래·투자 창 자동 전환, 목표 창, 9라운드 끝 결과 창, 외부 접속 없음, 페이지 오류 0 | 통과(각 1판, 시드 7) |
+| `ui_play.cjs OUTDIR [W H]` | 학생 게임 화면(`play.html`, 시드 7, 트로피아): 시장 창 자동 열림, [−]/[+] 조절기, 내놓기·사기 결과 알림, 거래·투자 창 자동 전환, 목표 창, 9라운드 끝 결과 창, 외부 접속 없음, 페이지 오류 0 | 통과(2026-11-27, 1280×860·390×844 각 1판) |
+| `ui_advisor.cjs OUTDIR [W H]` | 마루 선장: 처음 안내 6단계, 판매 등록·거래·투자 조언 문장, [팔러 가기](추천 수량 채움)·[제안서 쓰기](사기 제안서 채움), AI 거절은 '거절됐어요' | 통과(2026-11-27, 1280×860·390×844) |
+| `ui_host.cjs OUTDIR TAG [W H]` | 교사 화면: 수업 만들기(방 2개), 접속 정보, 모든 방 다음 단계, 방 자세히(지도·표), 9라운드 끝 결과 | 통과(2026-11-27, 1366×900·390×844) |
+| `map_audit.cjs [json-out]` | 세계 지도 점검(데모): 뜨거나 묻힌 집·풍경 물건, 비탈 공항, 끊긴 길 | 모두 0(물 위 길 1곳 = 항구 부두)(2026-11-27) |
+| (이전 기록) 학생 게임 화면 (Playwright, 2026-11-26, `play.html`) | 1280×860·390×844: 시장 창 자동 열림, 자원 줄·부족 표시, 내놓기·사기 결과 알림, 거래·투자 창 자동 전환, 목표 창, 9라운드 끝 결과 창, 외부 접속 없음, 페이지 오류 0 | 통과(각 1판, 시드 7) |
 | 혼자 해 보기 (Playwright, 2026-11-26) | `play.html`에서 시드 7·트로피아로 시작, 학생 화면 자동 입장, 준비 완료로 다음 단계, "다음 단계"로 9라운드 끝, 결과(점수·등급) 표시, 처음 화면 → 이어하기, 페이지 오류 0 | 통과(1판) |
 | `browser_e2e.py OUTDIR` | (2026-11-26 학생 화면 개편 전 기준. 새 화면 선택자로 고쳐야 함) 실제 크롬: Pyodide 로딩, 방 2개(교사 1 + 학생 탭 4), 버튼으로 거래·제안·투자, 방별·전체 진행, 준비 완료 자동 진행, 일시정지, 3초 타이머로 두 방 끝까지, 첫 화면 접속 인원, 새로고침 후 이어하기 | 통과 |
 
@@ -112,7 +116,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 test_actions.py unit
 npm install pyodide@0.27.7   # Node 테스트용(한 번)
 PYODIDE_MODULE=$PWD/node_modules/pyodide/pyodide.mjs node node_host.mjs
 PYODIDE_MODULE=$PWD/node_modules/pyodide/pyodide.mjs node node_class.mjs
-python3 browser_e2e.py /tmp/e2e     # playwright + chrome 필요
+python3 browser_e2e.py /tmp/e2e     # playwright + chrome 필요(2026-11-26 화면 개편 전 기준이라 지금은 맞지 않음)
+# 화면·지도 확인(저장소 루트에서, 웹 서버 없이 Playwright가 파일을 직접 넘김)
+node webapp/tests/ui_play.cjs /tmp/ui
+node webapp/tests/ui_advisor.cjs /tmp/ui
+node webapp/tests/ui_host.cjs /tmp/ui host
+node webapp/tests/map_audit.cjs
 ```
 
 엔진이나 `py/classroom.py`를 바꾸면 `python3 webapp/build_bundle.py`로 묶음을 다시 만든다. `--check`로 묶음과 원본이 같은지 확인한다.
@@ -129,3 +138,6 @@ python3 browser_e2e.py /tmp/e2e     # playwright + chrome 필요
 - 한 수업이 쓰는 Firebase 데이터 양.
 - 학교 PC·태블릿에서의 Pyodide 로딩 시간과 메모리.
 - 실제 학생의 사용성, 80분 진행.
+- 게임식 화면(2026-11-26~27)과 촘촘해진 지도(0.25 간격)가 학교 크롬북·iPad에서 부드럽게 도는지. 소프트웨어 렌더링 기준 지도 첫 준비 1.5 → 1.9초, 가장 먼 시점 10 → 7fps.
+- 교사 화면 접속 정보 인쇄의 실제 출력.
+- 선장 그림은 임시(코드로 그린 SVG). GPT가 그림으로 바꿀 예정.

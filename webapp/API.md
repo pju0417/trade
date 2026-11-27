@@ -114,7 +114,7 @@ await cls.finish({ clearServer: true })        // 수업 끝내기(서버의 방
 
 ## 세계 지도 (`js/world-engine.js`)
 
-9개국 가상 세계 지도 부품. 상태를 그리기만 한다. 화면에서는 `js/world-map.js`의 `updateWorldMap(element, state, { onPropose })`가 감싸서 쓴다. 데모는 `version2/world-map-demo.html`.
+9개국 가상 세계 지도 부품. 상태를 그리기만 한다. 학생 화면(`student-ui.js`)은 `createWorld`를 바로 쓰고(`theme: 'game'`, `card: false`, 나라를 누르면 학생 화면의 나라 창), 교사 화면은 `js/world-map.js`의 `updateWorldMap(element, state, { onPropose })`가 감싸서 쓴다(WebGL이 없으면 2D 지도). 데모는 `version2/world-map-demo.html`(기본은 게임과 같은 지도, `?political`이면 예전 정치 색 지도).
 
 ```js
 import { createWorld } from './world-engine.js';   // three.js r128·모델을 알아서 불러온다

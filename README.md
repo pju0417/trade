@@ -2,7 +2,7 @@
 
 초등학교 6학년 사회 무역 단원 마무리 게임의 경제 규칙을 만들고 검증하는 저장소다. 작업 지침은 `CLAUDE.md`에 있다.
 
-마지막 정리: 2026-11-19
+마지막 정리: 2026-11-27
 
 ## 폴더 구조
 
@@ -38,8 +38,11 @@
 
 1. 학생 3명 시범 수업으로 이해도·진행 시간 확인하기(`docs/student_rules_summary.md`, `docs/teacher_guide.md` 사용)
 2. 시범 수업 뒤 수출 목표 숫자 다시 보기(지금은 잠정). 학생 7명 이상이면 추가 3개국 목표도 정하기
-3. 웹앱: 기능 구현과 검증 완료(`webapp/README.md`). 여러 방·서버(Firebase 프로젝트)·진행 방식(교사/준비 완료/시간 제한) 지원. 주소 `https://pju0417.github.io/trade/webapp/`, 1서버 연결 확인. 혼자 해 보기(`webapp/play.html`, AI와 시뮬레이션 플레이) 추가(2026-11-26). 남은 것은 디자인(GPT·Claude 공동, 학생 화면은 2026-11-26 전체 화면 지도 + HUD로 개편), `tests/browser_e2e.py` 새 화면 기준으로 고치기, 학교 기기·여러 기기 동시 접속 시험, 서버 추가(`webapp/FIREBASE_SETUP.md`)
-4. 세계 지도: `version2/world-map-demo.html`의 엔진을 `webapp/js/world-engine.js`로 옮겨 학생·교사 화면에 붙임(2026-11-25). Tripo 모델 16개(항구·화물선·산업 건물·수도·마을) 포함. 지도 디자인은 Claude가 맡는다. 남은 것은 실제 iPad·크롬북 확인, 실제 수업 흐름 확인
+3. 웹앱(`webapp/README.md`): 여러 방·서버(Firebase 프로젝트)·진행 방식(교사/준비 완료/시간 제한), 주소 `https://pju0417.github.io/trade/webapp/`, 1서버 연결 확인(2026-11-20).
+   - 2026-11-26~27에 화면을 게임식으로 바꿨다. 학생 화면 = 전체 화면 3D 지도 + HUD(자원 줄, 메뉴, 알림, 턴 다이얼, 단계마다 저절로 열리는 창), 조언 캐릭터 '마루 선장'(처음 안내 + 상태로 계산한 조언), 교사 화면 = 항만 관제실 디자인, 혼자 해 보기(`webapp/play.html`, AI와 플레이). 글꼴 주아, 놋쇠·청록 톤.
+   - 남은 것: 선장 그림(GPT 담당, `webapp/API.md` "조언 캐릭터"), `webapp/tests/browser_e2e.py`를 새 화면 기준으로 고치기(사용자), 학교 기기·여러 기기 동시 접속 시험, 서버 추가(`webapp/FIREBASE_SETUP.md`)
+4. 세계 지도(Claude 담당): 데모 `version2/world-map-demo.html`과 게임용 `webapp/js/world-engine.js`에 같은 `createWorldMap`. 9개국, 수도·마을·밭, 강, 공항·배·비행기 무역 교통, Tripo 모델, 해안 모래사장·절벽, 발전하면 고개 길이 터널로(산업 레벨 3). `webapp/tests/map_audit.cjs`로 뜨거나 묻힌 물건·끊긴 길이 0인지 확인한다(2026-11-27 모두 0).
+   - 남은 것: 지형을 0.25 간격으로 촘촘하게 그리면서 무거워졌다(소프트웨어 렌더링 기준 첫 준비 1.5 → 1.9초). 실제 iPad·크롬북 확인, 실제 수업 흐름 확인
 
 ## 실행 방법
 

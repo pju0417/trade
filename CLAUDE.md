@@ -1,6 +1,6 @@
 # #11 무역 게임 — 작업 지침
 
-초등학교 6학년 사회 무역 단원 마무리 게임을 만드는 프로젝트다. 지금 있는 것은 9개국·9라운드 Python 경제 시뮬레이터(v17)와 검증 자료, 그리고 그 엔진을 브라우저(Pyodide)에서 그대로 돌리는 수업용 웹앱(`webapp/`)이다.
+초등학교 6학년 사회 무역 단원 마무리 게임을 만드는 프로젝트다. 지금 있는 것은 9개국·9라운드 Python 경제 시뮬레이터(v17)와 검증 자료, 그리고 그 엔진을 브라우저(Pyodide)에서 그대로 돌리는 수업용 웹앱(`webapp/`)이다. 웹앱은 게임식 화면(전체 화면 3D 세계 지도 + HUD, 조언 캐릭터 '마루 선장', 교사 화면 = 항만 관제실, 혼자 해 보기 `play.html`)이다(2026-11-27).
 
 ## 대화 방식
 
@@ -29,7 +29,7 @@
 ## 잠정·미확인
 
 - 시뮬레이터 수출 목표(트로피아 205, 그레니아 155, 오일리아 340, 메카니아 235, 미네리아 315, 테크니아 765G)와 웹앱 목표는 모두 잠정이다. 시범 수업 뒤 다시 본다.
-- 실제 학생의 이해도, 80분 진행, 학교 기기에서의 웹앱 동작, 여러 기기 동시 접속은 확인하지 않았다. 1서버(Firebase `trade-a55c6`)와 GitHub Pages(`https://pju0417.github.io/trade/webapp/`) 연결은 2026-11-20 방 1개로 확인했다.
+- 실제 학생의 이해도, 80분 진행, 학교 기기에서의 웹앱 동작, 여러 기기 동시 접속은 확인하지 않았다. 지도를 0.25 간격으로 촘촘하게 그리면서(2026-11-27) 무거워졌으니 크롬북·iPad에서 꼭 본다. 1서버(Firebase `trade-a55c6`)와 GitHub Pages(`https://pju0417.github.io/trade/webapp/`) 연결은 2026-11-20 방 1개로 확인했다.
 - 웹앱은 수출 목표 v2(트로피아 255, 그레니아 205, 오일리아 425, 메카니아 155, 미네리아 330, 테크니아 475G)를 쓴다(사용자 결정 2026-11-20). W1·W3 통과, W2 실패. 5G 내림(v3)도 W2 실패로 채택하지 않았다(`docs/webapp_human_play.md`). 원자재 진단은 `docs/raw_materials_diagnosis.md`.
 - 최종 시뮬레이션(혼합 행동, 학생 3명 vs 6명)은 기준 F1~F7을 모두 통과했다(`docs/final_simulation.md`). 추가 3개국에는 수출 목표가 없어 학생 7명 이상이면 따로 정해야 한다.
 - 학생 투자를 흉내 낼 때는 AI 예비금 조건을 빼고 본다(`sim_lib.LevelUpNoReserve`, `MainIndustryStudent`). 예비금은 AI 정책이지 학생 규칙이 아니다.
@@ -53,9 +53,11 @@
 - `classroom.py`나 엔진 묶음 대상 파일을 바꾸면 `python3 webapp/build_bundle.py`로 `engine_bundle.json`을 다시 만들고 `webapp/README.md`의 검증을 다시 돌린다.
 - 서버 1개 = Firebase 프로젝트 1개(무료 동시 접속 100). `webapp/js/config.js`의 `SERVERS` 순서가 방 코드의 서버 번호이므로 순서를 바꾸지 않는다. 교사 화면 하나가 여러 방(독립 게임)을 엔진 하나로 돌린다.
 - 화면 디자인은 GPT와 Claude가 같이 작업한다(사용자, 2026-11-26). 학생 게임 화면은 전체 화면 지도 + HUD(`webapp/student.html`, `js/student-ui.js`, `game.css`)다. 화면 코드(`*.html`, `js/*-ui.js`)와 엔진·통신 코드(`py/`, `js/engine-*`, `host.js`, `student-client.js`, `transport.js`)를 섞지 않는다. 화면이 쓰는 계약은 `webapp/API.md`다.
-- `webapp/tests/browser_e2e.py`는 학생 화면 개편(2026-11-26) 전 기준이라 새 화면 선택자로 고쳐야 한다(사용자가 이어서 작업 예정).
+- `webapp/tests/browser_e2e.py`는 학생 화면 개편(2026-11-26) 전 기준이라 새 화면 선택자로 고쳐야 한다(사용자가 이어서 작업 예정). 바뀐 것: 메시지는 `#msg` 대신 `#toasts` 알림, 준비 완료는 `.turn-dial`, 수량·가격은 [−]/[+] 조절기(`data-act="step"`), 처음에 선장 안내(`[data-adv=tour-skip]`), 혼자 해 보기 진행 막대는 접혀 있음(`#bar-handle`).
+- 화면을 고치면 `webapp/tests/ui_play.cjs`, `ui_advisor.cjs`, `ui_host.cjs`로 확인한다(웹 서버 없이 Playwright가 파일을 직접 넘긴다). 게임 화면 버튼은 trade.css·atlas.css의 공통 버튼 규칙이 덮으므로 `game.css`·`host.css`에서는 `.game`·`.host-page` 접두어로 쓴다.
+- 게임 글꼴은 주아(`webapp/assets/fonts/jua/`, SIL OFL)를 저장소에 넣어 쓴다(학교 네트워크에서 외부 글꼴이 막힐 수 있음). 이모지 대신 `js/good-icons.js`의 `goodIcon`·`uiIcon` 그림 아이콘을 쓴다.
 - 조언 캐릭터 '마루 선장'(`webapp/js/advisor-ui.js`): 캐릭터 그림·말풍선 디자인은 GPT가 맡는다(사용자, 2026-11-27). 그림은 `face(mood)`(mood = '' | 'warn' | 'happy')와 `game.css`의 `.advisor*`만 바꾸면 된다. 조언 내용(`adviceFor`)과 안내 순서(`tour`)는 Claude가 맡는다.
-- 세계 지도의 디자인은 Claude가 맡는다(사용자, 2026-11-24). 데모는 `version2/world-map-demo.html`, 게임용은 `webapp/js/world-engine.js`이고 둘에 같은 `createWorldMap`이 들어 있으므로 함께 고친다. 게임은 `political: false`(멀리서도 자연 지형)로 쓴다. three.js는 r128 고정(`webapp/assets/world/vendor/`). Tripo 원본 4K 모델은 `version2/assets/models/`에 로컬로만 두고, 경량화본만 저장소에 넣는다.
+- 세계 지도의 디자인은 Claude가 맡는다(사용자, 2026-11-24). 데모는 `version2/world-map-demo.html`, 게임용은 `webapp/js/world-engine.js`이고 둘에 같은 `createWorldMap`이 들어 있으므로 함께 고친다. 게임은 `political: false`, `theme: 'game'`(지도 컨트롤을 HUD 톤으로)으로 쓰고 학생 화면은 `card: false`다. 데모 기본도 게임과 같은 지도이고 `?political`이면 예전 정치 색 지도다. 지도를 고치면 `webapp/tests/map_audit.cjs`로 뜨거나 묻힌 물건·끊긴 길이 0인지 확인한다(물 위 길 1곳은 항구 부두). 물건·길·강은 화면에 그려지는 지형 높이 `meshH`에 놓는다. 해안은 바다까지 거리 `CD`로 모래사장·절벽을 나누고, 산업 하나가 레벨 3이 되면 고개 길이 터널로 바뀐다. three.js는 r128 고정(`webapp/assets/world/vendor/`). Tripo 원본 4K 모델은 `version2/assets/models/`에 로컬로만 두고, 경량화본만 저장소에 넣는다.
 
 ## 저장소에 없는 대형 파일
 
