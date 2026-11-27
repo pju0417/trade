@@ -4,31 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>무역 게임 · 아홉 나라의 바닷길</title>
-  <meta name="theme-color" content="#132e3d">
+  <meta name="theme-color" content="#0f2936">
   <link rel="stylesheet" href="trade.css">
   <link rel="stylesheet" href="atlas.css">
+  <link rel="stylesheet" href="assets/fonts/jua/jua.css">
+  <link rel="stylesheet" href="title.css">
 </head>
-<body class="lobby-page">
+<body class="lobby-page title-page">
+  <!-- 배경: 3D 세계 지도가 천천히 나라들 사이를 날아다닌다(WebGL이 없으면 2D 지도 그림) -->
   <div id="title-map" class="title-map" aria-hidden="true"></div>
-  <main class="shell lobby">
-    <div class="title-topline"><span class="atlas-emblem" aria-hidden="true">✧</span><span>초등학교 6학년 사회 · 세계와 이어지는 우리 나라</span><span class="edition-label">아홉 나라의 바닷길</span></div>
-    <header class="title-cover">
-      <p class="eyebrow">생산하고, 교환하고, 함께 성장하는 세계</p>
+  <div class="title-shade" aria-hidden="true"></div>
+  <main class="title-screen">
+    <header class="title-logo">
+      <p class="title-kicker">초등학교 6학년 사회 · 세계와 이어지는 우리 나라</p>
       <h1>무역 게임</h1>
-      <p class="title-subtitle">아홉 나라의 바닷길</p>
-      <p class="title-description">우리 나라의 강점을 찾고,<br>필요한 물건을 바다 너머에서 만나 보세요.</p>
-      <div class="title-divider" aria-hidden="true"><span></span>✦<span></span></div>
+      <p class="title-ribbon"><span>아홉 나라의 바닷길</span></p>
     </header>
-    <nav class="entry-grid" aria-label="게임 입구">
-      <a class="entry entry-student" href="student.html"><span class="entry-number">학생</span><strong>우리 나라로 입장</strong><small>방 코드와 접속 번호로 시작해요.</small><span class="entry-action">학생 화면 열기</span></a>
-      <a class="entry entry-host" href="host.html"><span class="entry-number">선생님</span><strong>새로운 수업 준비</strong><small>방을 만들고 세계의 흐름을 살펴봐요.</small><span class="entry-action">선생님 화면 열기</span></a>
+    <nav class="title-menu" aria-label="게임 입구">
+      <a class="entry entry-student menu-main" href="student.html"><span class="menu-ico" data-icon="ship"></span><span class="menu-text"><strong>학생으로 입장</strong><small>방 코드와 접속 번호로 우리 나라에 들어가요</small></span></a>
+      <a class="entry entry-host" href="host.html"><span class="menu-ico" data-icon="invest"></span><span class="menu-text"><strong>수업 준비</strong><small>선생님: 방을 만들고 세계의 흐름을 살펴봐요</small></span></a>
+      <a class="entry entry-play" href="play.html?local=1"><span class="menu-ico" data-icon="trading"></span><span class="menu-text"><strong>혼자 해 보기</strong><small>AI 나라들과 미리 한 판 해 봐요</small></span></a>
     </nav>
-    <p class="lobby-solo"><a href="play.html?local=1">혼자 해 보기 (AI와 시뮬레이션 플레이) →</a></p>
-    <section class="lobby-servers">
+    <section class="title-servers" aria-label="서버 접속 현황">
       <h2>서버 접속 현황</h2>
       <div id="servers">불러오는 중…</div>
     </section>
-    <footer class="title-footer"><span>나라별 목표를 향해, 서로 필요한 것을 주고받아요.</span><span>9개국 · 9라운드</span></footer>
+    <footer class="title-foot"><span>나라별 목표를 향해, 서로 필요한 것을 주고받아요.</span><span>9개국 · 9라운드</span></footer>
   </main>
   <script type="module" src="js/lobby.js"></script>
 </body>

@@ -1653,6 +1653,8 @@ function createWorldMap(container, THREE, opts) {
   function showToast(t) { toast.textContent = t; toast.style.opacity = '1'; clearTimeout(toastTimer); toastTimer = setTimeout(function () { toast.style.opacity = '0'; }, 2600); }
   var help = el('div', (GAME ? 'position:absolute;left:50%;transform:translateX(-50%);bottom:72px;' : 'position:absolute;right:12px;bottom:78px;') + 'background:rgba(31,41,51,0.82);color:#ffffff;' + (GAME ? TH.panel : '') + 'padding:7px 11px;border-radius:10px;font-size:11px;transition:opacity 1s;pointer-events:none;', isTouch ? '한 손가락: 이동 · 두 손가락: 확대/축소 · 탭: 나라 보기' : '드래그: 이동 · 휠: 확대/축소 · 클릭: 나라 보기 · 더블클릭: 확대');
   ui.appendChild(help); setTimeout(function () { help.style.opacity = '0'; }, 7000);
+  // controls: false → 배경용 지도(첫 화면): 확대 버튼·나라 버튼 줄·범례·안내·나라 카드를 모두 숨긴다
+  if (opts.controls === false) { opts.legend = false; opts.card = false; [zoomBox, natBar, help].forEach(function (e) { e.style.display = 'none'; }); }
 
   function selectNation(i) {
     if (i == null || i < 0) { card.style.display = 'none'; terrU.uSel.value = -1; return; }

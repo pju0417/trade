@@ -1,0 +1,70 @@
+/* First screen as a game title: live 3D world behind, logo, stacked main-menu buttons.
+   Same lacquer + brass look as game.css / host.css. */
+.title-page {
+  --hud-gold: #e9c46a; --hud-text: #f3ead2; --hud-muted: #c9d4c5;
+  --brass: linear-gradient(180deg, #f6dc94 0%, #e2b452 55%, #b8862c 100%);
+  --game-font: 'Jua', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  margin: 0; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; background: #0f2936; color: var(--hud-text);
+}
+.title-page .title-map { position: fixed; inset: 0; pointer-events: none; background-size: cover; background-position: center; }
+.title-page .title-map > * { pointer-events: none; }
+/* darken edges so the menu reads over the moving map */
+.title-shade { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(10, 28, 38, 0) 0%, rgba(10, 28, 38, .25) 50%, rgba(6, 18, 26, .75) 100%); }
+
+.title-screen { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; padding: 32px 16px 18px; box-sizing: border-box; }
+
+/* logo */
+.title-logo { text-align: center; }
+.title-kicker { margin: 0 0 6px; color: var(--hud-muted); font-size: .9rem; text-shadow: 0 1px 4px #000; }
+.title-logo h1 { margin: 0; font-family: var(--game-font); font-weight: 400; font-size: clamp(3.6rem, 11vw, 7.5rem); line-height: 1; color: #f6dc94; letter-spacing: .02em;
+  text-shadow: 0 2px 0 #c99a3a, 0 5px 0 #7a5a18, 0 8px 0 #4a3510, 0 14px 30px rgba(0, 0, 0, .7); }
+.title-ribbon { margin: 14px 0 0; }
+.title-ribbon span { position: relative; display: inline-block; padding: 6px 34px 8px; font-family: var(--game-font); font-size: clamp(1.1rem, 3vw, 1.5rem); color: #2a1e08; background: var(--brass); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 4px 0 #7a5a18, 0 8px 18px rgba(0, 0, 0, .5); }
+.title-ribbon span::before, .title-ribbon span::after { content: ''; position: absolute; top: 6px; width: 18px; height: 100%; background: #b8862c; z-index: -1; }
+.title-ribbon span::before { left: -14px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); }
+.title-ribbon span::after { right: -14px; clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
+
+/* main menu */
+.title-menu { width: min(460px, 100%); display: grid; gap: 12px; }
+.title-menu .entry {
+  display: flex; align-items: center; gap: 14px; padding: 12px 18px 12px 12px; border-radius: 14px; text-decoration: none; color: var(--hud-text);
+  background: linear-gradient(180deg, rgba(36, 78, 92, .94), rgba(16, 40, 50, .96));
+  box-shadow: 0 0 0 1px #0a1820, inset 0 0 0 1px rgba(233, 196, 106, .55), inset 0 0 0 3px rgba(10, 24, 32, .9), inset 0 0 0 4px rgba(233, 196, 106, .18), 0 6px 0 rgba(4, 14, 20, .8), 0 12px 24px rgba(0, 0, 0, .45);
+  transition: transform .08s, box-shadow .08s, filter .1s;
+}
+.title-menu .entry:hover { filter: brightness(1.12); transform: translateY(-2px); }
+.title-menu .entry:active { transform: translateY(4px); box-shadow: 0 0 0 1px #0a1820, inset 0 0 0 1px rgba(233, 196, 106, .55), 0 2px 0 rgba(4, 14, 20, .8); }
+.title-menu .entry.menu-main { background: var(--brass); color: #2a1e08; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 6px 0 #7a5a18, 0 12px 24px rgba(0, 0, 0, .5); }
+.title-menu .menu-ico { width: 52px; height: 52px; flex: none; border-radius: 50%; display: grid; place-items: center; color: var(--hud-gold);
+  background: radial-gradient(circle at 35% 30%, #2f6274, #143444); box-shadow: inset 0 0 0 2px #c99a3a, inset 0 0 0 4px rgba(10, 24, 32, .8), 0 2px 4px rgba(0, 0, 0, .5); }
+.title-menu .menu-main .menu-ico { background: radial-gradient(circle at 35% 30%, #1d4b5c, #0f2936); }
+.title-menu .menu-ico .ui-icon { width: 28px; height: 28px; }
+.title-menu .menu-text { display: grid; gap: 2px; }
+.title-menu strong { font-family: var(--game-font); font-weight: 400; font-size: 1.55rem; line-height: 1.1; }
+.title-menu small { font-size: .85rem; opacity: .85; }
+
+/* server status: small brass-rimmed plaques */
+.title-servers { width: min(460px, 100%); text-align: center; }
+.title-servers h2 { margin: 0 0 6px; font-family: var(--game-font); font-weight: 400; font-size: .95rem; color: var(--hud-muted); text-shadow: 0 1px 4px #000; }
+.title-servers .server-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.title-servers .server-list li { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 10px; font-size: .85rem; background: rgba(13, 31, 41, .88); box-shadow: inset 0 0 0 1px rgba(233, 196, 106, .4); }
+.title-servers .server-list strong { font-family: var(--game-font); font-weight: 400; font-size: 1rem; color: var(--hud-gold); }
+.title-servers .tag { font-size: .75rem; padding: 1px 7px; border-radius: 8px; background: rgba(143, 214, 148, .18); color: #bfe8c2; border: 0; }
+.title-servers .tag.attention { background: rgba(231, 111, 81, .3); color: #ffcdbf; }
+
+.title-foot { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; color: var(--hud-muted); font-size: .8rem; text-shadow: 0 1px 4px #000; }
+
+@media (max-width: 480px) {
+  .title-screen { gap: 18px; justify-content: flex-start; padding-top: 48px; }
+  .title-menu strong { font-size: 1.3rem; }
+  .title-menu .menu-ico { width: 44px; height: 44px; }
+}
+/* trade.css의 .entry 공통 규칙(종이 카드, 청록 글자) 지우기 */
+.title-menu .entry > .menu-text { color: inherit; font-size: inherit; }
+.title-menu .entry > .menu-ico { font-size: inherit; color: var(--hud-gold); }
+/* atlas.css의 .entry strong/small 색 덮어쓰기 */
+.title-menu .entry strong { color: var(--hud-gold); }
+.title-menu .entry small { color: var(--hud-muted); }
+.title-menu .entry.menu-main strong { color: #2a1e08; }
+.title-menu .entry.menu-main small { color: #4a3510; opacity: 1; }
+.title-servers .server-list li { flex-wrap: nowrap; white-space: nowrap; }
