@@ -1,0 +1,357 @@
+{
+ "games_per_policy": 30,
+ "seeds": [
+  170000,
+  170029
+ ],
+ "students": [
+  "Tropia",
+  "Mechania",
+  "Mineria"
+ ],
+ "result": {
+  "N": {
+   "Tropia": {
+    "mean": 22.6,
+    "stdev": 0.0,
+    "min": 22.6,
+    "max": 22.6,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 0,
+     "living": 13.8,
+     "trade": 0.0,
+     "utilization": 3.9,
+     "cash": 5.0
+    }
+   },
+   "Mechania": {
+    "mean": 22.2,
+    "stdev": 0.0,
+    "min": 22.2,
+    "max": 22.2,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 0,
+     "living": 9.9,
+     "trade": 0.0,
+     "utilization": 7.4,
+     "cash": 5.0
+    }
+   },
+   "Mineria": {
+    "mean": 17.8,
+    "stdev": 0.0,
+    "min": 17.8,
+    "max": 17.8,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 0,
+     "living": 11.0,
+     "trade": 0.0,
+     "utilization": 1.9,
+     "cash": 5.0
+    }
+   }
+  },
+  "H": {
+   "Tropia": {
+    "mean": 94.2,
+    "stdev": 0.2,
+    "min": 94.1,
+    "max": 94.6,
+    "A_rate": 1.0,
+    "grades": {
+     "A": 30,
+     "B": 0,
+     "C": 0,
+     "D": 0
+    },
+    "parts": {
+     "export": 19.8,
+     "industry": 15,
+     "living": 23.2,
+     "trade": 21.2,
+     "utilization": 10.0,
+     "cash": 5.0
+    }
+   },
+   "Mechania": {
+    "mean": 90.4,
+    "stdev": 1.1,
+    "min": 89.4,
+    "max": 92.0,
+    "A_rate": 0.4,
+    "grades": {
+     "A": 12,
+     "B": 18,
+     "C": 0,
+     "D": 0
+    },
+    "parts": {
+     "export": 19.9,
+     "industry": 15,
+     "living": 23.9,
+     "trade": 19.0,
+     "utilization": 7.6,
+     "cash": 5.0
+    }
+   },
+   "Mineria": {
+    "mean": 95.0,
+    "stdev": 1.1,
+    "min": 92.0,
+    "max": 96.0,
+    "A_rate": 1.0,
+    "grades": {
+     "A": 30,
+     "B": 0,
+     "C": 0,
+     "D": 0
+    },
+    "parts": {
+     "export": 19.3,
+     "industry": 15,
+     "living": 23.9,
+     "trade": 23.0,
+     "utilization": 8.8,
+     "cash": 5.0
+    }
+   }
+  },
+  "F-many": {
+   "Tropia": {
+    "mean": 60.5,
+    "stdev": 4.3,
+    "min": 53.3,
+    "max": 66.3,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 18,
+     "D": 12
+    },
+    "parts": {
+     "export": 2.5,
+     "industry": 15,
+     "living": 22.1,
+     "trade": 12.8,
+     "utilization": 3.6,
+     "cash": 4.5
+    }
+   },
+   "Mechania": {
+    "mean": 58.5,
+    "stdev": 6.7,
+    "min": 46.8,
+    "max": 69.6,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 20,
+     "D": 10
+    },
+    "parts": {
+     "export": 4.6,
+     "industry": 15,
+     "living": 19.4,
+     "trade": 12.7,
+     "utilization": 6.4,
+     "cash": 0.4
+    }
+   },
+   "Mineria": {
+    "mean": 65.1,
+    "stdev": 4.9,
+    "min": 54.7,
+    "max": 73.3,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 25,
+     "D": 5
+    },
+    "parts": {
+     "export": 4.9,
+     "industry": 15,
+     "living": 22.5,
+     "trade": 18.0,
+     "utilization": 2.8,
+     "cash": 1.8
+    }
+   }
+  },
+  "F-normal": {
+   "Tropia": {
+    "mean": 54.9,
+    "stdev": 1.2,
+    "min": 52.3,
+    "max": 57.2,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 15,
+     "living": 22.1,
+     "trade": 11.3,
+     "utilization": 3.2,
+     "cash": 3.4
+    }
+   },
+   "Mechania": {
+    "mean": 49.1,
+    "stdev": 2.9,
+    "min": 46.4,
+    "max": 57.0,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 15,
+     "living": 16.4,
+     "trade": 11.2,
+     "utilization": 6.4,
+     "cash": 0.1
+    }
+   },
+   "Mineria": {
+    "mean": 51.2,
+    "stdev": 0.7,
+    "min": 49.3,
+    "max": 52.9,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 15,
+     "living": 20.7,
+     "trade": 12.1,
+     "utilization": 1.4,
+     "cash": 2.1
+    }
+   }
+  },
+  "F-alerts": {
+   "Tropia": {
+    "mean": 47.1,
+    "stdev": 5.4,
+    "min": 43.6,
+    "max": 56.9,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 3.5,
+     "living": 23.6,
+     "trade": 12.7,
+     "utilization": 3.8,
+     "cash": 3.4
+    }
+   },
+   "Mechania": {
+    "mean": 48.3,
+    "stdev": 0.5,
+    "min": 47.1,
+    "max": 48.9,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 0,
+     "living": 23.6,
+     "trade": 15.1,
+     "utilization": 7.4,
+     "cash": 2.2
+    }
+   },
+   "Mineria": {
+    "mean": 40.5,
+    "stdev": 0.5,
+    "min": 39.8,
+    "max": 41.9,
+    "A_rate": 0.0,
+    "grades": {
+     "A": 0,
+     "B": 0,
+     "C": 0,
+     "D": 30
+    },
+    "parts": {
+     "export": 0.0,
+     "industry": 0,
+     "living": 23.2,
+     "trade": 13.5,
+     "utilization": 1.9,
+     "cash": 2.0
+    }
+   }
+  }
+ },
+ "criteria": {
+  "C1_A_rate_le_10pct": {
+   "Tropia": true,
+   "Mechania": true,
+   "Mineria": true
+  },
+  "C2_below_H": {
+   "Tropia": true,
+   "Mechania": true,
+   "Mineria": true
+  },
+  "C3_above_N": {
+   "Tropia": true,
+   "Mechania": true,
+   "Mineria": true
+  },
+  "all_pass": true
+ }
+}

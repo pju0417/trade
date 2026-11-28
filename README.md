@@ -14,6 +14,7 @@
 | `docs/teacher_guide.md` | 교사용 운영 안내 |
 | `docs/final_simulation.md` | 확정 규칙 최종 시뮬레이션: 혼합 행동, 학생 3명 vs 6명 |
 | `docs/virtual_students.md` | 가상 학생 3명(민준·서연·지호) 시뮬레이션과 한 판 따라가기 |
+| `docs/advisor_follower.md` | 마루 선장 말대로만 하는 학생 시뮬레이션(2026-11-28): 보통 수준이면 모두 D, 생각하는 학생은 대부분 A |
 | `docs/webapp_human_play.md` | 웹앱의 사람용 규칙이 점수 균형에 주는 영향 |
 | `webapp/` | 수업용 웹앱(교사 화면이 엔진을 돌리고 학생 기기가 접속). `webapp/README.md`, 디자인용 `webapp/API.md` |
 | `version2/` | 세계 지도 데모(`world-map-demo.html`, 9개국 가상 세계·3단계 확대, three.js r128)와 Tripo 에셋 계획. 게임용 엔진은 `webapp/js/world-engine.js` |
