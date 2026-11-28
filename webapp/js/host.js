@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS = {
   countdownSec: 5,
   timer: { listing: 120, trading: 240, invest: 60 },
   advisor: 'normal', // 학생 화면 '마루 선장' 도움 수준: many | normal | alerts | off (advisor-ui.js)
+  events: 'off',     // 세계 사건 카드(RULES_v1 §10): off | random. 수업을 만들 때 정하고 게임 중에는 바뀌지 않는다
 };
 const TEACHER_ONLY = new Set(['advance', 'set_controller']);
 const KEEP_IDS = 300;
@@ -50,20 +51,22 @@ export class RoomHost {
   }
 
   // ---------------------------------------------------------------- lifecycle
-  async create({ students, seed = randomSeed() }) {
+  async create({ students, seed = randomSeed(), events = false }) {
     this.seed = seed;
+    this.events = !!events; // world event cards (RULES_v1 §10), fixed for the whole game
     this.initialStudents = [...students];
     this.tokens = Object.fromEntries(students.map((n) => [n, pin()]));
-    await this.engine.newSession(this.code, seed, students);
+    await this.engine.newSession(this.code, seed, students, this.events);
     await this._start();
   }
 
   async restore(saved) {
     this.seed = saved.seed;
+    this.events = !!saved.events;
     this.initialStudents = saved.students;
     this.tokens = saved.tokens;
     for (const [id, r] of saved.done || []) this.done.set(id, r);
-    await this.engine.replay(this.code, saved.seed, saved.students, saved.log);
+    await this.engine.replay(this.code, saved.seed, saved.students, saved.log, this.events);
     await this._start();
   }
 
@@ -249,13 +252,13 @@ export class RoomHost {
     if (!this.cls.storage) return;
     const log = await this.engine.log(this.code);
     this.cls.storage.set(this.storageKey, JSON.stringify({
-      code: this.code, seed: this.seed, students: this.initialStudents, tokens: this.tokens,
+      code: this.code, seed: this.seed, students: this.initialStudents, tokens: this.tokens, events: this.events,
       log, done: [...this.done.entries()].slice(-KEEP_IDS), saved: new Date().toISOString(),
     }));
   }
 
   async exportLog() {
-    return { code: this.code, seed: this.seed, students: this.initialStudents, log: await this.engine.log(this.code) };
+    return { code: this.code, seed: this.seed, students: this.initialStudents, events: this.events, log: await this.engine.log(this.code) };
   }
 }
 
@@ -284,7 +287,7 @@ export class ClassHost {
     for (let i = 1; i <= rooms; i++) {
       const code = roomCode(this.serverId, cls, i);
       const room = new RoomHost({ cls: this, code, transport: this.server.room(code) });
-      await room.create({ students, seed: seeds ? seeds[i - 1] : undefined });
+      await room.create({ students, seed: seeds ? seeds[i - 1] : undefined, events: this.settings.events === 'random' });
       this.rooms.set(code, room); // listed only once it has a state
     }
     this._joinPresence();
@@ -422,8 +425,9 @@ function mergeSettings(s = {}) {
   const t = { ...d.timer, ...(s.timer || {}) };
   for (const k of Object.keys(t)) t[k] = Math.max(0, Math.min(1800, Math.round(Number(t[k]) || 0)));
   const advisor = ['many', 'normal', 'alerts', 'off'].includes(s.advisor) ? s.advisor : d.advisor;
+  const events = ['off', 'random'].includes(s.events) ? s.events : d.events;
   return {
-    mode, timer: t, advisor,
+    mode, timer: t, advisor, events,
     firstRoundTeacher: s.firstRoundTeacher === undefined ? d.firstRoundTeacher : !!s.firstRoundTeacher,
     countdownSec: Math.max(0, Math.min(30, Math.round(Number(s.countdownSec ?? d.countdownSec)))),
   };

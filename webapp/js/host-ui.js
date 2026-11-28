@@ -51,7 +51,7 @@ function setup() {
   if (drafts.rooms === undefined) Object.assign(drafts, {
     rooms: '1', mode: DEFAULT_SETTINGS.mode, first: 'yes', countdown: String(DEFAULT_SETTINGS.countdownSec),
     t_listing: String(DEFAULT_SETTINGS.timer.listing), t_trading: String(DEFAULT_SETTINGS.timer.trading), t_invest: String(DEFAULT_SETTINGS.timer.invest),
-    server: (servers.find((s) => s.local && LOCAL_FLAG) || servers[0]).id, expected: '', advisor: DEFAULT_SETTINGS.advisor,
+    server: (servers.find((s) => s.local && LOCAL_FLAG) || servers[0]).id, expected: '', advisor: DEFAULT_SETTINGS.advisor, events: DEFAULT_SETTINGS.events,
   });
   const saved = savedClasses(browserStorage);
   render($('#app'), `
@@ -73,7 +73,9 @@ function setup() {
     <p><label>예상 학생 수(접속 기기 수) <input data-k="expected" type="number" min="1" size="4" placeholder="자동"></label></p>
     <div class="fields"><label>진행 방식 <select data-k="mode">${Object.entries(MODE).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
        <label>첫 라운드 <select data-k="first"><option value="yes">1라운드는 선생님이 넘김</option><option value="no">1라운드도 같은 방식</option></select></label>
-       <label>선장 도움 <select data-k="advisor">${Object.entries(ADVISOR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></div>
+       <label>선장 도움 <select data-k="advisor">${Object.entries(ADVISOR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+       <label>세계 사건 카드 <select data-k="events"><option value="off">끄기</option><option value="random">켜기(2~8라운드에 하나씩)</option></select></label></div>
+    <p><small>세계 사건 카드: 풍년·가뭄·태풍·새 유전·광맥·기술 박람회·공장 축제가 2~8라운드에 하나씩 일어나 그 라운드 생산량이 바뀌어요(점수 공식은 그대로). 방마다 순서와 대상 나라가 달라요. 수업을 만든 뒤에는 바꿀 수 없어요.</small></p>
     <p><small>선장 도움: 보통은 1라운드에 예시를 들어 주고, 2~3라운드는 질문으로 힌트를 주고, 4라운드부터는 모자람·연료·광물 같은 규칙 경고만 저절로 보여 줘요(학생이 선장을 누르면 힌트). 결과가 비슷해지지 않게 하려면 보통이나 경고만을 권해요.</small></p>
     <fieldset><legend>단계 시간 (초)</legend><div class="fields">
       <label>판매 등록 <input data-k="t_listing" type="number" min="0"></label>
@@ -111,6 +113,7 @@ function dashboard() {
     return `<article class="room-card phase-${v.phase}">
       <header><span class="room-no">${i + 1}</span><h3>${i + 1}번 방</h3><span class="tag">${esc(r.code)}</span></header>
       <div class="room-main"><span class="phase-emblem">${uiIcon(v.phase)}</span><div><p class="room-phase">${v.round}R ${PHASE[v.phase]}</p><p class="room-mode">${esc(MODE[info.mode])}</p></div></div>
+      ${v.event ? `<p class="room-event" title="${esc(v.event.text)}">${goodIcon(v.event.good)} 사건: <b>${esc(v.event.title)}</b> ${v.event.country ? '· ' + esc(KO[v.event.country] || v.event.country) : ''}</p>` : ''}
       <ol class="round-pips" aria-label="${v.round}라운드 / 9라운드">${pips}</ol>
       <dl class="metrics"><div><dt>남은 시간</dt><dd class="clock" data-room="${esc(r.code)}" data-time="deadline_ms"></dd></div>
       <div><dt>준비한 나라</dt><dd>${info.ready.length}/${info.need.length}<span class="ready-bar"><i style="width:${readyPct}%"></i></span></dd></div>
@@ -205,7 +208,7 @@ async function act(el) {
     drafts.server = info.id;
     const settings = {
       mode: drafts.mode, firstRoundTeacher: drafts.first !== 'no', countdownSec: num(drafts.countdown),
-      timer: { listing: num(drafts.t_listing), trading: num(drafts.t_trading), invest: num(drafts.t_invest) }, advisor: drafts.advisor,
+      timer: { listing: num(drafts.t_listing), trading: num(drafts.t_trading), invest: num(drafts.t_invest) }, advisor: drafts.advisor, events: drafts.events,
     };
     lastMsg = '수업을 만드는 중…'; setup();
     try {

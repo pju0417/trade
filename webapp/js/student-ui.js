@@ -177,7 +177,8 @@ function drawTop() {
   const phase = S.phase === 'finished' ? '게임 끝' : `${S.round}라운드 · ${S.phase_label}`;
   render($('#hud-top'), `
     <div class="res money" title="돈">${uiIcon('coin', 'coin')}<b>${S.cash}<small class="unit">G</small></b></div>${res}
-    <div class="res turn"><strong>${esc(S.label)} · ${esc(phase)}</strong><span id="clock">${S.room?.paused ? '잠시 멈춤' : ''}</span></div>`, drafts);
+    <div class="res turn"><strong>${esc(S.label)} · ${esc(phase)}</strong><span id="clock">${S.room?.paused ? '잠시 멈춤' : ''}</span></div>
+    ${S.event ? `<div class="res event-chip" title="${esc(S.event.text)}">${goodIcon(S.event.good)}<span><small>이번 라운드 사건</small><b>${esc(S.event.title)}</b></span></div>` : ''}`, drafts);
   updateClock();
 }
 

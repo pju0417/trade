@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
+import random
 from collections import Counter
 
 import sim_lib as L
@@ -49,6 +50,44 @@ GOOD_KO = {'wheat': '밀', 'banana': '바나나', 'fuel': '연료', 'ore': '광�
 PHASE_KO = {'listing': '판매 등록', 'trading': '거래', 'invest': '투자·주력 선택', 'finished': '게임 끝'}
 MAX_PRICE = 9999
 MAX_QTY = 99
+
+
+# ---- optional rule: world event cards (docs/RULES_v1.md section 10; off by default) --------------------
+# One event per round R2-R8; the 7 kinds each appear once, order and targets from the room seed.
+# An event changes only that round's production (ClassroomGame.base_quantity during production()).
+EVENT_KINDS = {
+    'harvest':  {'title': '풍년', 'targets': ('Tropia', 'Grainia', 'Agrea'), 'good': 'main', 'delta': 3,
+                 'text': '{c}에 비가 알맞게 내려 {g} 대풍년! 이번 라운드 {g}을(를) 3개 더 만들어요.'},
+    'drought':  {'title': '가뭄', 'targets': ('Tropia', 'Grainia', 'Agrea'), 'good': 'main', 'delta': -2,
+                 'text': '{c}에 가뭄이 들었어요. 이번 라운드 {g}을(를) 2개 덜 만들어요.'},
+    'typhoon':  {'title': '태풍', 'targets': ('*',), 'good': 'banana', 'delta': -1,
+                 'text': '남쪽 바다에 태풍이 지나갔어요. 바나나를 만드는 나라는 모두 바나나를 1개씩 덜 만들어요.'},
+    'oilfield': {'title': '새 유전 발견', 'targets': ('Oilia',), 'good': 'fuel', 'delta': 2,
+                 'text': '{c}에서 새 유전을 찾았어요! 이번 라운드 연료를 2개 더 만들어요.'},
+    'orevein':  {'title': '광맥 발견', 'targets': ('Mineria', 'Ferria'), 'good': 'ore', 'delta': 2,
+                 'text': '{c}의 산에서 큰 광맥이 나왔어요! 이번 라운드 광물을 2개 더 만들어요.'},
+    'techfair': {'title': '기술 박람회', 'targets': ('Technia', 'Novia'), 'good': 'electronics', 'delta': 1,
+                 'text': '{c}에서 기술 박람회가 열렸어요. 이번 라운드 전자제품을 1개 더 만들어요.'},
+    'factory':  {'title': '공장 축제', 'targets': ('Mechania',), 'good': 'machine', 'delta': 1,
+                 'text': '{c} 공장 사람들이 힘을 냈어요. 이번 라운드 기계를 1개 더 만들어요.'},
+}
+EVENT_ROUNDS = range(2, 9)
+
+
+def make_events(seed, game):
+    """{round: event} for R2-R8, deterministic from the seed."""
+    rng = random.Random(int(seed) * 7919 + 11)
+    kinds = list(EVENT_KINDS)
+    rng.shuffle(kinds)
+    out = {}
+    for r, k in zip(EVENT_ROUNDS, kinds):
+        e = EVENT_KINDS[k]
+        target = rng.choice(e['targets'])
+        good = game.cs[target].main if e['good'] == 'main' else e['good']
+        out[r] = {'round': r, 'kind': k, 'title': e['title'], 'country': None if target == '*' else target,
+                  'good': good, 'delta': e['delta'],
+                  'text': e['text'].format(c=NAME_KO.get(target, ''), g=GOOD_KO[good])}
+    return out
 
 
 def total_score(m, n, targets=None):
@@ -76,12 +115,40 @@ class ClassroomGame(L.Emergency):
     main_k = {}
     students = frozenset()
 
+    event_prod = {}       # {(round, country or '*', good): delta} - world event cards (off = empty)
+    _producing = False
+
     def __init__(self, seed, students=()):
         self.students = set(students)
         self.student_plan = {}
         self.student_focus = {}
         self._student_investing = None
         super().__init__(seed, mode='baseline', operating_profile='light')
+
+    # --- world event cards: change this round's production only ---------------------------
+    def production(self):
+        first = self.r not in self.produced_rounds
+        self._producing = True
+        try:
+            done = super().production()
+        finally:
+            self._producing = False
+        # machines are made to order (machine_quantity), so a higher cap would change nothing:
+        # a machine event adds the units after production instead
+        if first and self.event_prod:
+            for (r, n, g), d in self.event_prod.items():
+                if r == self.r and g == 'machine' and d > 0 and n in self.cs:
+                    c = self.cs[n]
+                    self.mint(c, 'machine', d, self.tech_for(c, 'machine'))
+        return done
+
+    def base_quantity(self, c, g, lv=None):
+        q = super().base_quantity(c, g, lv)
+        if self._producing and lv is None and self.event_prod and g != 'machine':
+            d = self.event_prod.get((self.r, c.name, g), 0) + self.event_prod.get((self.r, '*', g), 0)
+            if d:
+                q = max(1, q + d)
+        return q
 
     # --- student decisions replace AI decisions for student countries -------------------
     def plan(self, c):
@@ -231,13 +298,16 @@ class ActionError(Exception):
 class Session:
     """One classroom game. All state changes go through apply(); the log replays exactly."""
 
-    def __init__(self, seed, students):
+    def __init__(self, seed, students, events=False):
         students = list(students)
         if len(set(students)) != len(students) or any(s not in ORIGINAL for s in students):
             raise ValueError('students must be distinct original countries')
         self.seed = int(seed)
         self.initial_students = list(students)
         self.g = ClassroomGame(self.seed, students)
+        self.events_on = bool(events)
+        self.events = make_events(self.seed, self.g) if self.events_on else {}
+        self.g.event_prod = {(r, e['country'] or '*', e['good']): e['delta'] for r, e in self.events.items()}
         self.log = []
         self.offers = {}
         self.offer_seq = 0
@@ -248,8 +318,8 @@ class Session:
         self._begin_round(1)
 
     @classmethod
-    def replay(cls, seed, students, log):
-        s = cls(seed, students)
+    def replay(cls, seed, students, log, events=False):
+        s = cls(seed, students, events)
         for a in log:
             s.apply(a)
         return s
@@ -756,7 +826,9 @@ class Session:
                 # for the world map: every country's industries and all trades of this round
                 'profiles': {n: {'main': c.main, 'expand': c.expand, 'focus': c.focus, 'levels': dict(c.levels),
                                  'student': n in g.students, 'evaluated': n in ORIGINAL} for n, c in g.cs.items()},
-                'world_trades': [self._tx_view(t, None) for t in g.transactions[self.tx_round_start:]]}
+                'world_trades': [self._tx_view(t, None) for t in g.transactions[self.tx_round_start:]],
+                # world event card of this round (None when the option is off or no event this round)
+                'event': self.events.get(g.r) if self.phase != 'finished' else None, 'events_on': self.events_on}
 
     def view(self, n):
         """Everything one student's screen needs."""

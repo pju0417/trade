@@ -113,3 +113,5 @@
   .host-page .h2-ico, .host-page .nation-token .resource-icon { display: none; }
 }
 .host-page .replay-note { font-family: var(--game-font); color: var(--hud-good); margin: 0 8px; }
+.host-page .room-event { margin: 6px 0 0; padding: 4px 10px; border-radius: 8px; background: rgba(233, 196, 106, .14); font-size: .9rem; }
+.host-page .room-event b { font-family: var(--game-font); font-weight: 400; color: var(--hud-gold); }

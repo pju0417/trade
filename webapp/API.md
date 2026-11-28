@@ -68,6 +68,7 @@ const leave = server.presence.join({ role: 'student', room: code.code, country: 
 | `profiles` | 지도용 나라 정보 `{나라: {main, expand, focus, levels:{산업:레벨}, student, evaluated}}`(9개국 모두). `evaluated`=false는 AI 전용 추가 3개국 |
 | `world_trades` | 이번 라운드의 모든 거래(지도 무역로용). 형식은 `transactions_this_round`와 같음. 교사 상태에도 있음 |
 | `room` | 진행 정보 `{code, mode, paused, ready:[나라], need:[나라], countdown_ms, deadline_ms, phase_seconds, advisor}`. `advisor` = 선장 도움 수준(`many`·`normal`·`alerts`·`off`, 교사가 정함). 남은 시간은 상태를 받은 순간 기준(받은 뒤 흐른 시간을 빼서 표시; `paused`면 멈춤) |
+| `event`, `events_on` | 이번 라운드 세계 사건 `{round, kind, title, country(없으면 모든 해당 나라), good, delta, text}` 또는 `null`, 사건 카드를 켰는지(RULES_v1 §10). 교사 상태에도 있음 |
 | `results` | 게임이 끝나면 나라별 `{total, grade, parts:{export, industry, living, trade, utilization, cash}, ...}` |
 
 ## 진행 방식

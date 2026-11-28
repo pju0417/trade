@@ -25,8 +25,8 @@ export class EngineClient {
   }
 
   init() { return this.call('init'); }
-  newSession(room, seed, students) { return this.call('newSession', room, seed, students); }
-  replay(room, seed, students, log) { return this.call('replay', room, seed, students, log); }
+  newSession(room, seed, students, events = false) { return this.call('newSession', room, seed, students, events); }
+  replay(room, seed, students, log, events = false) { return this.call('replay', room, seed, students, log, events); }
   apply(room, action) { return this.call('apply', room, action); }
   view(room, country) { return this.call('view', room, country); }
   teacher(room) { return this.call('teacher', room); }

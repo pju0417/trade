@@ -25,7 +25,7 @@ const storage = {
 const SETTINGS = { mode: 'ready', firstRoundTeacher: false, countdownSec: 1, timer: { listing: 0, trading: 0, invest: 0 }, advisor: 'normal' };
 const ADVISOR = { many: '많이(매 라운드 코치)', normal: '보통(점점 줄어듦)', alerts: '경고만', off: '끔' };
 
-const drafts = { seed: '', advisor: 'normal' };
+const drafts = { seed: '', advisor: 'normal', events: 'off' };
 let engine = null;
 let status = '엔진을 불러오는 중…(처음에는 10초쯤 걸릴 수 있어요)';
 let lastMsg = '';
@@ -51,6 +51,7 @@ function setup() {
       ${ORIGINAL.map((n, i) => `<label class="choice"><input type="checkbox" class="stu" data-k="stu-${n}" value="${n}" ${i === 0 ? 'checked' : ''}> ${KO[n]}</label>`).join('')}
     </div></fieldset>
     <p><label>시드(비우면 무작위, 같은 시드 = 같은 시작) <input data-k="seed" type="number" min="0" size="10"></label></p>
+    <p><label>세계 사건 카드 <select data-k="events"><option value="off">끄기</option><option value="random">켜기(2~8라운드에 하나씩)</option></select></label></p>
     <p><label>선장 도움 <select data-k="advisor">${Object.entries(ADVISOR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></p>
     <p><small>내가 맡은 나라가 모두 "준비 완료"를 누르면 바로 다음 단계로 넘어가요. 위쪽의 "다음 단계"로 언제든 넘길 수도 있어요. 시간 제한은 없어요.</small></p>
     <p><button data-act="new" ${engine ? '' : 'disabled'}>게임 시작</button></p>
@@ -133,7 +134,7 @@ async function act(el) {
     const seed = drafts.seed === '' ? null : num(drafts.seed);
     if (seed !== null && !(seed >= 0)) { lastMsg = '시드는 0 이상의 정수예요.'; return setup(); }
     lastMsg = '게임을 만드는 중…'; setup();
-    try { await start((c) => c.create({ students, rooms: 1, settings: { ...SETTINGS, advisor: drafts.advisor }, seeds: seed === null ? null : [seed] })); lastMsg = ''; }
+    try { await start((c) => c.create({ students, rooms: 1, settings: { ...SETTINGS, advisor: drafts.advisor, events: drafts.events }, seeds: seed === null ? null : [seed] })); lastMsg = ''; }
     catch (e) { lastMsg = e.message; await stop(); setup(); }
     return;
   }

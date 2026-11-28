@@ -172,9 +172,18 @@ export function createFun({ root, storageKey, toast, onAction }) {
     }
     return out.slice(0, 3);
   }
+  function eventHtml() {
+    const e = S.event; if (!e) return '';
+    const mine = e.country === S.country || (!e.country && (S.levels || {})[e.good] !== undefined);
+    return `<section class="fun-event ${e.delta > 0 ? 'good' : 'bad'}"><span class="ev-ico">${goodIcon(e.good)}</span>
+      <div><small>세계 사건${mine ? ' · <b>우리 나라</b>' : ''}</small><h3>${esc(e.title)}</h3><p>${esc(e.text)}</p></div></section>`;
+  }
   function roundCard() {
     const r = S.round - 1, prev = lastOfRound[r], start = roundStart[r];
-    if (!prev || !start) return;
+    if (!prev || !start) {
+      if (S.event) { show(`<header class="fun-head"><span class="fun-emblem">${uiIcon('news')}</span><h2>${S.round}라운드</h2><button class="fun-x" data-fun="close" aria-label="닫기">×</button></header>${eventHtml()}<p class="fun-actions"><button class="btn" data-fun="close">알겠어요</button></p>`, 'round'); play('round'); }
+      return;
+    }
     const me = S.country, name = (n) => S.names[n] || n;
     const legs = (prev.transactions_this_round || []).flatMap((t) => t.legs);
     const sold = legs.filter((l) => l.seller === me && l.buyer !== me), bought = legs.filter((l) => l.buyer === me && l.seller !== me);
@@ -183,6 +192,7 @@ export function createFun({ root, storageKey, toast, onAction }) {
     const list = (xs, arrow) => xs.length ? xs.map((l) => `<li>${goodIcon(l.good)} ${esc(S.goods[l.good])} ${l.qty}개 ${arrow} ${esc(name(arrow === '→' ? l.buyer : l.seller))}</li>`).join('') : '<li class="none">없어요</li>';
     const headlines = news(prev, start);
     show(`<header class="fun-head"><span class="fun-emblem">${uiIcon('news')}</span><h2>${S.round}라운드 시작</h2><button class="fun-x" data-fun="close" aria-label="닫기">×</button></header>
+      ${eventHtml()}
       <div class="fun-cols">
         <section class="fun-summary"><h3>${r}라운드 결산</h3>
           <div class="fun-mood mood-${m}">${uiIcon(m)}<span>국민 만족도 <b>${h == null ? '-' : Math.round(h)}</b></span></div>

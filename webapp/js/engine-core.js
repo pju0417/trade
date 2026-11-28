@@ -4,8 +4,8 @@
 // One engine holds many independent games, one per room code (separate seed, market and AI).
 //
 //   const engine = await createEngine({ loadPyodide, bundle, indexURL })
-//   engine.newSession(room, seed, students)      -> {ok}
-//   engine.replay(room, seed, students, log)     -> {ok}
+//   engine.newSession(room, seed, students, events=false)      -> {ok}   events = world event cards (RULES_v1 §10)
+//   engine.replay(room, seed, students, log, events=false)     -> {ok}
 //   engine.apply(room, action)                   -> {ok, msg, ...}
 //   engine.view(room, country) / engine.teacher(room) / engine.views(room, [countries])
 //   engine.log(room) / engine.drop(room) / engine.rooms()
@@ -32,10 +32,10 @@ def _call(fn, arg):
         return json.dumps(sorted(_SESS))
     room = a['room']
     if fn == 'new':
-        _SESS[room] = C.Session(a['seed'], a['students'])
+        _SESS[room] = C.Session(a['seed'], a['students'], a.get('events', False))
         return json.dumps({'ok': True})
     if fn == 'replay':
-        _SESS[room] = C.Session.replay(a['seed'], a['students'], a['log'])
+        _SESS[room] = C.Session.replay(a['seed'], a['students'], a['log'], a.get('events', False))
         return json.dumps({'ok': True})
     if fn == 'drop':
         _SESS.pop(room, None)
@@ -77,8 +77,8 @@ export async function createEngine({ loadPyodide, bundle, indexURL }) {
   const fn = py.globals.get('_call');
   const call = (name, arg) => JSON.parse(fn(name, JSON.stringify(arg === undefined ? null : arg)));
   return {
-    newSession: (room, seed, students) => call('new', { room, seed, students }),
-    replay: (room, seed, students, log) => call('replay', { room, seed, students, log }),
+    newSession: (room, seed, students, events = false) => call('new', { room, seed, students, events }),
+    replay: (room, seed, students, log, events = false) => call('replay', { room, seed, students, log, events }),
     apply: (room, action) => call('apply', { room, action }),
     view: (room, country) => call('view', { room, country }),
     teacher: (room) => call('teacher', { room }),
