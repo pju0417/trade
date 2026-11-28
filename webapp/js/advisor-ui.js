@@ -44,56 +44,72 @@ function freeOf(S, good) { return S.stock.filter((r) => r.good === good).reduce(
 function listedOf(S, good) { return S.my_orders.filter((o) => o.good === good).reduce((a, o) => a + o.qty, 0); }
 function cheapest(S, good) { return S.market.filter((o) => o.good === good && o.seller !== S.country).sort((a, b) => a.price - b.price)[0]; }
 
-// Tips for the current state, most important first: {id, mood, text(html), action?: [label, action]}
-export function adviceFor(S) {
+// 도움 수준(교사가 고름, state.room.advisor): many = 매 라운드 코치, normal = 1라운드 코치 → 2~3라운드 질문 힌트
+// → 4라운드부터 규칙 경고만(전략 힌트는 선장을 눌렀을 때만), alerts = 규칙 경고만, off = 선장 없음.
+export const ADVISOR_LEVELS = { many: '많이', normal: '보통(점점 줄어듦)', alerts: '경고만', off: '끔' };
+export function stageFor(level, round) {
+  if (level === 'many') return 'coach';
+  if (level === 'alerts' || level === 'off') return 'quiet';
+  return round <= 1 ? 'coach' : round <= 3 ? 'hint' : 'quiet';
+}
+
+// 조언 목록: {id, type: 'rule' | 'strategy', mood, text(html), action?: [버튼 글, onAction 값]}
+// rule = 모르면 손해 보는 규칙 사실(모자람, 다음 라운드 연료·광물, 받은 제안, 투자 마감) → 늘 알려 준다.
+// strategy = 무엇을 얼마에 팔고 언제 투자할지 → 결과를 비슷하게 만들기 쉬워서 단계에 따라 줄인다.
+//   coach = 구체적 예시(숫자는 칸에 채우지 않음), hint = 사실 + 질문, quiet = 학생이 선장을 눌렀을 때만 hint.
+export function adviceFor(S, stage = 'coach') {
   const tips = [];
   const L = (g) => S.goods[g];
+  const coach = stage === 'coach';
+  const R = (id, mood, text, action) => tips.push({ id, type: 'rule', mood, text, action });
+  const T = (id, mood, text, action) => tips.push({ id, type: 'strategy', mood, text, action });
   if (S.phase === 'finished') {
     const r = Object.values(S.results || {}).find((x) => x.label === S.label);
-    if (r) tips.push({ id: 'end', mood: r.total >= 80 ? 'happy' : '', text: r.total >= 80 ? `훌륭해요! <b>${r.grade}등급</b>이에요. 무역으로 우리 나라를 잘 키웠어요.` : `<b>${r.grade}등급</b>이에요. 점수표에서 어느 부분이 낮은지 보고 다음에는 그 부분을 노려 봐요.`, action: ['결과 보기', 'result'] });
+    if (r) R('end', r.total >= 80 ? 'happy' : '', r.total >= 80 ? `훌륭해요! <b>${r.grade}등급</b>이에요. 무역으로 우리 나라를 잘 키웠어요.` : `<b>${r.grade}등급</b>이에요. 점수표에서 어느 부분이 낮은지 보고 다음에는 그 부분을 노려 봐요.`, ['결과 보기', 'result']);
     return tips;
   }
-  if (!S.is_student) return [{ id: 'ai', mood: '', text: '지금은 선생님이 우리 나라를 AI에게 맡겼어요. 다시 맡게 되면 알려 줄게요.' }];
+  if (!S.is_student) return [{ id: 'ai', type: 'rule', mood: '', text: '지금은 선생님이 우리 나라를 AI에게 맡겼어요. 다시 맡게 되면 알려 줄게요.' }];
   const short = S.settlement.rows.filter((r) => r.short > 0);
   const nextR = S.round + 1, sched = S.operating_schedule || { fuel: [], ore: [] };
   const upcoming = [['fuel', sched.fuel], ['ore', sched.ore]].filter(([g, rs]) => rs.includes(nextR) && freeOf(S, g) - needOf(S, g) < 1).map(([g]) => g);
+  const makersOf = (good) => Object.entries(S.profiles || {}).filter(([k, pr]) => k !== S.country && S.countries.includes(k) && pr.levels && pr.levels[good] > 0).map(([k]) => k);
 
   if (S.phase === 'listing') {
-    // surplus: what we have beyond this round's settlement needs (sell what we make)
+    if (short.length) R('pre-short', 'warn', `이번 정산에 ${short.map((r) => `${icon(r.good)} <b>${esc(r.label)} ${r.short}개</b>`).join(', ')}가 모자라요. 다음 <b>거래</b> 단계에서 구해야 해요.`, ['시장 가격 보기', 'market:buy']);
     const surplus = S.stock.filter((r) => r.free > 0).map((r) => ({ ...r, extra: r.free - (r.gen === 1 || !GEN_GOODS.includes(r.good) ? needOf(S, r.good) : 0) })).filter((r) => r.extra > 0).sort((a, b) => (b.good === S.main) - (a.good === S.main) || b.extra - a.extra);
     if (surplus.length) {
-      const g = surplus[0], keep = Math.min(2, Math.floor(g.extra / 3)), sell = Math.max(1, g.extra - keep), q = S.quotes[g.good][g.gen];
-      const rival = cheapest(S, g.good);
-      tips.push({ id: 'sell-' + g.good, mood: '', text: `${icon(g.good)} <b>${esc(j(g.label + genTxt(g.good, g.gen), '이', '가'))}</b> 이번 정산에 쓰고도 <b>${g.extra}개</b> 남아요. <b>${sell}개</b>쯤 시장에 내놓아 보세요. 기준 가격은 <b>${q}G</b>${rival ? `, 지금 가장 싸게 파는 나라는 ${esc(rival.seller_label)} ${rival.price}G` : ''}예요. 다른 나라가 사서 쓰면 <b>수출 점수</b>가 올라가요.`, action: ['팔러 가기', `market:sell:${g.good}-${g.gen}:${sell}`] });
-    } else if (S.my_orders.length) tips.push({ id: 'listed', mood: 'happy', text: `좋아요! 시장에 물건을 ${S.my_orders.reduce((a, o) => a + o.qty, 0)}개 내놓았어요. 다 했으면 오른쪽 아래 <b>준비 완료</b>를 눌러요.` });
-    if (short.length) tips.push({ id: 'pre-short', mood: 'warn', text: `이번 정산에 ${short.map((r) => `${icon(r.good)} <b>${esc(r.label)} ${r.short}개</b>`).join(', ')}가 모자라요. 다음 <b>거래</b> 단계에서 사면 돼요. 지금은 판매 중인 가격을 미리 봐 두세요.`, action: ['시장 가격 보기', 'market:buy'] });
+      const g = surplus[0], q = S.quotes[g.good][g.gen], rival = cheapest(S, g.good), name = esc(j(g.label + genTxt(g.good, g.gen), '이', '가'));
+      T('sell-' + g.good, '', coach
+        ? `${icon(g.good)} <b>${name}</b> 이번 정산에 쓰고도 <b>${g.extra}개</b> 남아요. 예를 들어 절반쯤 내놓고 나머지는 남겨 둘 수 있어요. 기준 가격은 <b>${q}G</b>${rival ? `, 지금 가장 싸게 파는 나라는 ${esc(rival.seller_label)} ${rival.price}G` : ''}예요. 다른 나라가 사서 쓰면 <b>수출 점수</b>가 올라가요.`
+        : `${icon(g.good)} <b>${name}</b> <b>${g.extra}개</b> 남아요. 몇 개를 팔고 몇 개를 남길까요? 다른 나라보다 싸게 팔면 잘 팔리지만 돈은 덜 벌고, 비싸게 팔면 안 팔릴 수도 있어요.`,
+        ['팔기 창 열기', 'market:sell']);
+    } else if (coach && S.my_orders.length) T('listed', 'happy', `좋아요! 시장에 물건을 ${S.my_orders.reduce((a, o) => a + o.qty, 0)}개 내놓았어요. 다 했으면 오른쪽 아래 <b>준비 완료</b>를 눌러요.`);
   }
   if (S.phase === 'trading') {
     for (const r of short) {
-      const c = cheapest(S, r.good);
-      tips.push(c
-        ? { id: 'buy-' + r.good, mood: 'warn', text: `${icon(r.good)} <b>${esc(j(r.label, '이', '가'))}</b> <b>${r.short}개</b> 모자라요(${esc(r.purpose)}). <b>${esc(j(c.seller_label, '이', '가'))}</b> <b>${c.price}G</b>에 팔고 있어요. 정산 전에 사 두세요!`, action: ['사러 가기', 'market:buy'] }
-        : (() => {
-          const makers = Object.entries(S.profiles || {}).filter(([k, pr]) => k !== S.country && S.countries.includes(k) && pr.levels && pr.levels[r.good] > 0).map(([k]) => k);
-          const names = makers.map((k) => S.names[k] || k);
-          return { id: 'ask-' + r.good, mood: 'warn', text: `${icon(r.good)} <b>${esc(j(r.label, '이', '가'))}</b> <b>${r.short}개</b> 모자란데 시장에 없어요. ${names.length ? `<b>${esc(names.join('·'))}</b>에서 만들어요. ` : ''}<b>직접 사겠다고 제안</b>해 보세요. 기준 가격은 개당 <b>${S.quotes[r.good][1]}G</b>예요. 그 나라도 남는 게 없으면 거절하니, 그때는 다른 나라에 제안하거나 다음 라운드에 다시 해 봐요.`, action: ['제안서 쓰기', `trade:${makers[0] || ''}:${r.good}:${r.short}:${S.quotes[r.good][1] * r.short}`] };
-        })());
+      const c = cheapest(S, r.good), makers = makersOf(r.good), names = makers.map((k) => S.names[k] || k), what = `${icon(r.good)} <b>${esc(j(r.label, '이', '가'))}</b> <b>${r.short}개</b> 모자라요(${esc(r.purpose)}).`;
+      if (!coach) R('short-' + r.good, 'warn', `${what} 정산 전에 구해야 해요. 시장과 직접 거래 중 어디가 나을까요?`, ['시장 열기', 'market:buy']);
+      else if (c) R('short-' + r.good, 'warn', `${what} <b>${esc(j(c.seller_label, '이', '가'))}</b> <b>${c.price}G</b>에 팔고 있어요. 정산 전에 구해 두세요.`, ['시장 열기', 'market:buy']);
+      else R('short-' + r.good, 'warn', `${what} 시장에는 없어요. ${names.length ? `<b>${esc(names.join('·'))}</b>에서 만들어요. ` : ''}<b>직접 사겠다고 제안</b>해 보세요. 값은 여러분이 정해요(기준 가격 개당 ${S.quotes[r.good][1]}G). 그 나라도 남는 게 없으면 거절해요.`, ['제안서 쓰기', `trade:${makers[0] || ''}:${r.good}:${r.short}:`]);
     }
     const inc = S.offers.filter((o) => o.status === 'pending' && o.to === S.country);
-    if (inc.length) tips.push({ id: 'offer', mood: '', text: `다른 나라에서 제안이 <b>${inc.length}개</b> 왔어요. 우리에게 이득인지 보고 수락하거나 거절해요.`, action: ['제안 보기', 'trade'] });
-    for (const g of upcoming) tips.push({ id: 'next-' + g, mood: 'warn', text: `다음 ${nextR}라운드에 나라를 운영하려면 ${icon(g)} <b>${esc(L(g))} 1묶음</b>이 필요해요. 없으면 비싸게 급히 사야 하고 생활 점수도 깎여요. 이번에 미리 사 두면 좋아요.`, action: ['사러 가기', 'market:buy'] });
-    if (!short.length && !inc.length) tips.push({ id: 'ok-trade', mood: 'happy', text: `이번 정산에 필요한 물건은 다 있어요. 남는 물건이 팔리길 기다리거나, 다 했으면 <b>준비 완료</b>를 눌러요.` });
+    if (inc.length) R('offer', '', `다른 나라에서 제안이 <b>${inc.length}개</b> 왔어요. 우리에게 이득인지 보고 수락하거나 거절해요.`, ['제안 보기', 'trade']);
+    for (const g of upcoming) R('next-' + g, 'warn', `다음 ${nextR}라운드에 나라를 운영하려면 ${icon(g)} <b>${esc(L(g))} 1묶음</b>이 필요해요. 없으면 급히 사느라 돈이 들고 생활 점수도 깎여요.`, ['시장 열기', 'market:buy']);
+    if (coach && !short.length && !inc.length) T('ok-trade', 'happy', `이번 정산에 필요한 물건은 다 있어요. 남는 물건이 팔리길 기다리거나, 다 했으면 <b>준비 완료</b>를 눌러요.`);
   }
   if (S.phase === 'invest') {
     const main = S.invest_options.find((o) => o.main), any = S.invest_options.filter((o) => o.ok);
-    if (!S.progress.main_levelled && main) tips.push(main.ok
-      ? { id: 'inv-main', mood: '', text: `대표 산업 ${icon(main.good)} <b>${esc(j(main.label, '을', '를'))}</b> 한 번 키우면 <b>산업 점수 15점</b>을 다 받아요! 비용은 <b>${main.cost}G</b>예요.`, action: ['투자하러 가기', 'invest'] }
-      : { id: 'inv-main-no', mood: 'warn', text: `대표 산업 ${icon(main.good)} <b>${esc(j(main.label, '은', '는'))}</b> 아직 못 키워요: ${esc(main.reasons.join(', '))}. 돈이나 재료를 모아 다음 라운드에 꼭 키워요.` });
-    else if (any.length) tips.push({ id: 'inv-more', mood: 'happy', text: `대표 산업은 이미 키웠어요. 돈이 넉넉하면 더 키워서 물건을 더 많이 만들 수 있어요. 다만 다음 라운드에 살 물건 값은 남겨 두세요.`, action: ['투자 보기', 'invest'] });
-    if (S.cash < 60) tips.push({ id: 'cash-low', mood: 'warn', text: `돈이 <b>${S.cash}G</b>밖에 없어요. 다음 라운드에 모자란 물건을 사려면 돈을 조금 남겨 두는 게 좋아요.` });
-    for (const g of upcoming) tips.push({ id: 'next-inv-' + g, mood: 'warn', text: `다음 라운드에 ${icon(g)} <b>${esc(j(L(g), '이', '가'))}</b> 필요해요. 투자하고 남은 돈으로 살 수 있는지 확인해요.` });
+    const lastChance = S.round >= 6 && S.round <= 7 && !S.progress.main_levelled;
+    if (lastChance) R('inv-deadline', 'warn', `투자는 <b>7라운드까지</b>예요. 대표 산업을 한 번도 안 키우면 산업 점수 15점을 못 받아요.`, ['투자 창 열기', 'invest']);
+    if (!S.progress.main_levelled && main && !lastChance) T('inv-main', main.ok ? '' : 'warn', main.ok
+      ? (coach ? `대표 산업 ${icon(main.good)} <b>${esc(j(main.label, '을', '를'))}</b> 한 번 키우면 <b>산업 점수 15점</b>을 다 받아요. 비용은 <b>${main.cost}G</b>예요.`
+        : `대표 산업을 한 번이라도 키우면 산업 점수 15점이에요. 언제 키울까요? 일찍 키우면 물건을 더 많이 만들고, 늦게 키우면 그동안 돈을 아낄 수 있어요(투자는 7라운드까지).`)
+      : `대표 산업 ${icon(main.good)} <b>${esc(j(main.label, '은', '는'))}</b> 아직 못 키워요: ${esc(main.reasons.join(', '))}.`, ['투자 창 열기', 'invest']);
+    else if (coach && S.progress.main_levelled && any.length) T('inv-more', 'happy', `대표 산업은 이미 키웠어요. 돈이 넉넉하면 더 키울 수 있어요. 다음 라운드에 살 물건 값은 남겨 두세요.`, ['투자 창 열기', 'invest']);
+    if (S.cash < 60) T('cash-low', 'warn', coach ? `돈이 <b>${S.cash}G</b>밖에 없어요. 다음 라운드에 모자란 물건을 사려면 돈을 조금 남겨 두는 게 좋아요.` : `돈이 <b>${S.cash}G</b> 남았어요. 다음 라운드에 무엇을 사야 하는지 먼저 생각해 봐요.`);
+    for (const g of upcoming) R('next-inv-' + g, 'warn', `다음 라운드에 ${icon(g)} <b>${esc(j(L(g), '이', '가'))}</b> 필요해요. 투자하고 남은 돈으로 살 수 있는지 확인해요.`);
   }
-  if (!tips.length) tips.push({ id: 'idle-' + S.phase, mood: '', text: '지금 할 일은 다 했어요. 오른쪽 아래 <b>준비 완료</b>를 눌러 다음 단계로 가요.' });
+  if (coach && !tips.length) T('idle-' + S.phase, '', '지금 할 일은 다 했어요. 오른쪽 아래 <b>준비 완료</b>를 눌러 다음 단계로 가요.');
   return tips;
 }
 
@@ -115,16 +131,16 @@ export function createAdvisor({ root, storageKey, onAction }) {
     get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode: keep in memory only */ } },
   };
-  let S = null, tips = [], idx = 0, open = false, seen = new Set(), steps = null, step = 0, lastPhase = null, highlighted = null;
+  let S = null, tips = [], all = [], manual = false, idx = 0, open = false, seen = new Set(), steps = null, step = 0, lastPhase = null, highlighted = null;
   const muted = () => store.get('trade-advisor-muted') === '1';
   root.className = 'advisor';
   root.addEventListener('click', (e) => {
     const b = e.target.closest('[data-adv]'); if (!b) return;
     e.preventDefault(); e.stopPropagation();
     const a = b.dataset.adv;
-    if (a === 'face') { if (steps) return draw(); open = !open; if (open) idx = 0; }
+    if (a === 'face') { if (steps) return draw(); open = !open; if (open && S) { idx = 0; manual = true; computeTips(); } }
     else if (a === 'next') idx = (idx + 1) % tips.length;
-    else if (a === 'close') { open = false; tips.forEach((t) => seen.add(t.id)); }
+    else if (a === 'close') { open = false; tips.forEach((t) => seen.add(t.id)); manual = false; if (S) computeTips(); }
     else if (a === 'go') { open = false; seen.add(tips[idx].id); onAction(b.dataset.do); }
     else if (a === 'tour-next') { step++; if (step >= steps.length) endTour(); }
     else if (a === 'tour-skip') endTour();
@@ -158,11 +174,24 @@ export function createAdvisor({ root, storageKey, onAction }) {
     }
     root.innerHTML = `<button class="advisor-face ${unseen && !open ? 'has-tip' : ''}" data-adv="face" aria-label="${NAME}: 조언 보기">${face(mood)}${unseen && !open ? '<span class="advisor-dot">!</span>' : ''}</button>${bubble}`;
   }
+  let auto = [];
+  // 저절로 보여 주는 조언(auto): 코치·힌트 단계는 전부, 조용한 단계는 규칙 경고만.
+  // 선장을 누르면(manual) 전략 힌트까지(경고만 수준이면 규칙 경고만, 없으면 '스스로 정해 볼 차례').
+  function computeTips() {
+    const level = (S.room && S.room.advisor) || 'normal', stage = stageFor(level, S.round);
+    all = adviceFor(S, stage === 'quiet' ? 'hint' : stage);
+    auto = stage === 'quiet' ? all.filter((t) => t.type === 'rule') : all;
+    const asked = level === 'alerts' ? auto : all;
+    tips = manual ? (asked.length ? asked : [{ id: 'self', type: 'strategy', mood: 'happy', text: '이번에는 여러분이 스스로 정해 볼 차례예요. 목표 창에서 우리 나라 상황을 살펴봐요.', action: ['목표 보기', 'goals'] }]) : auto;
+    if (idx >= tips.length) idx = 0;
+  }
   return {
     update(state) {
       S = state;
-      tips = adviceFor(S);
-      if (idx >= tips.length) idx = 0;
+      const level = (S.room && S.room.advisor) || 'normal';
+      root.hidden = level === 'off';
+      if (level === 'off') { highlight(null); root.innerHTML = ''; return; }
+      computeTips();
       if (steps === null && store.get(storageKey) !== 'done' && S.phase !== 'finished' && S.is_student) { steps = tour(S); step = 0; }
       // a new phase, or a new warning, opens the bubble by itself (unless muted)
       const key = `${S.round}:${S.phase}`;
@@ -170,7 +199,7 @@ export function createAdvisor({ root, storageKey, onAction }) {
       if (!steps && !muted() && (key !== lastPhase || fresh.some((x) => x.mood === 'warn'))) {
         if (key !== lastPhase || !open) { open = fresh.length > 0; idx = Math.max(0, tips.indexOf(fresh[0])); }
       }
-      if (key !== lastPhase) { seen = new Set(); lastPhase = key; open = !steps && !muted() && tips.length > 0; idx = 0; }
+      if (key !== lastPhase) { seen = new Set(); lastPhase = key; manual = false; computeTips(); open = !steps && !muted() && tips.length > 0; idx = 0; }
       draw();
     },
   };

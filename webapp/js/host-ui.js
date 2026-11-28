@@ -12,6 +12,7 @@ const PHASE = { listing: '판매 등록', trading: '거래', invest: '투자', f
 const NATION = { Tropia: ['banana', '#b9e08c'], Grainia: ['wheat', '#f0d27a'], Oilia: ['fuel', '#f4a978'], Mechania: ['machine', '#9fc7e0'], Mineria: ['ore', '#e8a3a0'], Technia: ['electronics', '#a9d8b8'], Novia: ['electronics', '#f5b6c4'], Agrea: ['banana', '#9fd6cf'], Ferria: ['ore', '#c3b6d9'] };
 const token = (n, label) => `<span class="nation-token" style="--nc:${(NATION[n] || [])[1] || '#9fb'}">${NATION[n] ? goodIcon(NATION[n][0]) : ''}${esc(label || KO[n] || n)}</span>`;
 const h2 = (icon, text) => `<h2 class="host-h2"><span class="h2-ico">${uiIcon(icon)}</span>${text}</h2>`;
+const ADVISOR = { many: '많이(매 라운드 코치)', normal: '보통(점점 줄어듦)', alerts: '경고만', off: '끔' };
 const MODE = { teacher: '선생님이 넘김', ready: '모두 준비하면 넘어감', ready_timer: '모두 준비하거나 시간이 끝나면 넘어감' };
 const drafts = {};
 let engine = null;
@@ -39,7 +40,7 @@ function setup() {
   if (drafts.rooms === undefined) Object.assign(drafts, {
     rooms: '1', mode: DEFAULT_SETTINGS.mode, first: 'yes', countdown: String(DEFAULT_SETTINGS.countdownSec),
     t_listing: String(DEFAULT_SETTINGS.timer.listing), t_trading: String(DEFAULT_SETTINGS.timer.trading), t_invest: String(DEFAULT_SETTINGS.timer.invest),
-    server: (servers.find((s) => s.local && LOCAL_FLAG) || servers[0]).id, expected: '',
+    server: (servers.find((s) => s.local && LOCAL_FLAG) || servers[0]).id, expected: '', advisor: DEFAULT_SETTINGS.advisor,
   });
   const saved = savedClasses(browserStorage);
   render($('#app'), `
@@ -60,7 +61,9 @@ function setup() {
     <fieldset><legend>방마다 학생이 맡을 나라</legend><div class="choices">${ORIGINAL.map((n, i) => `<label class="choice nation-choice"><input type="checkbox" class="stu" data-k="stu-${n}" value="${n}" ${i % 2 === 0 ? 'checked' : ''}> ${token(n)}</label>`).join('')}</div></fieldset>
     <p><label>예상 학생 수(접속 기기 수) <input data-k="expected" type="number" min="1" size="4" placeholder="자동"></label></p>
     <div class="fields"><label>진행 방식 <select data-k="mode">${Object.entries(MODE).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
-       <label>첫 라운드 <select data-k="first"><option value="yes">1라운드는 선생님이 넘김</option><option value="no">1라운드도 같은 방식</option></select></label></div>
+       <label>첫 라운드 <select data-k="first"><option value="yes">1라운드는 선생님이 넘김</option><option value="no">1라운드도 같은 방식</option></select></label>
+       <label>선장 도움 <select data-k="advisor">${Object.entries(ADVISOR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></div>
+    <p><small>선장 도움: 보통은 1라운드에 예시를 들어 주고, 2~3라운드는 질문으로 힌트를 주고, 4라운드부터는 모자람·연료·광물 같은 규칙 경고만 저절로 보여 줘요(학생이 선장을 누르면 힌트). 결과가 비슷해지지 않게 하려면 보통이나 경고만을 권해요.</small></p>
     <fieldset><legend>단계 시간 (초)</legend><div class="fields">
       <label>판매 등록 <input data-k="t_listing" type="number" min="0"></label>
       <label>거래 <input data-k="t_trading" type="number" min="0"></label>
@@ -123,6 +126,7 @@ function dashboard() {
      <label>판매 (초) <input data-k="d_tl" type="number" value="${S.settings.timer.listing}"></label>
      <label>거래 (초) <input data-k="d_tt" type="number" value="${S.settings.timer.trading}"></label>
      <label>투자 (초) <input data-k="d_ti" type="number" value="${S.settings.timer.invest}"></label>
+     <label>선장 도움 <select data-k="d_adv">${Object.entries(ADVISOR).map(([k, t]) => `<option value="${k}" ${k === S.settings.advisor ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
      <button data-act="settings">적용</button></div><p><small>설정을 바꾸면 지금 단계의 시간을 처음부터 다시 셉니다.</small></p></section>
     ${drafts.showPins ? pinsHtml() : ''}
     ${room ? roomHtml(room) : ''}
@@ -189,7 +193,7 @@ async function act(el) {
     drafts.server = info.id;
     const settings = {
       mode: drafts.mode, firstRoundTeacher: drafts.first !== 'no', countdownSec: num(drafts.countdown),
-      timer: { listing: num(drafts.t_listing), trading: num(drafts.t_trading), invest: num(drafts.t_invest) },
+      timer: { listing: num(drafts.t_listing), trading: num(drafts.t_trading), invest: num(drafts.t_invest) }, advisor: drafts.advisor,
     };
     lastMsg = '수업을 만드는 중…'; setup();
     try {
@@ -224,7 +228,7 @@ async function act(el) {
   else if (a === 'resume-all') { await cls.resume(); lastMsg = '다시 시작했어요.'; }
   else if (a === 'settings') {
     await cls.setSettings({ mode: drafts.d_mode || S.settings.mode, firstRoundTeacher: (drafts.d_first || (S.settings.firstRoundTeacher ? 'yes' : 'no')) !== 'no',
-      timer: { listing: num(drafts.d_tl ?? S.settings.timer.listing), trading: num(drafts.d_tt ?? S.settings.timer.trading), invest: num(drafts.d_ti ?? S.settings.timer.invest) } });
+      timer: { listing: num(drafts.d_tl ?? S.settings.timer.listing), trading: num(drafts.d_tt ?? S.settings.timer.trading), invest: num(drafts.d_ti ?? S.settings.timer.invest) }, advisor: drafts.d_adv || S.settings.advisor });
     lastMsg = '진행 방식을 바꿨어요.';
   } else if (a === 'sel') { selected = selected === el.dataset.code ? null : el.dataset.code; }
   else if (a === 'print-pins') { window.print(); return; }

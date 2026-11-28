@@ -67,7 +67,7 @@ const leave = server.presence.join({ role: 'student', room: code.code, country: 
 | `names`, `goods` | 나라·물건 한국어 이름 |
 | `profiles` | 지도용 나라 정보 `{나라: {main, expand, focus, levels:{산업:레벨}, student, evaluated}}`(9개국 모두). `evaluated`=false는 AI 전용 추가 3개국 |
 | `world_trades` | 이번 라운드의 모든 거래(지도 무역로용). 형식은 `transactions_this_round`와 같음. 교사 상태에도 있음 |
-| `room` | 진행 정보 `{code, mode, paused, ready:[나라], need:[나라], countdown_ms, deadline_ms, phase_seconds}`. 남은 시간은 상태를 받은 순간 기준(받은 뒤 흐른 시간을 빼서 표시; `paused`면 멈춤) |
+| `room` | 진행 정보 `{code, mode, paused, ready:[나라], need:[나라], countdown_ms, deadline_ms, phase_seconds, advisor}`. `advisor` = 선장 도움 수준(`many`·`normal`·`alerts`·`off`, 교사가 정함). 남은 시간은 상태를 받은 순간 기준(받은 뒤 흐른 시간을 빼서 표시; `paused`면 멈춤) |
 | `results` | 게임이 끝나면 나라별 `{total, grade, parts:{export, industry, living, trade, utilization, cash}, ...}` |
 
 ## 진행 방식
@@ -137,5 +137,6 @@ adv.update(state);   // 상태가 바뀔 때마다
 ```
 
 - 그림 바꾸기(디자인 담당): `face(mood)`가 SVG 문자열을 돌려준다. `mood`는 `''`(보통), `'warn'`(걱정), `'happy'`(기쁨). 눈 깜빡임은 `.eye` 클래스, 크기·말풍선은 `game.css`의 `.advisor`, `.advisor-face`, `.advisor-bubble`, `.advisor-focus`(안내 중 강조 테두리).
-- `onAction` 값: `'market:sell'`, `'market:buy'`, `'invest'`, `'trade'`, `'goals'`, `'result'`, `'trade:나라:물건:수량:값'`(사기 제안서 채워서 열기).
-- 조언 목록은 `adviceFor(state)`가 `{id, mood, text(HTML), action?: [버튼 글, onAction 값]}`로 만든다.
+- `onAction` 값: `'market:sell'`, `'market:buy'`, `'invest'`, `'trade'`, `'goals'`, `'result'`, `'trade:나라:물건:수량:'`(사기 제안서에 나라·물건·수량을 채워 열기, 값은 비움).
+- 조언 목록은 `adviceFor(state, stage)`가 `{id, type: 'rule' | 'strategy', mood, text(HTML), action?: [버튼 글, onAction 값]}`로 만든다. `rule` = 모자람·다음 라운드 연료·광물·받은 제안·투자 마감처럼 모르면 손해 보는 규칙 사실, `strategy` = 무엇을 얼마에 팔고 언제 투자할지.
+- 도움 수준(`state.room.advisor`, `stageFor(level, round)`): `many` = 매 라운드 코치(구체적 예시), `normal` = 1라운드 코치 → 2~3라운드 질문 힌트 → 4라운드부터 규칙 경고만 저절로(학생이 선장을 누르면 힌트), `alerts` = 규칙 경고만, `off` = 선장 없음. 어떤 수준에서도 수량·가격을 칸에 미리 채우지 않는다(사기 제안서는 코치 단계에서 나라·물건·수량만).

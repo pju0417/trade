@@ -441,7 +441,7 @@ function advisorAction(a) {
   if (a.startsWith('trade:')) { // 'trade:나라:물건:수량:값' → 사기 제안서를 채워서 연다
     const [, to, good, qty, cash] = a.split(':');
     openWin('trade');
-    for (const [k, v] of Object.entries({ 'of-kind': 'buy', 'of-get-good': good, 'of-get-qty': qty, 'of-cash': cash, ...(to ? { 'of-to': to } : {}) })) setDraft(k, v);
+    for (const [k, v] of Object.entries({ 'of-kind': 'buy', 'of-get-good': good, 'of-get-qty': qty, 'of-cash': cash, 'of-to': to })) if (v) setDraft(k, v); // 값(가격)은 비워 두면 학생이 정한다
     syncOfferForm(); return;
   }
   openWin(a);

@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS = {
   firstRoundTeacher: true,
   countdownSec: 5,
   timer: { listing: 120, trading: 240, invest: 60 },
+  advisor: 'normal', // 학생 화면 '마루 선장' 도움 수준: many | normal | alerts | off (advisor-ui.js)
 };
 const TEACHER_ONLY = new Set(['advance', 'set_controller']);
 const KEEP_IDS = 300;
@@ -207,6 +208,7 @@ export class RoomHost {
       ready: need.filter((n) => this.ready.has(n)), need,
       countdown_ms: left(this.countdownAt), deadline_ms: left(this.deadline),
       phase_seconds: this.cls.settings.timer[this.view ? this.view.phase : ''] || null,
+      advisor: this.cls.settings.advisor,
     };
   }
 
@@ -419,8 +421,9 @@ function mergeSettings(s = {}) {
   const mode = ['teacher', 'ready', 'ready_timer'].includes(s.mode) ? s.mode : d.mode;
   const t = { ...d.timer, ...(s.timer || {}) };
   for (const k of Object.keys(t)) t[k] = Math.max(0, Math.min(1800, Math.round(Number(t[k]) || 0)));
+  const advisor = ['many', 'normal', 'alerts', 'off'].includes(s.advisor) ? s.advisor : d.advisor;
   return {
-    mode, timer: t,
+    mode, timer: t, advisor,
     firstRoundTeacher: s.firstRoundTeacher === undefined ? d.firstRoundTeacher : !!s.firstRoundTeacher,
     countdownSec: Math.max(0, Math.min(30, Math.round(Number(s.countdownSec ?? d.countdownSec)))),
   };
