@@ -29,7 +29,9 @@ async function game(b, level) {
   await p.waitForTimeout(3000);
   const bubble = async () => (await fr.locator('#advisor .advisor-bubble p').count()) ? (await fr.locator('#advisor .advisor-bubble p').innerText()) : '';
   const allTips = async () => { const out = []; for (let k = 0; k < 6; k++) { const t = await bubble(); if (!t || out.includes(t)) break; out.push(t); if (!(await fr.locator('[data-adv=next]').count())) break; await fr.locator('[data-adv=next]').click(); await p.waitForTimeout(150); } return out; };
-  const toRound = async (r) => { for (let k = 0; k < 40; k++) { const t = await p.textContent('#bar b'); if (t.startsWith(`${r}라운드 · 판매`)) return; await p.click('#bar button[data-act=adv]'); await p.waitForFunction((t) => document.querySelector('#bar b').textContent !== t, t, { timeout: 30000 }); } };
+  // the round start card (fun-ui.js) covers the screen: close it after each round change
+  const closeCards = async () => { await p.waitForTimeout(400); while (await fr.locator('.fun-card [data-fun=close]').count()) { await fr.locator('.fun-card [data-fun=close]').first().click(); await p.waitForTimeout(150); } };
+  const toRound = async (r) => { for (let k = 0; k < 40; k++) { const t = await p.textContent('#bar b'); if (t.startsWith(`${r}라운드 · 판매`)) return closeCards(); await p.click('#bar button[data-act=adv]'); await p.waitForFunction((t) => document.querySelector('#bar b').textContent !== t, t, { timeout: 30000 }); } };
   return { p, fr, errs, bubble, allTips, toRound, close: () => ctx.close() };
 }
 

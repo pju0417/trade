@@ -1875,6 +1875,53 @@ function createWorldMap(container, THREE, opts) {
   function onResize() { var w = container.clientWidth, h = container.clientHeight; if (!w || !h) return; renderer.setSize(w, h); camera.aspect = w / h; updateCamera(); }
   var ro = window.ResizeObserver ? new ResizeObserver(onResize) : null; if (ro) ro.observe(container); else window.addEventListener('resize', onResize);
 
+  // ───────────────────────── 마을 분위기 (만족도가 높으면 수도 위 불꽃, 낮으면 회색 구름) ─────────────────
+  // setMood(나라, 'happy' | 'sad' | null). 불꽃은 화면 크기 고정 점(멀리서도 보임), 구름은 수도 위 낮은 다면체 덩어리
+  var MOOD = {}, FW_N = 90;
+  var fwTex = (function () { var c = document.createElement('canvas'); c.width = c.height = 32; var x = c.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,255,255,0.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
+  var fwMat = new THREE.PointsMaterial({ size: 14, map: fwTex, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, depthTest: false });
+  var cloudMat = new THREE.MeshLambertMaterial({ color: 0x9aa3a9, transparent: true, opacity: 0.78 });
+  function capitalOf(key) { for (var k = 0; k < SETTLE.length; k++) if (SETTLE[k].capital && SETTLE[k].n.key === key) return SETTLE[k]; return null; }
+  function setMood(key, mood) {
+    var cur = MOOD[key];
+    if (cur && cur.mood === mood) return;
+    if (cur) { scene.remove(cur.obj); cur.obj.traverse(function (o) { if (o.geometry) o.geometry.dispose(); }); delete MOOD[key]; }
+    var cap = capitalOf(key); if (!mood || !cap) return;
+    var y0 = meshH(cap.x, cap.z), obj;
+    if (mood === 'happy') {
+      var g = new THREE.BufferGeometry(), pos = new Float32Array(FW_N * 3), col = new Float32Array(FW_N * 3);
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      obj = new THREE.Points(g, fwMat.clone()); obj.frustumCulled = false;
+      obj.userData = { t: 0, dirs: [], cx: cap.x, cz: cap.z, y: y0 + 0.9 };
+    } else {
+      obj = new THREE.Group();
+      for (var q = 0; q < 9; q++) { var m = new THREE.Mesh(new THREE.SphereGeometry(0.07 + (q % 3) * 0.025, 10, 8), cloudMat); m.scale.y = 0.7; m.position.set(cap.x + Math.cos(q * 2.3) * 0.16 * (q % 2 ? 1 : 0.55), y0 + 1.0 + (q % 3) * 0.03, cap.z + Math.sin(q * 2.3) * 0.1); obj.add(m); } // 작고 둥근 회색 구름
+      obj.userData = { t: 0 };
+    }
+    scene.add(obj); MOOD[key] = { mood: mood, obj: obj };
+  }
+  function burst(o) { // 새 불꽃: 한 점에서 사방으로
+    var d = o.userData, pos = o.geometry.attributes.position.array, col = o.geometry.attributes.color.array, hue = Math.random(), c = new THREE.Color();
+    d.ox = d.cx + (Math.random() - 0.5) * 0.4; d.oz = d.cz + (Math.random() - 0.5) * 0.4; d.dirs = []; hue = [0.02, 0.12, 0.55, 0.85, 0.3][Math.floor(Math.random() * 5)];
+    for (var k = 0; k < FW_N; k++) {
+      var th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1); d.dirs.push([Math.sin(ph) * Math.cos(th), Math.cos(ph), Math.sin(ph) * Math.sin(th)]);
+      c.setHSL((hue + (k % 3) * 0.12) % 1, 1, 0.68); col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
+      pos[k * 3] = d.ox; pos[k * 3 + 1] = d.y; pos[k * 3 + 2] = d.oz;
+    }
+    o.geometry.attributes.color.needsUpdate = true; d.t = 0;
+  }
+  function stepMood(dt) {
+    for (var key in MOOD) {
+      var mo = MOOD[key], o = mo.obj, d = o.userData;
+      if (mo.mood === 'happy') {
+        d.t += dt; if (d.t > 1.35 || !d.dirs.length) burst(o);
+        var u = Math.min(1, d.t / 1.1), r = 0.8 * (1 - Math.pow(1 - u, 3)), pos = o.geometry.attributes.position.array;
+        for (var k = 0; k < d.dirs.length; k++) { pos[k * 3] = d.ox + d.dirs[k][0] * r; pos[k * 3 + 1] = d.y + d.dirs[k][1] * r - u * u * 0.15; pos[k * 3 + 2] = d.oz + d.dirs[k][2] * r; }
+        o.geometry.attributes.position.needsUpdate = true; o.material.opacity = d.t < 1.1 ? 1 - u * 0.6 : Math.max(0, 0.4 - (d.t - 1.1));
+      } else { d.t += dt; o.position.x = Math.sin(d.t * 0.4) * 0.05; }
+    }
+  }
+
   // ───────────────────────── 게임 상태 연결 ─────────────────────────
   function setProfiles(p) { profiles = p || {}; rebuildProps(); refreshLabels(); if (terrU.uSel.value >= 0) selectNation(terrU.uSel.value); }
   function setMe(key) { me = NK[key] ? key : null; terrU.uMe.value = me ? NK[me].i : -1; refreshLabels(); refreshNatBar(); }
@@ -1956,6 +2003,7 @@ function createWorldMap(container, THREE, opts) {
       if (!_pp.ok) { l.el.style.display = 'none'; return; } l.el.style.display = 'block'; l.el.style.opacity = pOp;
       l.el.style.transform = 'translate(' + _pp.x.toFixed(1) + 'px,' + _pp.y.toFixed(1) + 'px) translate(-50%,-100%)';
     });
+    stepMood(dt);
     renderer.render(scene, camera);
     if ((hudTick += dt) > 0.15 && hasPanel) {
       hudTick = 0;
@@ -1998,6 +2046,7 @@ function createWorldMap(container, THREE, opts) {
       });
       return out;
     },
+    setMood: setMood, moods: function () { var o = {}; for (var k in MOOD) o[k] = MOOD[k].mood; return o; },
     tunnels: function () { return TUNNELS.map(function (t) { return { nation: NATIONS[t.ni].key, count: t.count, open: !!t.open, portals: t.portals }; }); },
     rivers: function () { return RIVERS.map(function (rv) { return { nation: NATIONS[rv.ni] ? NATIONS[rv.ni].key : null, pts: rv.pts, wid: rv.wid, mouth: rv.mouth }; }); },
     roads: function () { return ROADS.filter(function (r) { return r.pts; }).map(function (r) { return { w: r.w, pts: r.pts }; }); },

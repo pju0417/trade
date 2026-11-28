@@ -23,6 +23,17 @@ let selected = null;
 let status = '엔진을 불러오는 중…(처음에는 10초쯤 걸릴 수 있어요)';
 let lastMsg = '';
 let counts = {}; // server id -> online count (or error text)
+// 무역로 다시 보기: 방마다 라운드별 전체 거래(world_trades)를 이 브라우저에 모아 둔다
+const tradeLog = {}; // code -> {round: trades}
+let replaying = null;
+function logTrades(s) {
+  for (const r of s.rooms) {
+    const v = r.view, key = 'trade-routes-' + r.code;
+    if (!tradeLog[r.code]) { try { tradeLog[r.code] = JSON.parse(browserStorage.get(key) || '{}'); } catch (e) { tradeLog[r.code] = {}; } }
+    const t = v.world_trades || [], cur = tradeLog[r.code][v.round] || [];
+    if (v.phase !== 'finished' && t.length >= cur.length && t.length) { tradeLog[r.code][v.round] = t; try { browserStorage.set(key, JSON.stringify(tradeLog[r.code])); } catch (e) { /* storage full */ } }
+  }
+}
 
 const servers = serverList();
 const isLocal = servers.every((s) => s.local);
@@ -132,7 +143,7 @@ function dashboard() {
     ${room ? roomHtml(room) : ''}
     ${S.rooms.some((r) => r.view.results) ? resultsHtml() : ''}`, drafts);
   updateClocks();
-  if (room) updateWorldMap($('#room-world-map'), { ...room.view, room: room.info });
+  if (room && replaying !== room.code) updateWorldMap($('#room-world-map'), { ...room.view, room: room.info });
 }
 
 function pinsHtml() {
@@ -160,7 +171,8 @@ function roomHtml(r) {
     <div class="table-scroll"><table><tr><th>나라</th><th>접속 번호</th><th>운영</th><th>접속</th><th>준비</th><th></th><th></th></tr>${pins}</table></div>
     <div class="table-scroll"><table><tr><th>나라</th><th>돈</th><th>산업 레벨</th><th>주력</th><th>만족도</th><th>판매 중</th><th>쓰인 수출/목표</th><th>운영 부족</th></tr>${nations}</table></div>
     <h3>이 방의 시장</h3><div class="table-scroll"><table><thead><tr><th>파는 나라</th><th>물건</th><th>세대</th><th>수량</th><th>개당 가격</th></tr></thead><tbody>${t.market.map(o => `<tr><td>${esc(o.seller_label)}</td><td>${esc(o.label)}</td><td>${o.gen}</td><td>${o.qty}</td><td>${o.price}G</td></tr>`).join('')}</tbody></table></div>
-    <p><button data-act="export" data-code="${esc(r.code)}">이 방 행동 기록 내려받기</button></p></section>`;
+    <p><button data-act="replay" data-code="${esc(r.code)}">${uiIcon('replay')} 무역로 다시 보기</button> <span class="replay-note" id="replay-note"></span>
+    <button data-act="export" data-code="${esc(r.code)}">이 방 행동 기록 내려받기</button></p></section>`;
 }
 
 function resultsHtml() {
@@ -169,7 +181,7 @@ function resultsHtml() {
       <td class="score">${fmt(x.total)}</td><td><span class="grade grade-${esc(x.grade)}">${esc(x.grade)}</span></td>${['export', 'industry', 'living', 'trade', 'utilization', 'cash'].map((k) => `<td>${fmt(x.parts[k])}</td>`).join('')}</tr>`).join('')).join('')}</table></div></section>`;
 }
 
-function onSummary(s) { S = s; summaryAt = Date.now(); dashboard(); }
+function onSummary(s) { S = s; summaryAt = Date.now(); logTrades(s); dashboard(); }
 
 async function startClass(fn) {
   const server = await openServer(drafts.server || servers[0].id);
@@ -232,6 +244,21 @@ async function act(el) {
     lastMsg = '진행 방식을 바꿨어요.';
   } else if (a === 'sel') { selected = selected === el.dataset.code ? null : el.dataset.code; }
   else if (a === 'print-pins') { window.print(); return; }
+  else if (a === 'replay') {
+    // 라운드마다 1.8초씩 그 라운드의 무역로를 지도에 보여 준 뒤 지금 상태로 돌아온다
+    const code = el.dataset.code, room = S.rooms.find((x) => x.code === code), hist = tradeLog[code] || {};
+    const rounds = Object.keys(hist).map(Number).sort((a2, b2) => a2 - b2);
+    if (!room || !rounds.length) { lastMsg = '아직 기록된 무역로가 없어요.'; return dashboard(); }
+    replaying = code;
+    for (const [i, r] of rounds.entries()) {
+      setTimeout(() => {
+        updateWorldMap($('#room-world-map'), { ...room.view, room: room.info, round: r, phase_label: '무역로 다시 보기', world_trades: hist[r] });
+        const note = $('#replay-note'); if (note) note.textContent = `${r}라운드 무역로 · 거래 ${hist[r].length}건`;
+      }, i * 1800);
+    }
+    setTimeout(() => { replaying = null; const note = $('#replay-note'); if (note) note.textContent = ''; dashboard(); }, rounds.length * 1800 + 600);
+    return;
+  }
   else if (a === 'pins') { drafts.showPins = !drafts.showPins; }
   else if (a === 'ctl') { const r = await cls.teacherAction(el.dataset.code, { type: 'set_controller', country: el.dataset.country, mode: el.dataset.mode }); lastMsg = r.msg; }
   else if (a === 'export') {

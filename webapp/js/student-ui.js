@@ -11,6 +11,7 @@ import { esc, $, render, num, fmt } from './dom.js';
 import { updateWorldMap, applyMapBackground } from './world-map.js';
 import { goodIcon, uiIcon } from './good-icons.js';
 import { createAdvisor } from './advisor-ui.js';
+import { createFun } from './fun-ui.js';
 
 applyMapBackground($('#entry-map'));
 
@@ -27,7 +28,8 @@ let win = null;            // open window: market | trade | invest | goals | log
 let marketTab = 'buy';
 let nationKey = null;
 let phaseKey = null;
-let advisor = null;       // 마루 선장(조언 캐릭터)
+let advisor = null;
+let fun = null;           // 거래 연출·라운드 카드·배지·시상식·소리(fun-ui.js)       // 마루 선장(조언 캐릭터)
 const toasts = [];         // {id, kind, icon, title, text, actions, until, sig}
 const dismissed = new Set();
 let toastSeq = 0;
@@ -85,6 +87,7 @@ async function join() {
     if (!r.ok) { me = null; transport.close(); return; }
     leavePresence = server.presence.join({ role: 'student', room: parsed.code, country });
     advisor = createAdvisor({ root: $('#advisor'), storageKey: `trade-advisor-tour:${parsed.code}:${country}`, onAction: advisorAction });
+    fun = createFun({ root: $('#fun'), storageKey: `trade-fun:${parsed.code}:${country}`, toast: pushToast, onAction: advisorAction });
     history.replaceState(null, '', `?room=${parsed.code}&country=${country}${LOCAL_FLAG ? '&local=1' : ''}`);
     draw();
   } catch (err) {
@@ -147,7 +150,12 @@ async function ensureWorld() {
   } finally { ensureWorld.busy = false; }
 }
 function updateMap() {
-  if (world) world.update(S);
+  if (world) {
+    world.update(S);
+    // 우리 마을 분위기: 국민 만족도가 높으면 수도 위에 불꽃, 낮으면 회색 구름
+    const h = (S.happiness || [])[(S.happiness || []).length - 1];
+    if (world.setMood) world.setMood(S.country, h == null ? null : h >= 85 ? 'happy' : h < 65 ? 'sad' : null);
+  }
   else if (worldFallback) updateWorldMap($('#world'), S, { onPropose: (k) => { openTrade(k); } });
   else ensureWorld();
 }
@@ -211,8 +219,10 @@ function drawMenu() {
     ['log', 'log', '기록', false, 0],
   ];
   if (S.phase === 'finished') items.unshift(['result', 'result', '결과', true, 0]);
+  const snd = fun ? fun.soundOn() : true;
   render($('#hud-menu'), items.map(([k, ico, t, hot, badge]) => `<button data-act="win" data-win="${k}" aria-pressed="${win === k}" class="${hot ? 'hot' : ''}">
-    <span class="ico">${uiIcon(ico)}</span>${t}${badge ? `<span class="badge">${badge}</span>` : ''}</button>`).join(''), drafts);
+    <span class="ico">${uiIcon(ico)}</span>${t}${badge ? `<span class="badge">${badge}</span>` : ''}</button>`).join('')
+    + `<button data-act="sound" class="menu-sound" aria-pressed="${snd}" aria-label="소리 ${snd ? '끄기' : '켜기'}"><span class="ico">${uiIcon(snd ? 'sound' : 'mute')}</span>소리</button>`, drafts);
 }
 
 // ---------------------------------------------------------------- notifications
@@ -343,6 +353,7 @@ function goalsWindow() {
     <div class="stat"><span>평균 만족도</span><b>${fmt(p.avg_happy)}</b></div>
     <div class="stat"><span>운영 자원 부족</span><b>${p.operating_short_days}일</b></div>
     <div class="stat"><span>급히 산 자원 비용</span><b>${p.emergency_paid}G</b></div>
+    <h3>배지</h3>${fun ? fun.badgesHtml() : ''}
     <h3>이번 라운드 정산</h3><table><thead><tr><th>물건</th><th>쓰임</th><th>필요</th><th>창고</th><th>상태</th></tr></thead><tbody>${st}</tbody></table>
     <p class="win-note">판매 중인 물건은 정산에 쓸 수 없어요. 연료는 ${S.operating_schedule.fuel.join('·')}라운드, 광물은 ${S.operating_schedule.ore.join('·')}라운드에 써요.</p>`];
 }
@@ -427,6 +438,7 @@ function draw() {
   drawWindow();
   drawToasts();
   advisor?.update(S);
+  fun?.update(S);
 }
 
 // 입력값을 바꿀 때 화면에 이미 있는 칸에도 바로 넣는다(창이 열려 있으면 다시 그리지 않으므로)
@@ -453,6 +465,7 @@ async function act(el) {
   if (a === 'join') return join();
   if (!me) return;
   if (a === 'win') { win = win === el.dataset.win ? null : el.dataset.win; return draw(); }
+  if (a === 'sound') { fun?.toggleSound(); return drawMenu(); }
   if (a === 'step') {
     const box = el.closest('.stepper'), input = box.querySelector('input'), lo = Number(box.dataset.min), hi = Number(box.dataset.max), st = Number(box.dataset.step) || 1;
     let v = num(input.value); if (!Number.isFinite(v)) v = lo;

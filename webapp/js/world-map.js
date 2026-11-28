@@ -197,7 +197,11 @@ class WorldMap {
       if (halo.getAttribute('class') !== className) halo.setAttribute('class', className);
     }
     this.updateRoutes(state.world_trades || []);
-    if (this.world) { this.world.update(state); this.world.setRoutesVisible(this.showRoutes); }
+    if (this.world) {
+      this.world.update(state); this.world.setRoutesVisible(this.showRoutes);
+      // 교사 화면: 나라마다 국민 만족도로 마을 분위기(불꽃 / 회색 구름)
+      if (this.world.setMood && state.nations) for (const n of state.nations) this.world.setMood(n.country, n.happy == null ? null : n.happy >= 85 ? 'happy' : n.happy < 65 ? 'sad' : null);
+    }
     this.updateInspector();
     if (this.mode === '2d') this.place2DLabels();
   }

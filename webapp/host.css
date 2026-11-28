@@ -112,3 +112,4 @@
   .host-page th, .host-page td, .host-page .pin, .host-page .nation-token, .host-page .host-h2 { color: #000; background: none; text-shadow: none; }
   .host-page .h2-ico, .host-page .nation-token .resource-icon { display: none; }
 }
+.host-page .replay-note { font-family: var(--game-font); color: var(--hud-good); margin: 0 8px; }

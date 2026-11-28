@@ -32,6 +32,14 @@ const ui = {
   finished: '<path d="M8 4h8v5a4 4 0 0 1-8 0Zm4 9v4m-4 3h8l-1-3h-6Z"/>',
   bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4Zm4 3a2 2 0 0 0 4 0"/>',
   ship: '<path d="M3 15h18l-3 5H6Zm3 0V9h12v6M9 9V5h6v4"/>',
+  sound: '<path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="M16 9a4 4 0 0 1 0 6m2.5-8.5a7.5 7.5 0 0 1 0 11"/>',
+  mute: '<path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="m16 9 5 6m0-6-5 6"/>',
+  badge: '<circle cx="12" cy="9" r="6"/><path d="m8.5 14-2 7 5.5-3 5.5 3-2-7M12 6l1 2h2l-1.5 1.5.5 2-2-1-2 1 .5-2L9 8h2Z"/>',
+  news: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2Zm13 4h3v8a2 2 0 0 1-2 2M7 8h7M7 11h7M7 14h4"/>',
+  replay: '<path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5"/><path d="m10 9 5 3-5 3Z"/>',
+  happy: '<circle cx="12" cy="12" r="9"/><path d="M8 14c1 2 2.5 3 4 3s3-1 4-3M9 9.5v.5m6-.5v.5"/>',
+  neutral: '<circle cx="12" cy="12" r="9"/><path d="M8.5 15h7M9 9.5v.5m6-.5v.5"/>',
+  sad: '<circle cx="12" cy="12" r="9"/><path d="M8 17c1-2 2.5-3 4-3s3 1 4 3M9 9.5v.5m6-.5v.5"/>',
 };
 export function uiIcon(name, className = '') {
   return `<svg class="ui-icon ${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ui[name] || ui.bell}</svg>`;
