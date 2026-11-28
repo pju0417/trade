@@ -1,6 +1,6 @@
 # #11 무역 게임 — 작업 지침
 
-초등학교 6학년 사회 무역 단원 마무리 게임을 만드는 프로젝트다. 지금 있는 것은 9개국·9라운드 Python 경제 시뮬레이터(v17)와 검증 자료, 그리고 그 엔진을 브라우저(Pyodide)에서 그대로 돌리는 수업용 웹앱(`webapp/`)이다. 웹앱은 게임식 화면(전체 화면 3D 세계 지도 + HUD, 조언 캐릭터 '마루 선장', 교사 화면 = 항만 관제실, 혼자 해 보기 `play.html`)이다(2026-11-27).
+초등학교 6학년 사회 무역 단원 마무리 게임을 만드는 프로젝트다. 지금 있는 것은 9개국·9라운드 Python 경제 시뮬레이터(v17)와 검증 자료, 그리고 그 엔진을 브라우저(Pyodide)에서 그대로 돌리는 수업용 웹앱(`webapp/`)이다. 웹앱은 게임식 화면(첫 화면 = 3D 지도가 배경인 게임 타이틀, 학생 화면 = 전체 화면 3D 세계 지도 + HUD, 조언 캐릭터 '마루 선장', 교사 화면 = 항만 관제실, 혼자 해 보기 `play.html`)이다(2026-11-28).
 
 ## 대화 방식
 
@@ -57,7 +57,7 @@
 - 화면을 고치면 `webapp/tests/ui_play.cjs`, `ui_advisor.cjs`, `ui_host.cjs`로 확인한다(웹 서버 없이 Playwright가 파일을 직접 넘긴다). 게임 화면 버튼은 trade.css·atlas.css의 공통 버튼 규칙이 덮으므로 `game.css`·`host.css`에서는 `.game`·`.host-page` 접두어로 쓴다.
 - 게임 글꼴은 주아(`webapp/assets/fonts/jua/`, SIL OFL)를 저장소에 넣어 쓴다(학교 네트워크에서 외부 글꼴이 막힐 수 있음). 이모지 대신 `js/good-icons.js`의 `goodIcon`·`uiIcon` 그림 아이콘을 쓴다.
 - 조언 캐릭터 '마루 선장'(`webapp/js/advisor-ui.js`): 캐릭터 그림·말풍선 디자인은 GPT가 맡는다(사용자, 2026-11-27). 그림은 `face(mood)`(mood = '' | 'warn' | 'happy')와 `game.css`의 `.advisor*`만 바꾸면 된다. 조언 내용(`adviceFor`)과 안내 순서(`tour`)는 Claude가 맡는다. 결과가 일률적이 되지 않게 조언을 규칙 경고(늘)와 전략 조언(단계에 따라 줄임)으로 나누고, 교사가 도움 수준(많이·보통·경고만·끔, 기본 보통)을 고른다. 수량·가격은 칸에 미리 채우지 않는다(사용자 결정 2026-11-28). 선장 말대로만 하는 학생은 보통 수준에서 모두 D(49~55점), 생각하는 학생은 90~95점이었다(`docs/advisor_follower.md`, 150판). 조언을 늘릴 때는 이 시뮬레이션을 다시 돌린다.
-- 세계 지도의 디자인은 Claude가 맡는다(사용자, 2026-11-24). 데모는 `version2/world-map-demo.html`, 게임용은 `webapp/js/world-engine.js`이고 둘에 같은 `createWorldMap`이 들어 있으므로 함께 고친다. 게임은 `political: false`, `theme: 'game'`(지도 컨트롤을 HUD 톤으로)으로 쓰고 학생 화면은 `card: false`다. 데모 기본도 게임과 같은 지도이고 `?political`이면 예전 정치 색 지도다. 지도를 고치면 `webapp/tests/map_audit.cjs`로 뜨거나 묻힌 물건·끊긴 길이 0인지 확인한다(물 위 길 1곳은 항구 부두). 물건·길·강은 화면에 그려지는 지형 높이 `meshH`에 놓는다. 해안은 바다까지 거리 `CD`로 모래사장·절벽을 나누고, 산업 하나가 레벨 3이 되면 고개 길이 터널로 바뀐다. three.js는 r128 고정(`webapp/assets/world/vendor/`). Tripo 원본 4K 모델은 `version2/assets/models/`에 로컬로만 두고, 경량화본만 저장소에 넣는다.
+- 세계 지도의 디자인은 Claude가 맡는다(사용자, 2026-11-24). 데모는 `version2/world-map-demo.html`, 게임용은 `webapp/js/world-engine.js`이고 둘에 같은 `createWorldMap`이 들어 있으므로 함께 고친다. 게임은 `political: false`, `theme: 'game'`(지도 컨트롤을 HUD 톤으로)으로 쓰고 학생 화면은 `card: false`, 첫 화면 배경은 `controls: false`(조작 버튼 없음)다. 첫 화면도 3D 지도를 그리므로 학교 기기 성능 확인 대상이다. 데모 기본도 게임과 같은 지도이고 `?political`이면 예전 정치 색 지도다. 지도를 고치면 `webapp/tests/map_audit.cjs`로 뜨거나 묻힌 물건·끊긴 길이 0인지 확인한다(물 위 길 1곳은 항구 부두). 물건·길·강은 화면에 그려지는 지형 높이 `meshH`에 놓는다. 해안은 바다까지 거리 `CD`로 모래사장·절벽을 나누고, 산업 하나가 레벨 3이 되면 고개 길이 터널로 바뀐다. three.js는 r128 고정(`webapp/assets/world/vendor/`). Tripo 원본 4K 모델은 `version2/assets/models/`에 로컬로만 두고, 경량화본만 저장소에 넣는다.
 
 ## 저장소에 없는 대형 파일
 
